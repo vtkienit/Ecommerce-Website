@@ -24,7 +24,7 @@
     --color-text-tertiary: var(--color-white-tertiary);
     --color-text-quaternary: var(--color-white-quaternary);
 
-    --color-header-primary: var(--color-blue-primary);
+    --color-header-primary: var(--color-blue-secondary);
 
     --color-background-primary: var(--color-dark-primary);
     --color-background-secondary: var(--color-dark-secondary);

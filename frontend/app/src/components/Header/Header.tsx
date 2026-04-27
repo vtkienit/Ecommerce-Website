@@ -49,12 +49,12 @@ const Header = () => {
             <div className={styles["header__top-right"]}>
               
               {/* LANGUAGE */}
-              <div className={styles.lang} ref={langRef}>
-                <button className={styles["lang__btn"]} onClick={() => setOpen(prev => !prev)}>
-                  <Language width={16} height={16} className={styles["lang__btn-icon"]}/>
-                  {lang === "vi" ? "Tiếng Việt" : "English"}
-                  <ChevronDown size={16} />
-                </button>
+              <div className={styles["header__top-lang"]} ref={langRef}>
+                <Button className={styles["lang__btn"]} onClick={() => setOpen(prev => !prev)}>
+                  <Language width={16} height={16} className={styles["icon"]}/>
+                  <span>{lang === "vi" ? "Tiếng Việt" : "English"}</span>
+                  <ChevronDown size={16} className={styles.icon}/>
+                </Button>
 
                 {open && (
                   <div className={styles.lang__menu}>
@@ -70,6 +70,10 @@ const Header = () => {
 
               {/* THEME */}
               <ThemeToggle />
+
+              <Link to="/manage-order" className={styles["header__top-right-link"]}>
+                {t("manageOrder")}
+              </Link>
             </div>
           </div>
         </div>
@@ -80,19 +84,23 @@ const Header = () => {
 
             {/* Left */}
             <h1 className={styles.header__logo}>
-              <a href="/">QuyDung</a>
+              <Link to="/">QuyDung</Link>
             </h1>
 
             {/* NAV */}
             <nav className={styles.header__menu}>
               <div className={styles["header__menu-container"]}>
                 <ul>
-                  <li><Link to="/" className={clsx(styles["header__menu-item"], styles["header__menu-item--active"])}>{t("sale")}</Link></li>
-                  <li><Link to="/mattress" className={styles["header__menu-item"]}>{t("mattress")}</Link></li>
-                  <li><Link to="/bedding" className={styles["header__menu-item"]}>{t("bedding")}</Link></li>
-                  <li><Link to="/accessories" className={styles["header__menu-item"]}>{t("accessories")}</Link></li>
-                  <li><Link to="/support" className={styles["header__menu-item"]}>{t("support")}</Link></li>
-                  <li><Link to="/contact" className={styles["header__menu-item"]}>{t("contact")}</Link></li>
+                  <li className={clsx(styles["header__menu-item"], styles["header__menu-item--active"])}><Link to="/" >{t("sale")}</Link></li>
+                  <li className={styles["header__menu-item"]}><Link to="/mattress" >{t("mattress")}</Link></li>
+                  <li className={styles["header__menu-item"]}><Link to="/bedding" >{t("bedding")}</Link></li>
+                  <li className={clsx(styles["header__menu-item"], styles['--has-submenu'])}>
+                    <Link to="/accessories" > {t("accessories")}</Link>
+                    <ChevronDown size={14} className={clsx(styles["icon"], styles["down--hover"])} />
+                    <ChevronUp size={14} className={clsx(styles["icon"], styles["up--hover"])} />
+                  </li>
+                  <li className={styles["header__menu-item"]}><Link to="/support" >{t("support")}</Link></li>
+                  <li className={styles["header__menu-item"]}><Link to="/contact" >{t("contact")}</Link></li>
                 </ul>
               </div>
             </nav>
@@ -118,8 +126,8 @@ const Header = () => {
                 </span>}
               </Button>
 
-              <Button onClick={() => setMenuOpen(true)}>
-                <Menu className={styles.icon} width={25} height={25} />
+              <Button className={styles["hide-on-desktop"]} onClick={() => setMenuOpen(true)}>
+                <Menu className={clsx(styles.icon)} width={25} height={25} />
               </Button>
             </div>
           </div>

@@ -40,10 +40,10 @@
 /* ICONS */
 .toggle__icon--light {
     margin-left: auto;
-    color: var(--color-orange);
+    color: var(--color-orange-primary);
 }
 
 .toggle__icon--dark {
     margin-left: 0;
-    color: var(--color-orange);
+    color: var(--color-orange-primary);
 }
