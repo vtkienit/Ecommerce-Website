@@ -1,0 +1,17 @@
+:root {
+    --font-family-base: ui-sans-serif, system-ui, sans-serif;
+
+    --font-size-xs: 12px;
+    --font-size-sm: 14px;
+    --font-size-md: 16px;
+    --font-size-lg: 20px;
+    --font-size-xl: 24px;
+
+    --font-weight-sm: 400;
+    --font-weight-md: 500;
+    --font-weight-lg: 700;
+
+    --line-height-sm: 1.4;
+    --line-height-md: 1.6;
+    --line-height-lg: 1.8;
+}

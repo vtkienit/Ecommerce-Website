@@ -1,0 +1,37 @@
+:root {
+    --color-text-primary: var(--color-dark-primary);
+    --color-text-secondary: var(--color-dark-secondary);
+    --color-text-tertiary: var(--color-dark-tertiary);
+    --color-text-quaternary: var(--color-dark-quaternary);
+
+    --color-header-primary: var(--color-blue-primary);
+
+    --color-background-primary: var(--color-white-primary);
+    --color-background-secondary: var(--color-white-tertiary);
+    --color-background-tertiary: var(--color-white-quaternary);
+
+    --color-border-primary: var(--color-white-tertiary);
+
+    --color-shadow-primary: rgba(0, 0, 0, 0.1);
+
+    --color-error: var(--color-red-primary);
+}
+
+
+[data-theme="dark"] {
+    --color-text-primary: var(--color-white-primary);
+    --color-text-secondary: var(--color-white-secondary);
+    --color-text-tertiary: var(--color-white-tertiary);
+    --color-text-quaternary: var(--color-white-quaternary);
+
+    --color-header-primary: var(--color-blue-primary);
+
+    --color-background-primary: var(--color-dark-primary);
+    --color-background-secondary: var(--color-dark-secondary);
+    --color-background-tertiary: var(--color-dark-tertiary);
+
+    --color-border-primary: var(--color-dark-secondary);
+
+    --color-shadow-primary: rgba(255, 255, 255, 0.1);
+}
+    

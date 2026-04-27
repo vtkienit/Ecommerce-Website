@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-container": "#5e656c",
+                    "surface-dim": "#dcd9d9",
+                    "error": "#ba1a1a",
+                    "surface-variant": "#e5e2e1",
+                    "inverse-primary": "#a5c8ff",
+                    "on-tertiary-fixed-variant": "#733600",
+                    "on-surface-variant": "#414752",
+                    "tertiary-fixed": "#ffdbc7",
+                    "on-primary-fixed": "#001c3a",
+                    "primary-fixed-dim": "#a5c8ff",
+                    "background": "#fcf9f8",
+                    "primary-fixed": "#d4e3ff",
+                    "tertiary-fixed-dim": "#ffb688",
+                    "on-secondary-fixed-variant": "#40484e",
+                    "on-tertiary-container": "#fffeff",
+                    "on-error": "#ffffff",
+                    "primary-container": "#1976d2",
+                    "secondary-container": "#dce3eb",
+                    "surface-container-highest": "#e5e2e1",
+                    "outline-variant": "#c1c6d4",
+                    "surface-container-lowest": "#ffffff",
+                    "primary": "#005dac",
+                    "on-tertiary": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "inverse-on-surface": "#f3f0ef",
+                    "surface-container-low": "#f6f3f2",
+                    "on-tertiary-fixed": "#311300",
+                    "on-primary-container": "#fffdff",
+                    "on-error-container": "#93000a",
+                    "surface-tint": "#005faf",
+                    "secondary-fixed-dim": "#c0c7cf",
+                    "secondary-fixed": "#dce3eb",
+                    "on-primary-fixed-variant": "#004786",
+                    "on-surface": "#1c1b1b",
+                    "error-container": "#ffdad6",
+                    "tertiary": "#944700",
+                    "on-secondary": "#ffffff",
+                    "secondary": "#585f66",
+                    "tertiary-container": "#ba5b00",
+                    "on-secondary-fixed": "#151c22",
+                    "on-background": "#1c1b1b",
+                    "surface-container-high": "#eae7e7",
+                    "outline": "#717783",
+                    "inverse-surface": "#313030",
+                    "surface-bright": "#fcf9f8",
+                    "surface": "#fcf9f8",
+                    "surface-container": "#f0eded"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "8px",
+                    "container-max": "1280px",
+                    "lg": "48px",
+                    "md": "24px",
+                    "gutter": "24px",
+                    "xs": "4px",
+                    "xl": "80px",
+                    "sm": "12px"
+            },
+            "fontFamily": {
+                    "h2": ["Manrope"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "h3": ["Manrope"],
+                    "h1": ["Manrope"]
+            },
+            "fontSize": {
+                    "h2": ["32px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-sm": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                    "h3": ["24px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "h1": ["48px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased">
+<!-- TopAppBar Shell -->
+<header class="sticky top-0 w-full z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-gray-100">
+<!-- Row 1: Logo, Search, User State -->
+<div class="max-w-7xl mx-auto px-6 lg:px-8 py-4 flex items-center justify-between gap-8">
+<!-- Brand Identity -->
+<a class="text-2xl font-extrabold text-primary-container tracking-tight shrink-0 font-h2" href="/">
+                Quy Dung
+            </a>
+<!-- Search Bar (Injected Requirement) -->
+<div class="flex-grow max-w-2xl hidden md:block">
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline" data-icon="search">search</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-2.5 bg-surface-container-low border-transparent focus:border-primary-container focus:ring-0 rounded-lg text-body-md transition-all placeholder:text-on-secondary-container" placeholder="Tìm kiếm sản phẩm..." type="text"/>
+</div>
+</div>
+<!-- Trailing Actions (Logged In State) -->
+<div class="flex items-center gap-6 shrink-0">
+<div class="flex items-center gap-3 group cursor-pointer">
+<img alt="User Avatar" class="w-9 h-9 rounded-full object-cover border-2 border-transparent group-hover:border-primary-container transition-all" data-alt="close-up portrait of a friendly professional man with a neat beard in a soft sunlit studio setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAIHCdNKlOMinlry-ysJhb3ENazs2r3oJncQu1H-4AMcxsvjpyPAnk6c55WrnOCqd3L4Z9Squ8LmV9ByHix_fUBwIL-qH_LTOCb_ebAg9Fy1VZYAkdyvN0bL4CZj-5unyTAj-epsFxma5zJ37-IsLxH5NSyRPG5lEkYxxoqojn-P9VWNFanBfZd4BARj__DVlPuXBHOY-7irLOQ6QfcOaFE6q1nW5H_kEjbmDU9OWhhjijHSuWcOV2VDVpcYdQpBBKEYeEyeah54E"/>
+<span class="font-label-sm text-on-surface hidden sm:block">Hi, Minh</span>
+</div>
+<button class="relative p-2 rounded-full hover:bg-surface-container-high transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-secondary" data-icon="shopping_cart">shopping_cart</span>
+<span class="absolute top-1 right-1 w-4 h-4 bg-primary-container text-white text-[10px] flex items-center justify-center rounded-full font-bold">2</span>
+</button>
+<!-- Mobile Menu Trigger -->
+<button class="md:hidden p-2 rounded-lg hover:bg-surface-container-high">
+<span class="material-symbols-outlined text-secondary" data-icon="menu">menu</span>
+</button>
+</div>
+</div>
+<!-- Row 2: Navigation Links -->
+<div class="hidden md:block border-t border-gray-50">
+<nav class="max-w-7xl mx-auto px-6 lg:px-8">
+<ul class="flex items-center justify-center gap-10 py-3">
+<li>
+<a class="font-manrope text-sm font-bold text-primary-container border-b-2 border-primary-container pb-1" href="#">Sản phẩm</a>
+</li>
+<li>
+<a class="font-manrope text-sm font-medium text-slate-600 hover:text-primary-container transition-colors" href="#">Bộ sưu tập</a>
+</li>
+<li>
+<a class="font-manrope text-sm font-medium text-slate-600 hover:text-primary-container transition-colors" href="#">Giới thiệu</a>
+</li>
+<li>
+<a class="font-manrope text-sm font-medium text-slate-600 hover:text-primary-container transition-colors" href="#">Tin tức</a>
+</li>
+<li>
+<a class="font-manrope text-sm font-medium text-slate-600 hover:text-primary-container transition-colors" href="#">Ưu đãi &amp; Outlet</a>
+</li>
+<li>
+<a class="font-manrope text-sm font-medium text-slate-600 hover:text-primary-container transition-colors" href="#">Hỗ trợ</a>
+</li>
+<li>
+<a class="font-manrope text-sm font-medium text-slate-600 hover:text-primary-container transition-colors" href="#">Liên hệ</a>
+</li>
+</ul>
+</nav>
+</div>
+</header>
+<!-- Hero Placeholder Context -->
+<main>
+<section class="relative h-[600px] flex items-center overflow-hidden">
+<!-- Background Image -->
+<div class="absolute inset-0 z-0">
+<img alt="Luxury Bedding" class="w-full h-full object-cover" data-alt="luxury minimal bedroom with high-end white linen bedding soft morning sunlight through sheer curtains neutral tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAn6YsTzmeNcYPseCEy-v0NKn9-zfEwbujoCF0cq3a-rGUeEacXBr8sa24aSmlR5h_ySSENxQtmX57HNVuYJDOoFmJehry1R6lsJwL87-Ez6PZKOw96kAtGORRdm1TOehyNOKP8nywDskL05cn_qi1uubOTwjuW8bRCTC_fQDtLNtJ7lq0YLd0RF-WDhPZt5BSvEGKIB2e6X2paFBYPS6eJAnxQ1vD1q_UNYxxvUjKx9uLEu7ImzjoAmsHsi-e2qvabxYsSF-7pgnc"/>
+<div class="absolute inset-0 bg-gradient-to-r from-white/90 via-white/40 to-transparent"></div>
+</div>
+<!-- Content -->
+<div class="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 w-full">
+<div class="max-w-2xl">
+<span class="inline-block px-3 py-1 rounded-full bg-primary-fixed text-on-primary-fixed-variant font-label-sm mb-6">
+                        Bộ sưu tập Mùa Thu 2024
+                    </span>
+<h1 class="font-h1 text-h1 text-on-surface mb-6 leading-tight">
+                        Nâng tầm giấc ngủ <br/> chuẩn chuyên gia
+                    </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-8 max-w-lg">
+                        Khám phá các sản phẩm chăn ga gối cao cấp được thiết kế để mang lại sự thoải mái tối ưu và phục hồi năng lượng mỗi đêm.
+                    </p>
+<div class="flex items-center gap-4">
+<button class="bg-primary-container text-on-primary px-8 py-4 rounded-lg font-h3 text-body-md hover:shadow-lg transition-shadow active:scale-95 duration-200">
+                            Mua sắm ngay
+                        </button>
+<button class="bg-white border border-outline-variant text-secondary px-8 py-4 rounded-lg font-h3 text-body-md hover:bg-slate-50 transition-colors">
+                            Xem bộ sưu tập
+                        </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Category Grid (Bento Style) -->
+<section class="max-w-7xl mx-auto px-6 lg:px-8 py-xl">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter h-[500px]">
+<div class="md:col-span-2 md:row-span-2 rounded-xl overflow-hidden relative group cursor-pointer shadow-sm hover:shadow-md transition-shadow">
+<img alt="Gối Lông Vũ" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="top view of minimalist light grey bedding set with clean textures and soft shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7mzjpwEWrQNeixex45KMeFHWR3A6mqHLtSPuGFIlrew9SYDwf1URcEEbhHYjv-0jw9YEI1sQcQ1UhI__cgorAKKVkl1UYiXmGtRmyZ7z_xzhmgbmLfAx1fSTRVKstdGFJuBOrz54xL-d1k0mwVcsdbk6Z5QHzwGWdZE_GT3BLBj7E5W9qJAme5eMF0S0s_Y25zp6_iN6HpvH3TNQnlNW1xssWT_C01GwDFoZp7yQI8UYGu65zssb5AMLXFvxi5EDlSQp7W41Z4dw"/>
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors"></div>
+<div class="absolute bottom-6 left-6 text-white">
+<h3 class="font-h3 text-h3 mb-1">Gối Lông Vũ Premium</h3>
+<p class="font-label-sm opacity-90">Từ 1.200.000đ</p>
+</div>
+</div>
+<div class="md:col-span-2 rounded-xl overflow-hidden relative group cursor-pointer shadow-sm hover:shadow-md transition-shadow">
+<img alt="Chăn Cotton" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="aesthetic display of folded cotton sheets in soft pastel blue and white colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBmFzvtKQ-GYLv0eGz6jRtRPIh6dTAtonjITvrDdLbHcl6yzxCsbFC6uQzLi09tS9DIFXciqvl_1WuoX5KpNXyYaUfxPwUQ4w1BOxm_lzq6eo2q2v3jIAV3nvMTKCT0DbRZ1KNT3-mFcmbwiGlbdUPdqJQJNgIeWvxtvpQhf66CghXTyJKOuejDAD6BRprwAST843OonuSy8epqYmtqKpTCuS7Ilwl4665j8RmP-FPWnl5HZSG_Wx9UddNu3uixCWEPHaM9ii5btA"/>
+<div class="absolute inset-0 bg-black/10"></div>
+<div class="absolute bottom-6 left-6 text-white">
+<h3 class="font-h3 text-h3 mb-1">Chăn Cotton Silk</h3>
+<p class="font-label-sm opacity-90">Ưu đãi 20%</p>
+</div>
+</div>
+<div class="rounded-xl overflow-hidden relative group cursor-pointer shadow-sm hover:shadow-md transition-shadow">
+<img alt="Phụ kiện" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="close up of premium silk eye mask resting on a silk pillowcase soft purple lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuClTb0WtHxQlx97i9i_Yl7rM9irg62Vv3ThGs3r_8VgBfed9QqZFiA_8iM56zKM9J6jnqMRHHrIgU8T9Oo-FbnSnilgQbihBXpe6jvDTvsIZxK7whyCKongxl2apCSBkUeRR0YWDouSONjGVE6pY4OZuRmqSPeiVIrxygU-C3aXQQ90ZTOkSb4ry8sFmn6HHXwejbvCx3KBlKMZiNajTC6kxtxRygtiIhU-ZSxaKvEdRFCK1lPHGzkvVyQtlyQ2VGLPwK9t6K-MgNI"/>
+<div class="absolute inset-0 bg-black/10"></div>
+<div class="absolute bottom-4 left-4 text-white">
+<h3 class="font-label-sm font-bold">Phụ kiện ngủ</h3>
+</div>
+</div>
+<div class="rounded-xl overflow-hidden relative group cursor-pointer shadow-sm hover:shadow-md transition-shadow">
+<img alt="Outlet" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="warm cozy bedroom corner with an aromatherapy diffuser and a book on the nightstand" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1vJQNL9oUxzkE8Hoz8BZgDZjOZ2YkluGf0Zvxc6zF7HFcCkDxGtTaVjDzciWQxY9wgLAPg6gr9wXjhbdM6tqUS2HZ-T6F9ym-KlJnVsowI7a8FfI5EbeoW-l1F_uSR7BSnLICzF8ceWBQl1VYqqFUTNnGUVousruA7n6l4v25LLWmZQHgUWax_Nfanz16ZtIMxsfB54jlUgPuE_XOE9Wc0QPzwj98YjBGx9QsrJhSn0YeI5Q19mHuWF-63552wiOduoY3ESrcVlA"/>
+<div class="absolute inset-0 bg-black/10"></div>
+<div class="absolute bottom-4 left-4 text-white">
+<h3 class="font-label-sm font-bold">Góc Outlet</h3>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer Shell -->
+<footer class="bg-slate-50 border-t border-slate-200 py-12">
+<div class="max-w-7xl mx-auto px-6 lg:px-8">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+<div class="col-span-1 md:col-span-1">
+<span class="text-lg font-bold text-slate-900 mb-4 block">Quy Dung</span>
+<p class="font-manrope text-xs text-slate-500 leading-relaxed">
+                        Mang đến giải pháp chăm sóc giấc ngủ toàn diện từ thiên nhiên và công nghệ hiện đại.
+                    </p>
+</div>
+<div class="flex flex-col gap-3">
+<span class="font-label-sm font-bold text-slate-900">Khám phá</span>
+<a class="font-manrope text-xs text-slate-500 hover:text-primary-container transition-colors" href="#">Sản phẩm mới</a>
+<a class="font-manrope text-xs text-slate-500 hover:text-primary-container transition-colors" href="#">Bán chạy nhất</a>
+<a class="font-manrope text-xs text-slate-500 hover:text-primary-container transition-colors" href="#">Bộ sưu tập Tencel</a>
+</div>
+<div class="flex flex-col gap-3">
+<span class="font-label-sm font-bold text-slate-900">Hỗ trợ</span>
+<a class="font-manrope text-xs text-slate-500 hover:text-primary-container transition-colors" href="#">Chính sách bảo hành</a>
+<a class="font-manrope text-xs text-slate-500 hover:text-primary-container transition-colors" href="#">Vận chuyển &amp; Đổi trả</a>
+<a class="font-manrope text-xs text-slate-500 hover:text-primary-container transition-colors" href="#">Câu hỏi thường gặp</a>
+</div>
+<div class="flex flex-col gap-4">
+<span class="font-label-sm font-bold text-slate-900">Đăng ký bản tin</span>
+<div class="flex gap-2">
+<input class="bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs w-full focus:ring-1 focus:ring-primary-container focus:outline-none" placeholder="Email của bạn" type="email"/>
+<button class="bg-primary-container text-white px-4 py-2 rounded-lg text-xs font-bold">Gửi</button>
+</div>
+</div>
+</div>
+<div class="border-t border-slate-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="font-manrope text-xs text-slate-500">
+                    © 2024 Quy Dung. Chuyên gia chăm sóc giấc ngủ chuyên nghiệp.
+                </p>
+<div class="flex gap-6">
+<a class="font-manrope text-xs text-slate-500 hover:text-primary-container underline underline-offset-4" href="#">Chính sách bảo mật</a>
+<a class="font-manrope text-xs text-slate-500 hover:text-primary-container underline underline-offset-4" href="#">Điều khoản sử dụng</a>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

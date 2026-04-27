@@ -1,0 +1,19 @@
+:root {
+    --color-dark-primary: #111827;
+    --color-dark-secondary: #374151;
+    --color-dark-tertiary: #334155;
+    --color-dark-quaternary: #94a3b8;
+    
+    --color-blue-primary: #1976D2;
+
+    --color-white-primary: #ffffff;
+    --color-white-secondary: #fafafa;
+    --color-white-tertiary: #EEEEEE;
+    --color-white-quaternary: #DDDDDD;
+
+    --color-shadow-primary: rgba(0, 0, 0, 0.1);
+
+    --color-red-primary: #e53935;
+
+    --color-orange-primary: #FACC15;
+}
