@@ -1,9 +1,69 @@
+import React, { useState, useEffect } from 'react';
 import MainLayout from "../layouts/MainLayout";
 import { Helmet } from "react-helmet-async";
 import { useLanguage } from "../contexts/LanguageProvider";
+import { motion } from "framer-motion";
+import { Timer, Heart, ShieldCheck, Truck, Award, ChevronRight, ShoppingBag } from 'lucide-react';
+import Button from '../components/Button/Button';
+import clsx from 'clsx';
+import bannerImg from "../assets/images/home_banner.png";
+import mattressImg from "../assets/images/mattress.png";
+import beddingSetsImg from "../assets/images/bedding_sets.png";
+import blanketsImg from "../assets/images/blankets.png";
+import bedSheetsImg from "../assets/images/bed_sheets.png";
+import pillowsImg from "../assets/images/pillows.png";
+
+// Mock data remains similar but with more editorial properties
+const flashSaleProducts = [
+  {
+    id: 1,
+    title: 'Linen Duvet Set',
+    price: 189.0,
+    originalPrice: 270.0,
+    discount: '-30%',
+    image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&q=80&w=600',
+    category: 'Linen Collection'
+  },
+  {
+    id: 2,
+    title: 'Bamboo Silk Pillowcase',
+    price: 45.0,
+    originalPrice: 65.0,
+    discount: '-30%',
+    image: 'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&q=80&w=600',
+    category: 'Silk Collection'
+  },
+  {
+    id: 3,
+    title: 'Cloud Orthopedic Pad',
+    price: 320.0,
+    originalPrice: 450.0,
+    discount: '-30%',
+    image: 'https://images.unsplash.com/photo-1505691723518-36a5ac3be353?auto=format&fit=crop&q=80&w=600',
+    category: 'Mattress Technology'
+  },
+  {
+    id: 4,
+    title: 'Cloud Orthopedic Pad',
+    price: 320.0,
+    originalPrice: 450.0,
+    discount: '-30%',
+    image: bannerImg,
+    category: 'Mattress Technology'
+  }
+];
+
+const categories = [
+  { id: 'mattress', name: 'Mattress', image: mattressImg },
+  { id: 'beddingSets', name: 'Bedding Sets', image: beddingSetsImg },
+  { id: 'blankets', name: 'Blankets', image: blanketsImg },
+  { id: 'bedSheets', name: 'Bed Sheets', image:  bedSheetsImg},
+  { id: 'pillows', name: 'Pillows', image: pillowsImg }
+];
 
 function Home() {
   const { t } = useLanguage();
+  const [timeLeft, setTimeLeft] = useState('02 : 45 : 12');
 
   return (
     <MainLayout>
@@ -11,7 +71,198 @@ function Home() {
         <title>{t("home")}</title>
       </Helmet>
 
+      {/* Hero Section - Mobile Focused Header, Large Desktop Presence */}
+      <section className="relative w-full h-[400px] md:h-[430px] flex items-center px-6 md:px-16 overflow-hidden">
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <motion.img 
+            initial={{ scale: 1.1 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 1.5 }}
+            src={bannerImg}
+            className="w-full h-full object-cover brightness-[0.8]" 
+            alt="Restorative Comfort"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 md:bg-black/20" />
+        </div>
+        
+        <div className="relative z-10 max-w-2xl mt-auto pb-16 md:pb-0 md:mt-0">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <h1 className="text-4xl md:text-7xl font-semibold text-white tracking-tight mb-6">
+              {t("slogan1")},<br />{t("slogan2")}
+            </h1>
+            <p className="text-lg md:text-xl text-white/90 font-light mb-10 max-w-md">
+              {t('heroDesc')}
+            </p>
+            <Button size="lg" variant="primary" className="!font-semibold">
+              {t('shopNow')}
+            </Button>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Flash Sale - Horizontal Scroll for Mobile */}
+      <section className="py-12 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        
+            {/* Title */}
+            <div>
+              <span className="text-primary font-bold text-sm uppercase mb-2">
+                {t('limitedTime')}
+              </span>
+
+              <h2 className="text-text text-2xl md:text-5xl font-semibold">
+                {t('flashSale')}
+              </h2>
+
+              {/* Countdown - MOBILE */}
+              <div className="flex items-center gap-2 mt-3 md:hidden">
+                <Timer size={16} className="text-primary" strokeWidth={2.5} />
+                <span className="text-base text-text-secondary">
+                  {t('endsIn')}
+                </span>
+                <span className="text-base text-text font-mono font-semibold">
+                  {timeLeft}
+                </span>
+              </div>
+            </div>
+
+            {/* Countdown - DESKTOP */}
+            <div className="hidden md:flex items-center gap-3 text-sm bg-bg-secondary px-4 py-2 rounded-full border border-border">
+              <Timer size={16} className="text-primary" strokeWidth={2.5} />
+              <span className="text-text-secondary">
+                {t('endsIn')}
+              </span>
+              <span className="text-text text-base font-mono font-semibold">
+                {timeLeft}
+              </span>
+            </div>
+          </div>
+          
+          <div className='flex justify-end my-3 md:mt-5'>
+            <Button className="!text-primary !font-semibold">
+              {t("viewAll")} <ChevronRight size={15} />
+            </Button>
+          </div>
+
+          <div className="flex gap-6 overflow-x-auto hide-scrollbar snap-x snap-mandatory pb-10">
+            {flashSaleProducts.map((product) => (
+              <div key={product.id} className="min-w-[280px] group cursor-pointer snap-start bg-bg rounded-md overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-500">
+                
+                {/* Image */}
+                <div className="relative aspect-[4/4]">
+                  
+                  {/* Discount badge */}
+                  <div className="absolute top-0 left-0 z-10 bg-red-500 text-white text-sm font-bold px-3 py-1.5 rounded-br-md shadow-lg">
+                    {product.discount}
+                  </div>
+
+                  {/* Image */}
+                  <img 
+                    src={product.image} 
+                    className="absolute w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                    alt={product.title}
+                  />
+                </div>
+                
+                {/* Content */}
+                <div className="flex flex-col gap-2 px-3 py-4">
+                  <p className="text-sm text-text-secondary font-semibold">
+                    {product.category}
+                  </p>
+
+                  <h3 className="text-lg text-text font-semibold">
+                    {product.title}
+                  </h3>
+
+                  <div className="flex items-center gap-3">
+                    <span className="font-bold text-text text-xl">
+                      ${product.price.toFixed(2)}
+                    </span>
+                    <span className="text-text-tertiary line-through text-sm font-medium">
+                      ${product.originalPrice.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Collections - Editorial Grid */}
+      <section className="py-12 border-y border-border">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
+
+          <h2 className="text-text text-2xl md:text-5xl font-semibold">{t('collections')}</h2>
+
+          <div className='flex justify-end my-3 md:mt-5'>
+            <Button className="!text-primary !font-semibold">
+              {t("viewAll")} <ChevronRight size={15} />
+            </Button>
+          </div>
+          
+          <div className="flex gap-6 overflow-x-auto overflow-y-visible hide-scrollbar snap-x snap-mandatory pb-10">
+            {categories.map((cat) => (
+              <div className="
+                min-w-[280px] relative group cursor-pointer snap-start bg-bg rounded-md overflow-hidden
+                shadow-sm hover:shadow-xl transition-shadow duration-500
+                ">
+                <img 
+                  src={cat.image} 
+                  className="aspect-[4/5] object-cover transition-transform duration-600 group-hover:scale-110" 
+                  alt={cat.name}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end pb-5 pl-3">
+                  <h3 className="text-white text-2xl font-semibold underline-offset-8 decoration-white/50 decoration-2 group-hover:underline">
+                    {cat.name}
+                  </h3>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us - Restful Icons */}
+      <section className="py-12 md:py-14 border-t border-border">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-20">
+            <FeatureCard 
+              icon={<Award className="text-primary/70" size={40} strokeWidth={1} />} 
+              title={t('highQuality')} 
+              desc={t('highQualityDesc')} 
+            />
+            <FeatureCard 
+              icon={<Truck className="text-primary/70" size={40} strokeWidth={1} />} 
+              title={t('fastDelivery')} 
+              desc={t('fastDeliveryDesc')} 
+            />
+            <FeatureCard 
+              icon={<ShieldCheck className="text-primary/70" size={40} strokeWidth={1} />} 
+              title={t('warranty')} 
+              desc={t('warrantyDesc')} 
+            />
+          </div>
+        </div>
+      </section>
     </MainLayout>
+  );
+}
+
+function FeatureCard({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
+  return (
+    <div className="flex flex-col items-center text-center">
+      <div className="w-24 h-24 rounded-full border border-border bg-bg flex items-center justify-center mb-5 shadow-sm hover:scale-110 transition-transform duration-500">
+        {icon}
+      </div>
+      <h4 className="text-text text-2xl font-semibold mb-4 tracking-tight">{title}</h4>
+      <p className="text-text-secondary text-base max-w-xs">{desc}</p>
+    </div>
   );
 }
 

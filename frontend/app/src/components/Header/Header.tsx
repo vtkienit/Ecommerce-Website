@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react"; 
 import { useClickOutside } from "../../hooks/useClickOutside";
 import { Link } from "react-router-dom";
-import { Search, ShoppingCart, ChevronDown, Menu, ChevronUp} from "lucide-react";
+import { Search, ShoppingCart, ChevronDown, Menu, ChevronUp, X} from "lucide-react";
 import Language from "../../assets/icons/language.svg?react";
 import User from "../../assets/icons/user.svg?react";
 import clsx from "clsx";
@@ -15,18 +15,8 @@ const Header = () => {
   const userName = localStorage.getItem("userName") || "";
   const { lang, setLang, t } = useLanguage();
   const { theme, setTheme } = useTheme();
-  const [open, setOpen] = useState(false);
-  const langRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuItemOpen, setMenuItemOpen] = useState<Record<number, boolean>>({});
-
-  // Close language menu when clicking outside
-  useClickOutside(langRef, () => setOpen(false));
-
-  const handleChangeLang = (value: "vi" | "en") => {
-    setLang(value);
-    setOpen(false);
-  };
 
   const toggleMenuItem = (id: number) => {
     setMenuItemOpen(prev => ({
@@ -36,116 +26,145 @@ const Header = () => {
   };
 
   return (
-    <header className={styles.header}>
-      <div className={styles["header__container"]}>
-        
-        {/* TOP HEADER */}
-        <div className={styles.header__top}>
-          <div className={styles["header__top-container"]}>
-            <div className={styles["header__top-left"]}>
-              <span className={styles["header__top-left--badge"]}> {t("slogan")} </span>
-            </div>
-
-            <div className={styles["header__top-right"]}>
-              
-              {/* LANGUAGE */}
-              <div className={styles["header__top-lang"]} ref={langRef}>
-                <Button className={styles["lang__btn"]} onClick={() => setOpen(prev => !prev)}>
-                  <Language width={16} height={16} className={styles["icon"]}/>
-                  <span>{lang === "vi" ? "Tiếng Việt" : "English"}</span>
-                  <ChevronDown size={16} className={styles.icon}/>
-                </Button>
-
-                {open && (
-                  <div className={styles.lang__menu}>
-                    <p className={styles.lang__item} onClick={() => handleChangeLang("vi")}>
-                      {t("vietnamese")}
-                    </p>
-                    <p className={styles.lang__item} onClick={() => handleChangeLang("en")}>
-                      {t("english")}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* THEME */}
-              <ThemeToggle />
-
-              <Link to="/manage-order" className={styles["header__top-right-link"]}>
-                {t("manageOrder")}
-              </Link>
-            </div>
+    <header className="w-full bg-[var(--bg)] sticky top-0 z-50">
+      {/* TOP HEADER */}
+      <div className="hidden md:block">
+        <div className="flex items-center justify-between px-6 lg:px-10 py-1.5 max-w-7xl mx-auto">
+          <div>
+            <span className="text-base font-medium text-primary"> {t("slogan")} </span>
           </div>
-        </div>
 
-        {/* MAIN HEADER */}
-        <div className={styles.header__main}>
-          <div className={styles["header__main-container"]}>
+          <div className="flex items-center gap-4">
+            
+            {/* LANGUAGE */}
+            <div className={clsx(styles["header__top-lang"], "relative cursor-pointer group")} >
+              <Button className={styles["lang__btn"]}>
+                <Language width={16} height={16} className={styles["icon"]}/>
+                <span>{lang === "vi" ? "Tiếng Việt" : "English"}</span>
+                <ChevronDown size={16} className={clsx(styles.icon, "group-hover:hidden")}/>
+                <ChevronUp size={16} className={clsx(styles.icon, "hidden group-hover:flex")}/>
+              </Button>
 
-            {/* Left */}
-            <h1 className={styles.header__logo}>
-              <Link to="/">QuyDung</Link>
-            </h1>
-
-            {/* NAV */}
-            <nav className={styles.header__menu}>
-              <div className={styles["header__menu-container"]}>
-                <ul>
-                  <li className={clsx(styles["header__menu-item"], styles["header__menu-item--active"])}><Link to="/" >{t("sale")}</Link></li>
-                  <li className={styles["header__menu-item"]}><Link to="/mattress" >{t("mattress")}</Link></li>
-                  <li className={styles["header__menu-item"]}><Link to="/bedding" >{t("bedding")}</Link></li>
-                  <li className={clsx(styles["header__menu-item"], styles['--has-submenu'])}>
-                    <Link to="/accessories" > {t("accessories")}</Link>
-                    <ChevronDown size={14} className={clsx(styles["icon"], styles["down--hover"])} />
-                    <ChevronUp size={14} className={clsx(styles["icon"], styles["up--hover"])} />
-                  </li>
-                  <li className={styles["header__menu-item"]}><Link to="/support" >{t("support")}</Link></li>
-                  <li className={styles["header__menu-item"]}><Link to="/contact" >{t("contact")}</Link></li>
-                </ul>
+              <div className="absolute pt-1.5 z-[100]">
+                <div className={styles["lang__menu-container"]}>
+                  <p className={clsx(styles.lang__item, lang==="vi" && "!text-primary")} onClick={() => setLang("vi")}>
+                    {t("vietnamese")}
+                  </p>
+                  <p className={clsx(styles.lang__item, lang==="en" && "!text-primary")} onClick={() => setLang("en")}>
+                    {t("english")}
+                  </p>
+                </div>
               </div>
-            </nav>
-
-            {/* RIGHT */}
-            <div className={styles["header__main-right"]}>
-              <Button>
-                <Search className={styles.icon} width={25} height={25} />
-              </Button>
-
-              <Button variant="secondary" className={styles.header__cart}>
-                <ShoppingCart className={styles.icon} width={25} height={25}/>
-                <span className={styles["header__cart-badge"]}>
-                  2
-                </span>
-              </Button>
-
-              <Button className={styles.header__user}>
-                <User className={styles.icon} width={25} height={25}/>
-
-                {userName && <span className={styles["header__user--username"]}>
-                  {t("hi")}, {userName}
-                </span>}
-              </Button>
-
-              <Button className={styles["hide-on-desktop"]} onClick={() => setMenuOpen(true)}>
-                <Menu className={clsx(styles.icon)} width={25} height={25} />
-              </Button>
             </div>
+
+            {/* THEME */}
+            <ThemeToggle />
+
+            <Link to="/manage-order" className={styles["header__top-right-link"]}>
+              {t("manageOrder")}
+            </Link>
           </div>
         </div>
       </div>
+
+      {/* MAIN HEADER */}
+      <div className="border-y border-[var(--border)]">
+        <div className="flex items-center justify-between px-2 md:px-6 lg:px-10 max-w-[1280px] mx-auto">
+
+          {/* Left */}
+          <h1 className="flex items-center my-4">
+            <Link className="text-xl font-bold text-primary no-underline" to="/">QuyDung</Link>
+          </h1>
+
+          {/* NAV */}
+          <nav className="hidden md:flex justify-center">
+            <div className="flex items-center justify-center max-w-7xl mx-auto px-4">
+              <ul className="flex gap-5 list-none p-0 m-0">
+                <li className={clsx(styles["header__menu-item"], styles["--active"])}><Link to="/" >{t("sale")}</Link></li>
+                <li className={styles["header__menu-item"]}><Link to="/mattress" >{t("mattress")}</Link></li>
+                <li className={styles["header__menu-item"]}><Link to="/bedding" >{t("beddingSets")}</Link></li>
+                <li className={clsx("relative group")}>
+                  <div className={clsx(styles["header__menu-item"])}>
+                    <Link to="/accessories" > {t("accessories")}</Link>
+                    <ChevronDown size={14} className={clsx(styles["icon"], "group-hover:hidden")} />
+                    <ChevronUp size={14} className={clsx(styles["icon"], "hidden group-hover:flex")} />
+                  </div>
+
+                  {/* dropdown */}
+                    <div
+                      className="
+                        absolute top-full pt-2.5
+                        left-1/2 -translate-x-1/2
+                        opacity-0 invisible
+                        group-hover:opacity-100 group-hover:visible
+                        transition-opacity duration-400
+                        z-[100]
+                      "
+                    >
+                      <ul className=" bg-bg rounded-xl shadow-lg overflow-hidden">
+                        <li className="px-16 py-3 hover:bg-bg-secondary cursor-pointer text-center">
+                          <Link className="text-text-secondary font-medium" to="" > {t("blankets")} </Link>
+                        </li>
+                        <li className="px-16 py-3 hover:bg-bg-secondary cursor-pointer text-center">
+                          <Link className="text-text-secondary font-medium" to=""> {t("bedSheets")} </Link>
+                        </li>
+                        <li className="px-16 py-3 hover:bg-bg-secondary cursor-pointer text-center">
+                          <Link className="text-text-secondary font-medium" to=""> {t("pillows")} </Link>
+                        </li>
+                      </ul>
+                    </div>
+                </li>
+                <li className={styles["header__menu-item"]}><Link to="/support" >{t("support")}</Link></li>
+                <li className={styles["header__menu-item"]}><Link to="/contact" >{t("contact")}</Link></li>
+              </ul>
+            </div>
+          </nav>
+
+          {/* RIGHT */}
+          <div className="flex items-center gap-4">
+            <Button>
+              <Search className={styles.icon} width={25} height={25} />
+            </Button>
+
+            <Button variant="secondary" className="relative">
+              <ShoppingCart className={styles.icon} width={25} height={25}/>
+              <span className="absolute -top-2 -right-1.5 bg-primary text-white text-xs px-1.5 py-0.5 rounded-full">
+                2
+              </span>
+            </Button>
+
+            <Button className={styles.header__user}>
+              <User className={styles.icon} width={25} height={25}/>
+
+              {userName && <span className="hidden lg:flex">
+                {t("hi")}, {userName}
+              </span>}
+            </Button>
+
+            <Button className="md:!hidden" onClick={() => setMenuOpen(prev => !prev)}>
+              {menuOpen ? (
+                <X className={styles.icon} width={25} height={25} />
+              ) : (
+                <Menu className={styles.icon} width={25} height={25} />
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+      
 
       {menuOpen && (
         <div className={styles["header__menu-mobile"]}>
           <div className={styles["header__menu-mobile-container"]}>
             {/* MENU */}
-            <nav className={styles["header__menu-mobile-section"]}>
+            <nav className="flex flex-col">
               <h3 className={styles["header__menu-mobile-title"]}>{t("menu")}</h3>
 
-              <ul>
+              <ul className="list-none p-0 m-0 flex flex-col">
                 <li className={styles["header__menu-mobile-item"]}><Link to="/sale">{t("sale")}</Link></li>
                 <li className={styles["header__menu-mobile-item"]}><Link to="/mattress">{t("mattress")}</Link></li>
-                <li className={styles["header__menu-mobile-item"]}><Link to="/bedding">{t("bedding")}</Link></li>
-                <li className={styles["header__menu-mobile-item"]} onClick={() => toggleMenuItem(1)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer"}}>
+                <li className={styles["header__menu-mobile-item"]}><Link to="/bedding">{t("beddingSets")}</Link></li>
+                <li className={clsx(styles["header__menu-mobile-item"], "flex justify-between items-center cursor-pointer")} onClick={() => toggleMenuItem(1)} >
                   <Link to="#">{t("accessories")}</Link>
                   {menuItemOpen[1] ? <ChevronUp size={16} className={styles.icon} /> : <ChevronDown size={16} className={styles.icon} />}
                 </li>
@@ -153,13 +172,13 @@ const Header = () => {
                 {menuItemOpen[1] && (
                   <>
                   <li className={clsx(styles["header__menu-mobile-item"], styles["--secondary"])}>
-                    <Link to="/accessories/blanket">{t("blanket")}</Link>
+                    <Link to="/accessories/blanket">{t("blankets")}</Link>
                   </li>
                   <li className={clsx(styles["header__menu-mobile-item"], styles["--secondary"])}>
-                    <Link to="/accessories/bed-sheet">{t("bedSheet")}</Link>
+                    <Link to="/accessories/bed-sheet">{t("bedSheets")}</Link>
                   </li>
                   <li className={clsx(styles["header__menu-mobile-item"], styles["--secondary"])}>
-                    <Link to="/accessories/pillow">{t("pillow")}</Link>
+                    <Link to="/accessories/pillow">{t("pillows")}</Link>
                   </li>
                   </>
                 )}
@@ -177,40 +196,40 @@ const Header = () => {
             </nav>
 
             {/* OTHER */}
-            <section className={styles["header__menu-mobile-section"]}>
+            <section className="flex flex-col">
               <h3 className={styles["header__menu-mobile-title"]}>{t("other")}</h3>
 
               <ul>
-                <li className={styles["header__menu-mobile-item"]} onClick={() => toggleMenuItem(2)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer"}}>
+                <li className={clsx(styles["header__menu-mobile-item"], "flex justify-between items-center cursor-pointer")} onClick={() => toggleMenuItem(2)}>
                   <Link to="#">{t("language")}</Link>
                   {menuItemOpen[2] ? <ChevronUp size={16} className={styles.icon} /> : <ChevronDown size={16} className={styles.icon} />}
                 </li>
 
                 {menuItemOpen[2] && (
                   <>
-                  <label className={clsx(styles["header__menu-mobile-item"], styles["--secondary"])} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer"}}>
+                  <label className={clsx(styles["header__menu-mobile-item"], styles["--secondary"], "flex justify-between items-center cursor-pointer")} >
                     <span>{t("vietnamese")}</span>
-                    <input type="radio" name="language" checked={lang === "vi"} onChange={() => handleChangeLang("vi")} onClick={(e) => e.stopPropagation()} />
+                    <input type="radio" name="language" checked={lang === "vi"} onChange={() => setLang("vi")} onClick={(e) => e.stopPropagation()} />
                   </label>
-                  <label className={clsx(styles["header__menu-mobile-item"], styles["--secondary"])} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer"}}>
+                  <label className={clsx(styles["header__menu-mobile-item"], styles["--secondary"], "flex justify-between items-center cursor-pointer")} >
                     <span>{t("english")}</span>
-                    <input type="radio" name="language" checked={lang === "en"} onChange={() => handleChangeLang("en")} onClick={(e) => e.stopPropagation()} />
+                    <input type="radio" name="language" checked={lang === "en"} onChange={() => setLang("en")} onClick={(e) => e.stopPropagation()} />
                   </label>
                   </>
                 )}
 
-                <li className={styles["header__menu-mobile-item"]} onClick={() => toggleMenuItem(3)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer"}}>
+                <li className={clsx(styles["header__menu-mobile-item"], "flex justify-between items-center cursor-pointer")} onClick={() => toggleMenuItem(3)}>
                   <Link to="#">{t("theme")}</Link>
                   {menuItemOpen[3] ? <ChevronUp size={16} className={styles.icon} /> : <ChevronDown size={16} className={styles.icon} />}
                 </li>
 
                 {menuItemOpen[3] && (
                   <>
-                  <label className={clsx(styles["header__menu-mobile-item"], styles["--secondary"])} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer"}}>
+                  <label className={clsx(styles["header__menu-mobile-item"], styles["--secondary"], "flex justify-between items-center cursor-pointer")}>
                     <span>{t("light")}</span>
                     <input type="radio" name="theme" checked={theme === "light"} onChange={() => setTheme("light")} onClick={(e) => e.stopPropagation()} />
                   </label>
-                  <label className={clsx(styles["header__menu-mobile-item"], styles["--secondary"])} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer"}}>
+                  <label className={clsx(styles["header__menu-mobile-item"], styles["--secondary"], "flex justify-between items-center cursor-pointer")}>
                     <span>{t("dark")}</span>
                     <input type="radio" name="theme" checked={theme === "dark"} onChange={() => setTheme("dark")} onClick={(e) => e.stopPropagation()} />
                   </label>

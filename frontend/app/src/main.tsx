@@ -5,10 +5,10 @@ import { HelmetProvider } from "react-helmet-async";
 import { LanguageProvider } from "./contexts/LanguageProvider.tsx";
 import { ThemeProvider } from "./contexts/ThemeProvider.tsx";
 import "./index.css";
-import "./theme/theme.css";
-import "./theme/colors.css";
-import "./theme/spacing.css";
-import "./theme/typography.css";
+import "./styles/theme.css";
+import "./styles/colors.css";
+import "./styles/spacing.css";
+import "./styles/typography.css";
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

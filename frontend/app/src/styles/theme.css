@@ -1,0 +1,50 @@
+:root {
+  /* TEXT */
+  --text: var(--gray-900);
+  --text-secondary: var(--gray-600);
+  --text-tertiary: var(--gray-400);
+  --text-muted: var(--gray-300);
+
+  /* BACKGROUND */
+  --bg: var(--white);
+  --bg-subtle: #f7f7f8;
+  --bg-secondary: var(--gray-100);
+  --bg-tertiary: var(--gray-200);
+
+  /* BORDER */
+  --border: var(--gray-200);
+
+  /* BRAND */
+  --primary: var(--blue-600);
+
+  /* STATE */
+  --error: var(--red-500);
+
+  /* SHADOW */
+  --shadow: var(--shadow-light);
+}
+
+
+[data-theme="dark"] {
+  /* TEXT */
+  --text: var(--gray-50);
+  --text-secondary: var(--gray-300);
+  --text-tertiary: var(--gray-400);
+  --text-muted: var(--gray-500);
+
+  /* BACKGROUND */
+  --bg: #020617;
+  --bg-subtle: #111827;
+  --bg-secondary: var(--gray-700);
+  --bg-tertiary: var(--gray-600);
+
+  /* BORDER */
+  --border: var(--gray-700);
+
+  /* BRAND */
+  --primary: var(--blue-400);
+
+  /* SHADOW */
+  --shadow: var(--shadow-dark);
+}
+    

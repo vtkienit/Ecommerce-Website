@@ -1,20 +1,20 @@
 .toggle {
   width: 45px;
   height: 20px;
-  background: var(--color-header-primary);
-  border-radius: 20px;
+  background: var(--primary);
+  border-radius: var(--space-5);
   position: relative;
   cursor: pointer;
   border: none;
   display: flex;
   align-items: center;
-  padding: 0 var(--spacing-sm);
+  padding: 0 var(--space-1);
 }
 
 .toggle__circle {
   width: 18px;
   height: 18px;
-  background: var(--color-white-primary);
+  background: var(--white);
   border-radius: 50%;
   position: absolute;
   top: 1px;
@@ -40,10 +40,10 @@
 /* ICONS */
 .toggle__icon--light {
     margin-left: auto;
-    color: var(--color-orange-primary);
+    color: var(--yellow-500);
 }
 
 .toggle__icon--dark {
     margin-left: 0;
-    color: var(--color-orange-primary);
+    color: var(--yellow-500);
 }
