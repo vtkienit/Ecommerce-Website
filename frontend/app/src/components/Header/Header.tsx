@@ -26,10 +26,10 @@ const Header = () => {
   };
 
   return (
-    <header className="w-full bg-[var(--bg)] sticky top-0 z-50">
+    <header className="w-full bg-bg sticky top-0 z-50">
       {/* TOP HEADER */}
       <div className="hidden md:block">
-        <div className="flex items-center justify-between px-6 lg:px-10 py-1.5 max-w-7xl mx-auto">
+        <div className="flex items-center justify-between px-3 lg:px-8 py-1.5 max-w-7xl mx-auto">
           <div>
             <span className="text-base font-medium text-primary"> {t("slogan")} </span>
           </div>
@@ -68,8 +68,8 @@ const Header = () => {
       </div>
 
       {/* MAIN HEADER */}
-      <div className="border-y border-[var(--border)]">
-        <div className="flex items-center justify-between px-2 md:px-6 lg:px-10 max-w-[1280px] mx-auto">
+      <div className="border-y border-border">
+        <div className="flex items-center justify-between px-3 lg:px-8 max-w-[1280px] mx-auto">
 
           {/* Left */}
           <h1 className="flex items-center my-4">

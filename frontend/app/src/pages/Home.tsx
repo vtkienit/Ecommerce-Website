@@ -3,8 +3,9 @@ import MainLayout from "../layouts/MainLayout";
 import { Helmet } from "react-helmet-async";
 import { useLanguage } from "../contexts/LanguageProvider";
 import { motion } from "framer-motion";
-import { Timer, Heart, ShieldCheck, Truck, Award, ChevronRight, ShoppingBag } from 'lucide-react';
+import { Timer, ShieldCheck, Truck, Award, ChevronRight } from 'lucide-react';
 import Button from '../components/Button/Button';
+import ProductCard from '../components/ProductCard';
 import clsx from 'clsx';
 import bannerImg from "../assets/images/home_banner.png";
 import mattressImg from "../assets/images/mattress.png";
@@ -50,7 +51,34 @@ const flashSaleProducts = [
     discount: '-30%',
     image: bannerImg,
     category: 'Mattress Technology'
-  }
+  },
+    {
+    id: 5,
+    title: 'Linen Duvet Set',
+    price: 189.0,
+    originalPrice: 270.0,
+    discount: '-30%',
+    image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&q=80&w=600',
+    category: 'Linen Collection'
+  },
+  {
+    id: 6,
+    title: 'Bamboo Silk Pillowcase',
+    price: 45.0,
+    originalPrice: 65.0,
+    discount: '-30%',
+    image: 'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&q=80&w=600',
+    category: 'Silk Collection'
+  },
+  {
+    id: 7,
+    title: 'Cloud Orthopedic Pad',
+    price: 320.0,
+    originalPrice: 450.0,
+    discount: '-30%',
+    image: 'https://images.unsplash.com/photo-1505691723518-36a5ac3be353?auto=format&fit=crop&q=80&w=600',
+    category: 'Mattress Technology'
+  },
 ];
 
 const categories = [
@@ -61,7 +89,7 @@ const categories = [
   { id: 'pillows', name: 'Pillows', image: pillowsImg }
 ];
 
-function Home() {
+export default function Home() {
   const { t } = useLanguage();
   const [timeLeft, setTimeLeft] = useState('02 : 45 : 12');
 
@@ -106,7 +134,7 @@ function Home() {
 
       {/* Flash Sale - Horizontal Scroll for Mobile */}
       <section className="py-12 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 md:px-6">
+        <div className="max-w-7xl mx-auto px-3 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         
             {/* Title */}
@@ -149,46 +177,9 @@ function Home() {
             </Button>
           </div>
 
-          <div className="flex gap-6 overflow-x-auto hide-scrollbar snap-x snap-mandatory pb-10">
-            {flashSaleProducts.map((product) => (
-              <div key={product.id} className="min-w-[280px] group cursor-pointer snap-start bg-bg rounded-md overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-500">
-                
-                {/* Image */}
-                <div className="relative aspect-[4/4]">
-                  
-                  {/* Discount badge */}
-                  <div className="absolute top-0 left-0 z-10 bg-red-500 text-white text-sm font-bold px-3 py-1.5 rounded-br-md shadow-lg">
-                    {product.discount}
-                  </div>
-
-                  {/* Image */}
-                  <img 
-                    src={product.image} 
-                    className="absolute w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                    alt={product.title}
-                  />
-                </div>
-                
-                {/* Content */}
-                <div className="flex flex-col gap-2 px-3 py-4">
-                  <p className="text-sm text-text-secondary font-semibold">
-                    {product.category}
-                  </p>
-
-                  <h3 className="text-lg text-text font-semibold">
-                    {product.title}
-                  </h3>
-
-                  <div className="flex items-center gap-3">
-                    <span className="font-bold text-text text-xl">
-                      ${product.price.toFixed(2)}
-                    </span>
-                    <span className="text-text-tertiary line-through text-sm font-medium">
-                      ${product.originalPrice.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </div>
+          <div className="flex gap-3 lg:gap-5 overflow-x-auto hide-scrollbar snap-x snap-mandatory pb-10">
+            {flashSaleProducts.map((p) => (
+              <ProductCard key={p.id} {...p} className='snap-start w-[176px] lg:w-[240px] shrink-0'/>
             ))}
           </div>
         </div>
@@ -196,7 +187,7 @@ function Home() {
 
       {/* Collections - Editorial Grid */}
       <section className="py-12 border-y border-border">
-        <div className="max-w-7xl mx-auto px-4 md:px-6">
+        <div className="max-w-7xl mx-auto px-3 lg:px-8">
 
           <h2 className="text-text text-2xl md:text-5xl font-semibold">{t('collections')}</h2>
 
@@ -206,10 +197,10 @@ function Home() {
             </Button>
           </div>
           
-          <div className="flex gap-6 overflow-x-auto overflow-y-visible hide-scrollbar snap-x snap-mandatory pb-10">
+          <div className="flex gap-3 md:gap-5 overflow-x-auto overflow-y-visible hide-scrollbar snap-x snap-mandatory pb-10">
             {categories.map((cat) => (
               <div className="
-                min-w-[280px] relative group cursor-pointer snap-start bg-bg rounded-md overflow-hidden
+                min-w-[200px] lg:min-w-[280px] relative group cursor-pointer snap-start bg-bg rounded-md overflow-hidden
                 shadow-sm hover:shadow-xl transition-shadow duration-500
                 ">
                 <img 
@@ -265,5 +256,3 @@ function FeatureCard({ icon, title, desc }: { icon: React.ReactNode, title: stri
     </div>
   );
 }
-
-export default Home;
