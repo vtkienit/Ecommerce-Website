@@ -13,6 +13,7 @@ import beddingSetsImg from "../assets/images/bedding_sets.png";
 import blanketsImg from "../assets/images/blankets.png";
 import bedSheetsImg from "../assets/images/bed_sheets.png";
 import pillowsImg from "../assets/images/pillows.png";
+import useDragScroll from '../hooks/useDragScroll';
 
 // Mock data remains similar but with more editorial properties
 const flashSaleProducts = [
@@ -92,6 +93,7 @@ const categories = [
 export default function Home() {
   const { t } = useLanguage();
   const [timeLeft, setTimeLeft] = useState('02 : 45 : 12');
+  const { sliderRef, dragEvents } = useDragScroll();
 
   return (
     <MainLayout>
@@ -100,7 +102,7 @@ export default function Home() {
       </Helmet>
 
       {/* Hero Section - Mobile Focused Header, Large Desktop Presence */}
-      <section className="relative w-full h-[400px] md:h-[430px] flex items-center px-6 md:px-16 overflow-hidden">
+      <section className="relative w-full h-[400px] md:h-[430px] overflow-hidden">
         <div className="absolute inset-0 z-0 overflow-hidden">
           <motion.img 
             initial={{ scale: 1.1 }}
@@ -113,7 +115,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 md:bg-black/20" />
         </div>
         
-        <div className="relative z-10 max-w-2xl mt-auto pb-16 md:pb-0 md:mt-0">
+        <div className="relative z-10 h-full max-w-7xl mx-auto px-3 lg:px-8 flex items-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -171,15 +173,31 @@ export default function Home() {
             </div>
           </div>
           
-          <div className='flex justify-end my-3 md:mt-5'>
+          <div className='flex justify-end mt-3 md:mt-5'>
             <Button className="!text-primary !font-semibold">
               {t("viewAll")} <ChevronRight size={15} />
             </Button>
           </div>
 
-          <div className="flex gap-3 lg:gap-5 overflow-x-auto hide-scrollbar snap-x snap-mandatory pb-10">
+          <div
+            ref={sliderRef}
+            {...dragEvents}
+            className="
+              flex gap-3 lg:gap-5
+              overflow-x-auto hide-scrollbar
+              
+              cursor-grab active:cursor-grabbing
+              select-none
+              touch-pan-y
+              py-3
+            "
+          >
             {flashSaleProducts.map((p) => (
-              <ProductCard key={p.id} {...p} className='snap-start w-[176px] lg:w-[240px] shrink-0'/>
+              <ProductCard
+                key={p.id}
+                {...p}
+                className="w-[176px] lg:w-[240px] shrink-0"
+              />
             ))}
           </div>
         </div>

@@ -22,7 +22,7 @@ export default function ProductCard({
   return (
     <div
       className={clsx(
-        "group cursor-pointer bg-bg rounded-md overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-500",
+        "group cursor-pointer bg-bg rounded-md overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-500",
         className
       )}
     >
@@ -39,7 +39,7 @@ export default function ProductCard({
         {/* Image */}
         <img
           src={image}
-          className="absolute w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 block"
+          className="absolute w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 block pointer-events-none select-none"
           alt={title}
         />
       </div>
