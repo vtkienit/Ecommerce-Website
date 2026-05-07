@@ -90,6 +90,13 @@ export default function Mattress() {
     );
   };
 
+  const clearAllFilters = () => {
+    setSelectedSizes([]);
+    setSelectedPrices([]);
+    setSelectedDiscounts([]);
+    setSelectedColors([]);
+  };
+
   return (
     <MainLayout>
       <Helmet>
@@ -200,6 +207,8 @@ export default function Mattress() {
           sort={sort}
           setSort={setSort}
           sortOptions={sortOptions}
+
+          clearAllFilters={clearAllFilters}
 
           openFilters={openFilters}
           toggleFilter={toggleFilter}

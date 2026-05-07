@@ -57,6 +57,7 @@ export const translations = {
     filters: "Bộ lọc",
     colors: "Màu sắc",
     size: "Kích thước",
+    clearAll: "Xóa tất cả",
   },
   en: {
     hi: "Hi",
@@ -115,5 +116,6 @@ export const translations = {
     filters: "Filters",
     colors: "Colors",
     size: "Size",
+    clearAll: "Clear all",
   },
 };

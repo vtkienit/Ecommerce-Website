@@ -10,6 +10,7 @@ type FilterMobileProps = {
   sort: string;
   setSort: (value: string) => void;
   sortOptions: string[];
+  clearAllFilters: () => void;
 
   openFilters: string[];
   toggleFilter: (key: string) => void;
@@ -109,6 +110,7 @@ export default function FilterMobile({
   sort,
   setSort,
   sortOptions,
+  clearAllFilters,
   openFilters,
   toggleFilter,
   selectedSizes, 
@@ -176,6 +178,7 @@ export default function FilterMobile({
               title={t("sort")}
               open={openFilters.includes("sort")}
               onClick={() => toggleFilter("sort")}
+              className="!grid-cols-1"
             >
               <div className="flex flex-col gap-4 col-span-1">
                 {sortOptions.map(opt => (
@@ -278,21 +281,16 @@ export default function FilterMobile({
                 </div>
             </MobileFilterItem>
 
-            {/* BUTTON */}
-            <button
-              onClick={onClose}
-              className="
-                mt-7
-                w-full
-                h-12
-                rounded-xl
-                bg-primary
-                text-white
-                font-semibold
-              "
-            >
-              Apply
-            </button>
+            <div className="flex justify-center">
+                {/* CLEAR ALL */}
+                <button
+                    onClick={clearAllFilters}
+                    className="mt-7 px-8 py-2.5 rounded-xl border border-primary bg-bg text-primary font-semibold 
+                    transition-colors duration-200 active:bg-primary/20"
+                >
+                    {t("clearAll")}
+                </button>
+            </div>
           </motion.div>
         </div>
       )}
@@ -306,11 +304,13 @@ function MobileFilterItem({
   open,
   onClick,
   children,
+  className,
 }: {
   title: string;
   open: boolean;
   onClick: () => void;
   children: ReactNode;
+  className?: string;
 }) {
   return (
     <div className="border-b border-border py-2 text-text-secondary">
@@ -329,7 +329,7 @@ function MobileFilterItem({
           open ? "max-h-[1000px] opacity-100 mt-1" : "max-h-0 opacity-0"
         )}
       >
-        <div className="grid grid-cols-2 gap-3">
+        <div className={clsx("grid grid-cols-2 gap-3", className)}>
           {children}
         </div>
       </div>

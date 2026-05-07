@@ -6,7 +6,7 @@ import User from "../../assets/icons/user.svg?react";
 import clsx from "clsx";
 import styles from "./Header.module.css";
 import Button from "../Button/Button";
-import ThemeToggle from "../ThemeToggle/ThemeToggle";
+import ThemeToggle from "../ThemeToggle";
 import { useLanguage } from "../../contexts/LanguageProvider";
 import { useTheme } from "../../contexts/ThemeProvider";
 
@@ -107,7 +107,7 @@ const Header = () => {
                           <Link className="text-text-secondary font-medium" to="" > {t("blankets")} </Link>
                         </li>
                         <li className="px-16 py-3 hover:bg-bg-secondary cursor-pointer text-center">
-                          <Link className="text-text-secondary font-medium" to=""> {t("bedSheets")} </Link>
+                          <Link className="text-text-secondary font-medium whitespace-nowrap" to=""> {t("bedSheets")} </Link>
                         </li>
                         <li className="px-16 py-3 hover:bg-bg-secondary cursor-pointer text-center">
                           <Link className="text-text-secondary font-medium" to=""> {t("pillows")} </Link>
