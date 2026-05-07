@@ -93,8 +93,9 @@ const categories = [
 export default function Home() {
   const { t } = useLanguage();
   const [timeLeft, setTimeLeft] = useState('02 : 45 : 12');
-  const { sliderRef, dragEvents } = useDragScroll();
-
+  const flashSaleSlider = useDragScroll();
+  const collectionsSlider = useDragScroll();
+  
   return (
     <MainLayout>
       <Helmet>
@@ -124,7 +125,7 @@ export default function Home() {
             <h1 className="text-4xl md:text-7xl font-semibold text-white tracking-tight mb-6">
               {t("slogan1")},<br />{t("slogan2")}
             </h1>
-            <p className="text-lg md:text-xl text-white/90 font-light mb-10 max-w-md">
+            <p className="text-lg md:text-xl text-gray-200 mb-10 max-w-md">
               {t('heroDesc')}
             </p>
             <Button size="lg" variant="primary" className="!font-semibold">
@@ -180,8 +181,8 @@ export default function Home() {
           </div>
 
           <div
-            ref={sliderRef}
-            {...dragEvents}
+            ref={flashSaleSlider.sliderRef}
+            {...flashSaleSlider.dragEvents}
             className="
               flex gap-3 lg:gap-5
               overflow-x-auto hide-scrollbar
@@ -215,15 +216,19 @@ export default function Home() {
             </Button>
           </div>
           
-          <div className="flex gap-3 md:gap-5 overflow-x-auto overflow-y-visible hide-scrollbar snap-x snap-mandatory pb-10">
+          <div 
+            ref={collectionsSlider.sliderRef}
+            {...collectionsSlider.dragEvents}
+            className="flex gap-3 md:gap-5 overflow-x-auto hide-scrollbar pb-10 cursor-grab active:cursor-grabbing select-none touch-pan-y">
             {categories.map((cat) => (
-              <div className="
-                min-w-[200px] lg:min-w-[280px] relative group cursor-pointer snap-start bg-bg rounded-md overflow-hidden
-                shadow-sm hover:shadow-xl transition-shadow duration-500
+              <div
+                className="
+                min-w-[200px] lg:min-w-[280px] relative group cursor-pointer bg-bg rounded-md overflow-hidden
+                shadow-sm hover:shadow-lg transition-shadow duration-500
                 ">
                 <img 
                   src={cat.image} 
-                  className="aspect-[4/5] object-cover transition-transform duration-600 group-hover:scale-110" 
+                  className="aspect-[4/5] object-cover transition-transform duration-500 group-hover:scale-110 pointer-events-none" 
                   alt={cat.name}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end pb-5 pl-3">

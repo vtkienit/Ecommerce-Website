@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react"; 
-import { useClickOutside } from "../../hooks/useClickOutside";
-import { Link } from "react-router-dom";
-import { Search, ShoppingCart, ChevronDown, Menu, ChevronUp, X} from "lucide-react";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import { Search, ShoppingCart, ChevronDown, Menu, X} from "lucide-react";
 import Language from "../../assets/icons/language.svg?react";
 import User from "../../assets/icons/user.svg?react";
 import clsx from "clsx";
@@ -17,6 +16,8 @@ const Header = () => {
   const { theme, setTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuItemOpen, setMenuItemOpen] = useState<Record<number, boolean>>({});
+  const location = useLocation();
+  const isAccessoriesActive = location.pathname.startsWith("/accessories");
 
   const toggleMenuItem = (id: number) => {
     setMenuItemOpen(prev => ({
@@ -41,8 +42,7 @@ const Header = () => {
               <Button className={styles["lang__btn"]}>
                 <Language width={16} height={16} className={styles["icon"]}/>
                 <span>{lang === "vi" ? "Tiếng Việt" : "English"}</span>
-                <ChevronDown size={16} className={clsx(styles.icon, "group-hover:hidden")}/>
-                <ChevronUp size={16} className={clsx(styles.icon, "hidden group-hover:flex")}/>
+                <ChevronDown size={16} className={clsx(styles.icon, "transition-transform duration-200", "group-hover:rotate-180")}/>
               </Button>
 
               <div className="absolute pt-1.5 z-[100]">
@@ -80,14 +80,15 @@ const Header = () => {
           <nav className="hidden md:flex justify-center">
             <div className="flex items-center justify-center max-w-7xl mx-auto px-4">
               <ul className="flex gap-5 list-none p-0 m-0">
-                <li className={clsx(styles["header__menu-item"], styles["--active"])}><Link to="/" >{t("sale")}</Link></li>
-                <li className={styles["header__menu-item"]}><Link to="/mattress" >{t("mattress")}</Link></li>
-                <li className={styles["header__menu-item"]}><Link to="/bedding" >{t("beddingSets")}</Link></li>
+                <li className={styles["header__menu-item"]}><NavLink to="/" className={({ isActive }) => isActive ? styles["--active"] : ""} >{t("sale")}</NavLink></li>
+                <li className={styles["header__menu-item"]}><NavLink to="/mattress" className={({ isActive }) => isActive ? styles["--active"] : ""} >{t("mattress")}</NavLink></li>
+                <li className={styles["header__menu-item"]}><NavLink to="/bedding" className={({ isActive }) => isActive ? styles["--active"] : ""} >{t("beddingSets")}</NavLink></li>
                 <li className={clsx("relative group")}>
                   <div className={clsx(styles["header__menu-item"])}>
-                    <Link to="/accessories" > {t("accessories")}</Link>
-                    <ChevronDown size={14} className={clsx(styles["icon"], "group-hover:hidden")} />
-                    <ChevronUp size={14} className={clsx(styles["icon"], "hidden group-hover:flex")} />
+                    <span className={isAccessoriesActive ? styles["--active"] : ""}>
+                      {t("accessories")}
+                    </span>
+                    <ChevronDown size={14} className={clsx(styles["icon"], "transition-transform duration-200", "group-hover:rotate-180")} />
                   </div>
 
                   {/* dropdown */}
@@ -114,8 +115,8 @@ const Header = () => {
                       </ul>
                     </div>
                 </li>
-                <li className={styles["header__menu-item"]}><Link to="/support" >{t("support")}</Link></li>
-                <li className={styles["header__menu-item"]}><Link to="/contact" >{t("contact")}</Link></li>
+                <li className={styles["header__menu-item"]}><NavLink to="/support" className={({ isActive }) => isActive ? styles["--active"] : ""} >{t("support")}</NavLink></li>
+                <li className={styles["header__menu-item"]}><NavLink to="/contact" className={({ isActive }) => isActive ? styles["--active"] : ""} >{t("contact")}</NavLink></li>
               </ul>
             </div>
           </nav>
@@ -151,7 +152,6 @@ const Header = () => {
           </div>
         </div>
       </div>
-      
 
       {menuOpen && (
         <div className={styles["header__menu-mobile"]}>
@@ -166,7 +166,7 @@ const Header = () => {
                 <li className={styles["header__menu-mobile-item"]}><Link to="/bedding">{t("beddingSets")}</Link></li>
                 <li className={clsx(styles["header__menu-mobile-item"], "flex justify-between items-center cursor-pointer")} onClick={() => toggleMenuItem(1)} >
                   <Link to="#">{t("accessories")}</Link>
-                  {menuItemOpen[1] ? <ChevronUp size={16} className={styles.icon} /> : <ChevronDown size={16} className={styles.icon} />}
+                  {<ChevronDown size={16} className={clsx(styles.icon, "transition-transform duration-200", menuItemOpen[1] && "rotate-180")}/>}
                 </li>
 
                 {menuItemOpen[1] && (
@@ -202,7 +202,7 @@ const Header = () => {
               <ul>
                 <li className={clsx(styles["header__menu-mobile-item"], "flex justify-between items-center cursor-pointer")} onClick={() => toggleMenuItem(2)}>
                   <Link to="#">{t("language")}</Link>
-                  {menuItemOpen[2] ? <ChevronUp size={16} className={styles.icon} /> : <ChevronDown size={16} className={styles.icon} />}
+                  {<ChevronDown size={16} className={clsx(styles.icon, "transition-transform duration-200", menuItemOpen[2] && "rotate-180")}/>}
                 </li>
 
                 {menuItemOpen[2] && (
@@ -220,7 +220,7 @@ const Header = () => {
 
                 <li className={clsx(styles["header__menu-mobile-item"], "flex justify-between items-center cursor-pointer")} onClick={() => toggleMenuItem(3)}>
                   <Link to="#">{t("theme")}</Link>
-                  {menuItemOpen[3] ? <ChevronUp size={16} className={styles.icon} /> : <ChevronDown size={16} className={styles.icon} />}
+                  {<ChevronDown size={16} className={clsx(styles.icon, "transition-transform duration-200", menuItemOpen[3] && "rotate-180")}/>}
                 </li>
 
                 {menuItemOpen[3] && (

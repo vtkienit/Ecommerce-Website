@@ -9,6 +9,8 @@ import Button from "../components/Button/Button";
 import clsx from "clsx";
 import ProductCard from "../components/ProductCard";
 import { motion } from "framer-motion";
+import FilterSidebar from "../components/FilterSidebar";
+import FilterMobile from "../components/FilterMobile";
 
 /* ===== MOCK DATA (reuse style Home) ===== */
 const products = [
@@ -61,11 +63,31 @@ export default function Mattress() {
   ];
 
   const [sort, setSort] = useState(sortOptions[0]);
-  const [openFilter, setOpenFilter] = useState<string | null>(null);
+  const [openFilters, setOpenFilters] = useState<string[]>([]);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [selectedPrices, setSelectedPrices] = useState<string[]>([]);
+  const [selectedDiscounts, setSelectedDiscounts] = useState<string[]>([]);
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
 
-  const toggle = (key: string) => {
-    setOpenFilter(prev => (prev === key ? null : key));
+  const toggleFilter = (key: string) => {
+    setOpenFilters(prev =>
+      prev.includes(key)
+        ? prev.filter(item => item !== key)
+        : [...prev, key]
+    );
+  };
+
+  const toggleSelection = (
+    value: string,
+    selected: string[],
+    setSelected: React.Dispatch<React.SetStateAction<string[]>>
+  ) => {
+    setSelected(prev =>
+      prev.includes(value)
+        ? prev.filter(item => item !== value)
+        : [...prev, value]
+    );
   };
 
   return (
@@ -90,10 +112,10 @@ export default function Mattress() {
         <div className="max-w-7xl mx-auto px-3 lg:px-8 py-3 relative z-10">
           {/* ===== TITLE ===== */}
           <div className="text-center">
-            <h1 className="text-white text-4xl md:text-5xl font-semibold tracking-tight">
+            <h1 className="text-4xl md:text-7xl font-semibold text-white tracking-tight">
               {t("mattress")}
             </h1>
-            <p className="text-gray-200 mt-3 max-w-3xl mx-auto">
+            <p className="text-lg md:text-xl text-gray-200 mt-3 max-w-3xl mx-auto">
               {t("mattressHeroDesc")}
             </p>
           </div>
@@ -111,7 +133,7 @@ export default function Mattress() {
 
         {/* MOBILE BUTTON */}
         <div className="lg:hidden mb-4">
-          <Button size="lg" className="!bg-bg" onClick={() => setMobileOpen(true)}>
+          <Button size="lg" className="!bg-bg !border !border-border" onClick={() => setMobileOpen(true)}>
             <SlidersHorizontal size={19} />
             {t("sort")} / {t("filters")}
           </Button>
@@ -120,56 +142,22 @@ export default function Mattress() {
         <div className="flex gap-4">
 
           {/* ===== FILTER SIDEBAR ===== */}
-          <aside className="hidden lg:block w-[280px]">
-            <div className="bg-bg border border-border rounded-md p-5 sticky top-28">
+          <FilterSidebar
+            openFilters={openFilters}
+            toggleFilter={toggleFilter}
 
-              {/* TITLE */}
-              <div className="flex text-text items-center gap-2 mb-6">
-                <SlidersHorizontal size={18} />
-                <span className="font-semibold text-lg">{t("filters")}</span>
-              </div>
+            selectedSizes={selectedSizes}
+            selectedPrices={selectedPrices}
+            selectedDiscounts={selectedDiscounts}
+            selectedColors={selectedColors}
 
-              {/* FILTER ITEMS */}
-              <FilterItem
-                title={t("price")}
-                open={openFilter === "price"}
-                onClick={() => toggle("price")}
-              >
-                <input type="range" className="w-full" />
-              </FilterItem>
+            toggleSelection={toggleSelection}
 
-              <FilterItem
-                title={t("discount")}
-                open={openFilter === "discount"}
-                onClick={() => toggle("discount")}
-              >
-                <input type="range" className="w-full" />
-              </FilterItem>
-
-              <FilterItem
-                title={t("size")}
-                open={openFilter === "size"}
-                onClick={() => toggle("size")}
-              >
-                <Checkbox label="Single" />
-                <Checkbox label="Double" />
-                <Checkbox label="King" />
-              </FilterItem>
-
-              <FilterItem
-                title={t("colors")}
-                open={openFilter === "color"}
-                onClick={() => toggle("color")}
-              >
-                <div className="flex gap-3">
-                  <ColorDot color="bg-gray-300" />
-                  <ColorDot color="bg-black" />
-                  <ColorDot color="bg-yellow-200" />
-                </div>
-              </FilterItem>
-
-            </div>
-          </aside>
+            setSelectedSizes={setSelectedSizes}
+            setSelectedPrices={setSelectedPrices}
+            setSelectedDiscounts={setSelectedDiscounts}
+            setSelectedColors={setSelectedColors}
+          />
 
           {/* ===== RIGHT CONTENT ===== */}
           <section className="flex-1">
@@ -181,7 +169,7 @@ export default function Mattress() {
                   value={sort}
                   onChange={(e) => setSort(e.target.value)}
                   className="appearance-none border border-border px-4 pr-10 py-2 rounded-md
-                    bg-bg text-text focus:outline-none cursor-pointer"
+                    bg-bg text-text-secondary focus:outline-none cursor-pointer"
                 >
                   {sortOptions.map(opt => (
                     <option key={opt}>{opt}</option>
@@ -190,7 +178,7 @@ export default function Mattress() {
 
                 {/* CUSTOM ARROW */}
                 <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
-                  <ChevronDown size={18} />
+                  <ChevronDown size={18} className="text-text-secondary" />
                 </div>
               </div>
             </div>
@@ -205,85 +193,31 @@ export default function Mattress() {
         </div>
 
         {/* ===== MOBILE DRAWER ===== */}
-        {mobileOpen && (
-          <div className="fixed inset-0 bg-black/40 z-50 flex">
-            <div className="bg-bg w-[85%] p-5 overflow-y-auto">
+        <FilterMobile
+          open={mobileOpen}
+          onClose={() => setMobileOpen(false)}
 
-              <h3 className="text-lg font-semibold mb-4">Sort & Filter</h3>
+          sort={sort}
+          setSort={setSort}
+          sortOptions={sortOptions}
 
-              {/* SORT */}
-              <div className="mb-6">
-                {sortOptions.map(opt => (
-                  <label key={opt} className="flex gap-2 mb-2">
-                    <input
-                      type="radio"
-                      checked={sort === opt}
-                      onChange={() => setSort(opt)}
-                    />
-                    {opt}
-                  </label>
-                ))}
-              </div>
+          openFilters={openFilters}
+          toggleFilter={toggleFilter}
 
-              {/* FILTER */}
-              <FilterItem title="Giá" open>
-                <input type="range" className="w-full" />
-              </FilterItem>
+          selectedSizes={selectedSizes}
+          selectedPrices={selectedPrices}
+          selectedDiscounts={selectedDiscounts}
+          selectedColors={selectedColors}
 
-              <FilterItem title="Kích thước" open>
-                <Checkbox label="Single" />
-                <Checkbox label="Double" />
-                <Checkbox label="King" />
-              </FilterItem>
+          toggleSelection={toggleSelection}
 
-              <button
-                onClick={() => setMobileOpen(false)}
-                className="mt-6 w-full bg-primary text-white py-3 rounded-lg"
-              >
-                Apply
-              </button>
-            </div>
+          setSelectedSizes={setSelectedSizes}
+          setSelectedPrices={setSelectedPrices}
+          setSelectedDiscounts={setSelectedDiscounts}
+          setSelectedColors={setSelectedColors}
+        />
 
-            <div className="flex-1" onClick={() => setMobileOpen(false)} />
-          </div>
-        )}
       </main>
     </MainLayout>
-  );
-}
-
-/* ===== COMPONENTS ===== */
-
-function FilterItem({ title, open, onClick, children }: any) {
-  return (
-    <div className="border-b border-border last:border-none py-4">
-      <div
-        onClick={onClick}
-        className="flex justify-between items-center cursor-pointer"
-      >
-        <span className="font-semibold text-text">{title}</span>
-        <ChevronDown
-          size={18}
-          className={clsx("transition-transform duration-200", open && "rotate-180")}
-        />
-      </div>
-
-      {open && <div className="mt-4">{children}</div>}
-    </div>
-  );
-}
-
-function Checkbox({ label }: any) {
-  return (
-    <label className="flex items-center gap-2 text-text-secondary mb-2">
-      <input type="checkbox" />
-      {label}
-    </label>
-  );
-}
-
-function ColorDot({ color }: any) {
-  return (
-    <div className={clsx("w-6 h-6 rounded-full border border-border", color)} />
   );
 }

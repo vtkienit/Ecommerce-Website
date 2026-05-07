@@ -39,7 +39,7 @@ export default function ProductCard({
         {/* Image */}
         <img
           src={image}
-          className="absolute w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 block pointer-events-none select-none"
+          className="absolute w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 block pointer-events-none"
           alt={title}
         />
       </div>
