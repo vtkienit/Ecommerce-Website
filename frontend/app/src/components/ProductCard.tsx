@@ -7,6 +7,8 @@ type ProductCardProps = {
   originalPrice?: number;
   discount?: string;
   category?: string;
+  numberSizes: number;
+  numberColors: number;
   className?: string;
 };
 
@@ -17,6 +19,8 @@ export default function ProductCard({
   originalPrice,
   discount,
   category,
+  numberSizes,
+  numberColors,
   className,
 }: ProductCardProps) {
   return (
@@ -58,7 +62,7 @@ export default function ProductCard({
         </h3>
 
         <div className="flex items-center gap-3">
-          <span className="font-bold text-text text-lg md:text-xl">
+          <span className="font-bold text-red-700 text-lg md:text-xl">
             ${price.toFixed(2)}
           </span>
 
@@ -67,6 +71,19 @@ export default function ProductCard({
               ${originalPrice.toFixed(2)}
             </span>
           )}
+        </div>
+
+        {/* TAGS */}
+        <div className="flex flex-nowrap gap-2 mt-1 text-xs text-primary md:text-sm font-regular md:font-medium">
+          
+          <div className="px-1 py-0.5 md:px-2.5 md:py-1 whitespace-nowrap rounded-md bg-primary/8 truncate">
+            {numberSizes} Kích thước
+          </div>
+
+          <div className="px-1 py-0.5 md:px-2.5 md:py-1 whitespace-nowrap rounded-md bg-primary/8 truncate">
+            {numberColors} Màu sắc
+          </div>
+
         </div>
       </div>
     </div>

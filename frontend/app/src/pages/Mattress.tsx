@@ -21,7 +21,9 @@ const products = [
     originalPrice: 270.0,
     discount: '-30%',
     image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&q=80&w=600',
-    category: 'Linen Collection'
+    category: 'Linen Collection',
+    numberSizes: 3,
+    numberColors: 5,
   },
   {
     id: 2,
@@ -30,7 +32,9 @@ const products = [
     originalPrice: 65.0,
     discount: '-30%',
     image: 'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&q=80&w=600',
-    category: 'Silk Collection'
+    category: 'Silk Collection',
+    numberSizes: 2,
+    numberColors: 3,
   },
   {
     id: 3,
@@ -39,7 +43,9 @@ const products = [
     originalPrice: 450.0,
     discount: '-30%',
     image: 'https://images.unsplash.com/photo-1505691723518-36a5ac3be353?auto=format&fit=crop&q=80&w=600',
-    category: 'Mattress Technology'
+    category: 'Mattress Technology',
+    numberSizes: 4,
+    numberColors: 6,
   },
   {
     id: 4,
@@ -48,7 +54,9 @@ const products = [
     originalPrice: 450.0,
     discount: '-30%',
     image: 'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&q=80&w=600',
-    category: 'Mattress Technology'
+    category: 'Mattress Technology',
+    numberSizes: 5,
+    numberColors: 3,
   }
 ];
 

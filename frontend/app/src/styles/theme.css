@@ -35,7 +35,7 @@
   /* BACKGROUND */
   --bg: #020617;
   --bg-subtle: #111827;
-  --bg-secondary: var(--gray-700);
+  --bg-secondary: var(--gray-800);
   --bg-tertiary: var(--gray-600);
 
   /* BORDER */

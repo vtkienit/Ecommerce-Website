@@ -2,6 +2,7 @@
   border: none;
   cursor: pointer;
   display: inline-flex;
+  justify-content: center;
   align-items: center;
   gap: var(--space-1_5);
   border-radius: var(--space-1_5);
