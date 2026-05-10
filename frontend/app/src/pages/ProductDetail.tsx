@@ -67,11 +67,10 @@ const sizes = ["40x60", "50x70", "60x80"];
 const thickness = ["8", "10", "12"];
 
 const colors = [
-  "bg-gray-200",
-  "bg-blue-500",
-  "bg-pink-400",
-  "bg-black",
-];
+  "white",
+  "black",
+  "purple",
+] as const;
 
 export default function ProductDetail() {
     const { t } = useLanguage();
@@ -79,7 +78,7 @@ export default function ProductDetail() {
     const [activeImage, setActiveImage] = useState(productImages[0]);
     const [selectedSize, setSelectedSize] = useState("40x60");
     const [selectedThickness, setSelectedThickness] = useState("8");
-    const [selectedColor, setSelectedColor] = useState(colors[0]);
+    const [selectedColor, setSelectedColor] = useState<(typeof colors)[number]>(colors[0]);
     const [quantity, setQuantity] = useState("1");
 
     const handleQuantityChange = (value: string) => {
@@ -188,7 +187,7 @@ export default function ProductDetail() {
 
               {/* SIZE */}
               <div className="mb-6">
-                <h3 className="text-text text-xl font-semibold mb-3">
+                <h3 className="text-text text-xl font-semibold mb-2">
                   {t("size")} (cm)
                 </h3>
 
@@ -211,7 +210,7 @@ export default function ProductDetail() {
 
               {/* THICKNESS */}
               <div className="mb-6">
-                <h3 className="text-text text-xl font-semibold mb-3">
+                <h3 className="text-text text-xl font-semibold mb-2">
                   {t("thickness")} (cm)
                 </h3>
 
@@ -234,23 +233,25 @@ export default function ProductDetail() {
 
               {/* COLORS */}
               <div className="mb-8">
-                <h3 className="text-text text-xl font-semibold mb-3">
+                <h3 className="text-text text-xl font-semibold mb-2">
                   {t("colors")}
                 </h3>
 
-                <div className="flex gap-4">
-                  {colors.map(color => (
-                    <button
-                      key={color}
-                      onClick={() => setSelectedColor(color)}
-                      className={`w-10 h-10 rounded-full border-4 transition-all ${color} ${
-                        selectedColor === color
-                          ? "border-primary scale-110"
-                          : "border-transparent"
-                      }`}
-                    />
-                  ))}
-                </div>
+              <div className="flex flex-wrap gap-3">
+                {colors.map(color => (
+                  <button
+                    key={color}
+                    onClick={() => setSelectedColor(color)}
+                    className={`py-2 px-6 rounded-xl border text-lg font-medium capitalize transition-all ${
+                      selectedColor === color
+                        ? "bg-primary text-white border-primary"
+                        : "bg-bg border-border text-text-secondary hover:border-primary hover:text-primary"
+                    }`}
+                  >
+                    {t(color)}
+                  </button>
+                ))}
+              </div>
               </div>
 
               {/* ACTIONS */}
