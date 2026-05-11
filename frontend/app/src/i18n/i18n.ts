@@ -62,7 +62,8 @@ export const translations = {
     productDesc: "Mô tả sản phẩm",
     relatedProducts: "Sản phẩm liên quan",
     thickness: "Độ dày",
-
+    description: "Mô tả",
+    userGuide: "Hướng dẫn sử dụng",
     red: "Đỏ",
     white: "Trắng",
     black: "Đen",
@@ -143,6 +144,8 @@ export const translations = {
     productDesc: "Product description",
     relatedProducts: "Related products",
     thickness: "Thickness",
+    description: "Description",
+    userGuide: "User Guide",
 
     red: "Red",
     white: "White",

@@ -57,7 +57,29 @@ const products = [
     category: 'Mattress Technology',
     numberSizes: 5,
     numberColors: 3,
-  }
+  },
+    {
+    id: 5,
+    title: 'Linen Duvet Set',
+    price: 189.0,
+    originalPrice: 270.0,
+    discount: '-30%',
+    image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&q=80&w=600',
+    category: 'Linen Collection',
+    numberSizes: 3,
+    numberColors: 5,
+  },
+  {
+    id: 6,
+    title: 'Bamboo Silk Pillowcase',
+    price: 45.0,
+    originalPrice: 65.0,
+    discount: '-30%',
+    image: 'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&q=80&w=600',
+    category: 'Silk Collection',
+    numberSizes: 2,
+    numberColors: 3,
+  },
 ];
 
 export default function Mattress() {
@@ -71,7 +93,7 @@ export default function Mattress() {
   ];
 
   const [sort, setSort] = useState(sortOptions[0]);
-  const [openFilters, setOpenFilters] = useState<string[]>([]);
+  const [openFilters, setOpenFilters] = useState<string[]>(["price", "discount", "color"]);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedPrices, setSelectedPrices] = useState<string[]>([]);

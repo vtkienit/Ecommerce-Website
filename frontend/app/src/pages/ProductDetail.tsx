@@ -80,6 +80,7 @@ export default function ProductDetail() {
     const [selectedThickness, setSelectedThickness] = useState("8");
     const [selectedColor, setSelectedColor] = useState<(typeof colors)[number]>(colors[0]);
     const [quantity, setQuantity] = useState("1");
+    const [activeTab, setActiveTab] = useState<"desc" | "guide">("desc");
 
     const handleQuantityChange = (value: string) => {
             if (value === "") {
@@ -305,24 +306,166 @@ export default function ProductDetail() {
           </div>
         </section>
 
-        {/* ===== DESCRIPTION ===== */}
+        {/* ===== PRODUCT TABS ===== */}
         <section className="mt-14">
-          <h2 className="text-3xl font-semibold text-text mb-5">
-            {t("productDesc")}
-          </h2>
 
-          <div className="bg-bg border border-border rounded-2xl p-6">
-            <p className="text-text-secondary leading-relaxed text-lg">
-              Cloud Orthopedic Pad được thiết kế với lớp memory foam cao cấp,
-              hỗ trợ tối đa cho cột sống và mang lại cảm giác thoải mái suốt
-              đêm dài. Chất liệu mềm mại, thoáng khí và thân thiện với da giúp
-              nâng cao chất lượng giấc ngủ mỗi ngày.
-            </p>
+          {/* TAB BUTTONS */}
+          <div className="flex justify-center mb-6">
+            <div className="flex border border-border rounded-xl overflow-hidden">
+
+              <button
+                onClick={() => setActiveTab("desc")}
+                className={`px-6 py-3 text-base font-medium transition-colors cursor-pointer ${
+                  activeTab === "desc"
+                    ? "bg-primary text-white"
+                    : "bg-bg text-text-secondary hover:text-primary"
+                }`}
+              >
+                {t("description")}
+              </button>
+
+              <button
+                onClick={() => setActiveTab("guide")}
+                className={`px-6 py-3 text-base font-medium transition-colors cursor-pointer ${
+                  activeTab === "guide"
+                    ? "bg-primary text-white"
+                    : "bg-bg text-text-secondary hover:text-primary"
+                }`}
+              >
+                {t("userGuide")}
+              </button>
+
+            </div>
+          </div>
+
+          {/* TAB CONTENT */}
+          <div className="bg-bg border border-border rounded-xl p-6 lg:p-8">
+
+            {/* ===== DESCRIPTION ===== */}
+            {activeTab === "desc" && (
+              <div>
+
+                {/* OVERVIEW */}
+                <div className="mb-8">
+                  <h3 className="text-2xl font-semibold text-text mb-4">
+                    Overview
+                  </h3>
+
+                  <p className="text-lg text-text-secondary leading-relaxed">
+                    Cloud Orthopedic Pad được thiết kế với lớp memory foam cao cấp,
+                    hỗ trợ tối đa cho cột sống và mang lại cảm giác thoải mái suốt
+                    đêm dài. Chất liệu mềm mại, thoáng khí và thân thiện với da giúp
+                    nâng cao chất lượng giấc ngủ mỗi ngày.
+                  </p>
+                </div>
+
+                {/* GENERAL INFO */}
+                <div>
+                  <h3 className="text-2xl font-semibold text-text mb-4">
+                    Thông tin chung
+                  </h3>
+
+                  <div className="space-y-3 text-lg text-text-secondary">
+
+                    <div className="flex gap-3">
+                      <span className="font-semibold text-text">SKU:</span>
+                      <span>ORT-CLD-001</span>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <span className="font-semibold text-text">
+                        Chất liệu:
+                      </span>
+                      <span>Premium Memory Foam</span>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <span className="font-semibold text-text">
+                        Xuất xứ:
+                      </span>
+                      <span>Việt Nam</span>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <span className="font-semibold text-text">
+                        Thương hiệu:
+                      </span>
+                      <span>QuyDung Bedding</span>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ===== USER GUIDE ===== */}
+            {activeTab === "guide" && (
+              <div className="space-y-8">
+
+                <div>
+                  <h3 className="text-2xl font-semibold text-text mb-4">
+                    Hướng dẫn sử dụng và bảo quản
+                  </h3>
+
+                  <p className="text-lg text-text-secondary leading-relaxed">
+                    Đệm bông ép là vật dụng quen thuộc trong phòng ngủ của mỗi gia đình.
+                    Tuổi thọ của đệm phụ thuộc vào cách sử dụng và bảo quản đúng cách.
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="text-xl font-semibold text-text mb-3">
+                    Hướng dẫn sử dụng
+                  </h4>
+
+                  <ul className="space-y-2 list-disc pl-5 text-lg text-text-secondary">
+                    <li>Đặt đệm trên bề mặt phẳng và khô ráo.</li>
+                    <li>Không đặt gần nguồn nhiệt hoặc nơi ẩm thấp.</li>
+                    <li>Đảo chiều đệm định kỳ để tăng tuổi thọ.</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="text-xl font-semibold text-text mb-3">
+                    Hướng dẫn bảo quản
+                  </h4>
+
+                  <ul className="space-y-2 list-disc pl-5 text-lg text-text-secondary">
+                    <li>Bảo quản nơi thông thoáng khi không sử dụng.</li>
+                    <li>Không dùng hóa chất mạnh để vệ sinh.</li>
+                    <li>Vệ sinh định kỳ 6-8 tháng / lần.</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="text-xl font-semibold text-text mb-3">
+                    Vỏ đệm
+                  </h4>
+
+                  <p className="text-lg text-text-secondary leading-relaxed">
+                    Có thể tháo rời để giặt tay hoặc giặt máy ở chế độ nhẹ dưới 30°C.
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="text-xl font-semibold text-text mb-3">
+                    Lõi đệm
+                  </h4>
+
+                  <p className="text-lg text-text-secondary leading-relaxed">
+                    Không dùng vật sắc nhọn hoặc hóa chất mạnh tác động trực tiếp lên
+                    lõi đệm để tránh hư hại cấu trúc foam.
+                  </p>
+                </div>
+
+              </div>
+            )}
+
           </div>
         </section>
 
         {/* ===== RELATED PRODUCTS ===== */}
-        <section className="mt-16 mb-8">
+        <section className="mt-14 mb-8">
 
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-3xl font-semibold text-text">
