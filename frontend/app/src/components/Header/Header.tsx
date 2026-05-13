@@ -47,10 +47,10 @@ const Header = () => {
 
               <div className="absolute pt-1.5 z-[100]">
                 <div className={"hidden group-hover:block text-text-secondary top-full bg-bg border border-border rounded shadow-lg"}>
-                  <p className={clsx("text-center px-5 py-2 cursor-pointer whitespace-nowrap hover:bg-bg-secondary", lang==="vi" && "text-primary")} onClick={() => setLang("vi")}>
+                  <p className={clsx("text-center px-6 py-2 cursor-pointer whitespace-nowrap hover:bg-bg-secondary", lang==="vi" && "text-primary")} onClick={() => setLang("vi")}>
                     {t("vietnamese")}
                   </p>
-                  <p className={clsx("text-center px-5 py-2 cursor-pointer whitespace-nowrap hover:bg-bg-secondary", lang==="en" && "text-primary")} onClick={() => setLang("en")}>
+                  <p className={clsx("text-center px-6 py-2 cursor-pointer whitespace-nowrap hover:bg-bg-secondary", lang==="en" && "text-primary")} onClick={() => setLang("en")}>
                     {t("english")}
                   </p>
                 </div>
