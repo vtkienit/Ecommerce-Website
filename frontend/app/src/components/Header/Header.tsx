@@ -5,7 +5,6 @@ import Language from "../../assets/icons/language.svg?react";
 import User from "../../assets/icons/user.svg?react";
 import clsx from "clsx";
 import styles from "./Header.module.css";
-import Button from "../Button";
 import ThemeToggle from "../ThemeToggle";
 import { useLanguage } from "../../contexts/LanguageProvider";
 import { useTheme } from "../../contexts/ThemeProvider";
@@ -127,28 +126,28 @@ const Header = () => {
               <Search width={25} height={25} />
             </button>
 
-            <Button variant="secondary" className="relative">
-              <ShoppingCart className={styles.icon} width={25} height={25}/>
+            <button className="relative text-text-secondary cursor-pointer">
+              <ShoppingCart width={25} height={25}/>
               <span className="absolute -top-2 -right-1.5 bg-primary text-white text-xs px-1.5 py-0.5 rounded-full">
                 2
               </span>
-            </Button>
+            </button>
 
-            <Button className={styles.header__user}>
-              <User className={styles.icon} width={25} height={25}/>
+            <button className={"flex text-text-secondary cursor-pointer"}>
+              <User width={25} height={25}/>
 
               {userName && <span className="hidden lg:flex">
                 {t("hi")}, {userName}
               </span>}
-            </Button>
+            </button>
 
-            <Button className="md:!hidden" onClick={() => setMenuOpen(prev => !prev)}>
+            <button className="text-text-secondary cursor-pointer md:hidden" onClick={() => setMenuOpen(prev => !prev)}>
               {menuOpen ? (
-                <X className={styles.icon} width={25} height={25} />
+                <X width={25} height={25} />
               ) : (
-                <Menu className={styles.icon} width={25} height={25} />
+                <Menu width={25} height={25} />
               )}
-            </Button>
+            </button>
           </div>
         </div>
       </div>
