@@ -4,7 +4,6 @@ import { Helmet } from "react-helmet-async";
 import { useLanguage } from "../contexts/LanguageProvider";
 import { motion } from "framer-motion";
 import { Timer, ShieldCheck, Truck, Award, ChevronRight } from 'lucide-react';
-import Button from '../components/Button/Button';
 import ProductCard from '../components/ProductCard';
 import clsx from 'clsx';
 import bannerImg from "../assets/images/home_banner.png";
@@ -24,7 +23,9 @@ const flashSaleProducts = [
     originalPrice: 270.0,
     discount: '-30%',
     image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&q=80&w=600',
-    category: 'Linen Collection'
+    category: 'Linen Collection',
+    numberSizes: 3,
+    numberColors: 5,
   },
   {
     id: 2,
@@ -33,7 +34,9 @@ const flashSaleProducts = [
     originalPrice: 65.0,
     discount: '-30%',
     image: 'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&q=80&w=600',
-    category: 'Silk Collection'
+    category: 'Silk Collection',
+    numberSizes: 2,
+    numberColors: 3,
   },
   {
     id: 3,
@@ -42,7 +45,9 @@ const flashSaleProducts = [
     originalPrice: 450.0,
     discount: '-30%',
     image: 'https://images.unsplash.com/photo-1505691723518-36a5ac3be353?auto=format&fit=crop&q=80&w=600',
-    category: 'Mattress Technology'
+    category: 'Mattress Technology',
+    numberSizes: 4,
+    numberColors: 6,
   },
   {
     id: 4,
@@ -50,8 +55,10 @@ const flashSaleProducts = [
     price: 320.0,
     originalPrice: 450.0,
     discount: '-30%',
-    image: bannerImg,
-    category: 'Mattress Technology'
+    image: 'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&q=80&w=600',
+    category: 'Mattress Technology',
+    numberSizes: 5,
+    numberColors: 3,
   },
     {
     id: 5,
@@ -60,7 +67,9 @@ const flashSaleProducts = [
     originalPrice: 270.0,
     discount: '-30%',
     image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&q=80&w=600',
-    category: 'Linen Collection'
+    category: 'Linen Collection',
+    numberSizes: 3,
+    numberColors: 5,
   },
   {
     id: 6,
@@ -69,16 +78,9 @@ const flashSaleProducts = [
     originalPrice: 65.0,
     discount: '-30%',
     image: 'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&q=80&w=600',
-    category: 'Silk Collection'
-  },
-  {
-    id: 7,
-    title: 'Cloud Orthopedic Pad',
-    price: 320.0,
-    originalPrice: 450.0,
-    discount: '-30%',
-    image: 'https://images.unsplash.com/photo-1505691723518-36a5ac3be353?auto=format&fit=crop&q=80&w=600',
-    category: 'Mattress Technology'
+    category: 'Silk Collection',
+    numberSizes: 2,
+    numberColors: 3,
   },
 ];
 
@@ -128,9 +130,9 @@ export default function Home() {
             <p className="text-lg md:text-xl text-gray-200 mb-10 max-w-md">
               {t('heroDesc')}
             </p>
-            <Button size="lg" variant="primary" className="!font-semibold">
+            <button className="bg-primary text-white font-semibold py-2 px-6 rounded-md hover:bg-primary/80 cursor-pointer">
               {t('shopNow')}
-            </Button>
+            </button>
           </motion.div>
         </div>
       </section>
@@ -174,10 +176,10 @@ export default function Home() {
             </div>
           </div>
           
-          <div className='flex justify-end mt-3 md:mt-5'>
-            <Button className="!text-primary !font-semibold">
+          <div className='flex justify-end mt-2 md:mt-4'>
+            <button className="text-primary font-semibold flex items-center gap-2 cursor-pointer">
               {t("viewAll")} <ChevronRight size={15} />
-            </Button>
+            </button>
           </div>
 
           <div
@@ -190,7 +192,7 @@ export default function Home() {
               cursor-grab active:cursor-grabbing
               select-none
               touch-pan-y
-              py-3
+              py-2 md:py-3
             "
           >
             {flashSaleProducts.map((p) => (
@@ -210,16 +212,16 @@ export default function Home() {
 
           <h2 className="text-text text-2xl md:text-5xl font-semibold">{t('collections')}</h2>
 
-          <div className='flex justify-end my-3 md:mt-5'>
-            <Button className="!text-primary !font-semibold">
+          <div className='flex justify-end mt-2 md:mt-4'>
+            <button className="text-primary font-semibold flex items-center gap-2 cursor-pointer">
               {t("viewAll")} <ChevronRight size={15} />
-            </Button>
+            </button>
           </div>
           
           <div 
             ref={collectionsSlider.sliderRef}
             {...collectionsSlider.dragEvents}
-            className="flex gap-3 md:gap-5 overflow-x-auto hide-scrollbar pb-10 cursor-grab active:cursor-grabbing select-none touch-pan-y">
+            className="flex gap-3 md:gap-5 py-2 md:py-3 overflow-x-auto hide-scrollbar pb-10 cursor-grab active:cursor-grabbing select-none touch-pan-y">
             {categories.map((cat) => (
               <div
                 className="

@@ -5,7 +5,6 @@ import { Helmet } from "react-helmet-async";
 import { useLanguage } from "../contexts/LanguageProvider";
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import bannerImg from "../assets/images/mattress_banner.png"
-import Button from "../components/Button/Button";
 import clsx from "clsx";
 import ProductCard from "../components/ProductCard";
 import { motion } from "framer-motion";
@@ -170,10 +169,10 @@ export default function Mattress() {
 
         {/* MOBILE BUTTON */}
         <div className="lg:hidden mb-4">
-          <Button size="lg" className="!bg-bg !border !border-border" onClick={() => setMobileOpen(true)}>
+          <button className="flex gap-2 items-center border border-border px-3 py-2 rounded-md text-text-secondary bg-bg" onClick={() => setMobileOpen(true)}>
             <SlidersHorizontal size={19} />
             {t("sort")} / {t("filters")}
-          </Button>
+          </button>
         </div>
 
         <div className="flex gap-4">

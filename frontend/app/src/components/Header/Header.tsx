@@ -5,7 +5,7 @@ import Language from "../../assets/icons/language.svg?react";
 import User from "../../assets/icons/user.svg?react";
 import clsx from "clsx";
 import styles from "./Header.module.css";
-import Button from "../Button/Button";
+import Button from "../Button";
 import ThemeToggle from "../ThemeToggle";
 import { useLanguage } from "../../contexts/LanguageProvider";
 import { useTheme } from "../../contexts/ThemeProvider";
@@ -39,18 +39,18 @@ const Header = () => {
             
             {/* LANGUAGE */}
             <div className={clsx(styles["header__top-lang"], "relative cursor-pointer group")} >
-              <Button className={styles["lang__btn"]}>
-                <Language width={16} height={16} className={styles["icon"]}/>
+              <button className={ "flex gap-2 items-center cursor-pointer text-text-secondary hover:text-primary "}>
+                <Language width={16} height={16} />
                 <span>{lang === "vi" ? "Tiếng Việt" : "English"}</span>
-                <ChevronDown size={16} className={clsx(styles.icon, "transition-transform duration-200", "group-hover:rotate-180")}/>
-              </Button>
+                <ChevronDown size={16} className={clsx("transition-transform duration-200", "group-hover:rotate-180")}/>
+              </button>
 
               <div className="absolute pt-1.5 z-[100]">
-                <div className={styles["lang__menu-container"]}>
-                  <p className={clsx(styles.lang__item, lang==="vi" && "!text-primary")} onClick={() => setLang("vi")}>
+                <div className={"hidden group-hover:block text-text-secondary top-full bg-bg border border-border rounded shadow-lg"}>
+                  <p className={clsx("text-center px-5 py-2 cursor-pointer whitespace-nowrap hover:bg-bg-secondary", lang==="vi" && "text-primary")} onClick={() => setLang("vi")}>
                     {t("vietnamese")}
                   </p>
-                  <p className={clsx(styles.lang__item, lang==="en" && "!text-primary")} onClick={() => setLang("en")}>
+                  <p className={clsx("text-center px-5 py-2 cursor-pointer whitespace-nowrap hover:bg-bg-secondary", lang==="en" && "text-primary")} onClick={() => setLang("en")}>
                     {t("english")}
                   </p>
                 </div>
@@ -60,7 +60,7 @@ const Header = () => {
             {/* THEME */}
             <ThemeToggle />
 
-            <Link to="/manage-order" className={styles["header__top-right-link"]}>
+            <Link to="/manage-order" className={"text-base text-text-secondary tracking-tight font-medium hover:text-primary"}>
               {t("manageOrder")}
             </Link>
           </div>
@@ -123,9 +123,9 @@ const Header = () => {
 
           {/* RIGHT */}
           <div className="flex items-center gap-4">
-            <Button>
-              <Search className={styles.icon} width={25} height={25} />
-            </Button>
+            <button className="text-text-secondary cursor-pointer">
+              <Search width={25} height={25} />
+            </button>
 
             <Button variant="secondary" className="relative">
               <ShoppingCart className={styles.icon} width={25} height={25}/>

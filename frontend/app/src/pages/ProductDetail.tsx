@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { ShoppingCart, Minus, Plus, ChevronLeft, ChevronRight } from "lucide-react";
-
+import { ShoppingCart, Minus, Plus } from "lucide-react";
 import MainLayout from "../layouts/MainLayout";
 import ProductCard from "../components/ProductCard";
-import Button from "../components/Button/Button";
 import { useLanguage } from "../contexts/LanguageProvider";
 
 const productImages = [
@@ -260,11 +258,11 @@ export default function ProductDetail() {
 
                 {/* QUANTITY */}
                 <div className="flex items-center justify-center">
-                    <div className="flex items-center  h-12 border border-text-tertiary text-text-secondary rounded-xl overflow-hidden">
+                    <div className="flex items-center  h-12 border border-text-tertiary text-text-secondary rounded-md overflow-hidden">
 
                     <button
                         onClick={() => setQuantity(prev => String(Math.max(1, Number(prev) - 1)))}
-                        className="w-12 h-full flex items-center justify-center hover:bg-primary/10"
+                        className="w-12 h-full flex items-center justify-center hover:bg-primary/10 cursor-pointer"
                     >
                         <Minus size={20} />
                     </button>
@@ -284,7 +282,7 @@ export default function ProductDetail() {
 
                     <button
                         onClick={() => setQuantity(prev => String(Number(prev) + 1))}
-                        className="w-12 h-full flex items-center justify-center hover:bg-primary/10"
+                        className="w-12 h-full flex items-center justify-center hover:bg-primary/10 cursor-pointer"
                     >
                         <Plus size={20} />
                     </button>
@@ -292,15 +290,15 @@ export default function ProductDetail() {
                 </div>
                 
                 {/* ADD CART */}
-                <Button variant="outline" size="lg" className="flex-1 hover:!bg-primary/10">
+                <button className="flex-1 flex items-center justify-center gap-2 text-primary bg-bg border border-primary rounded-md hover:bg-primary/10 cursor-pointer">
                   <ShoppingCart size={22} />
                   {t("addToCart")}
-                </Button>
+                </button>
 
                 {/* BUY NOW */}
-                <Button size="lg" className="flex-1 !text-white !font-medium !bg-red-600 hover:!bg-red-700">
+                <button className="flex-1 text-white font-medium rounded-md bg-red-600 hover:bg-red-700 cursor-pointer">
                   {t("buy")}
-                </Button>
+                </button>
               </div>
             </div>
           </div>

@@ -77,48 +77,6 @@
 
 /* Responsive Tablet */
 @media (min-width: 768px) {
-  .lang__menu-container {
-    display: none;
-    top:100%;
-    right: 0;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--space-2);
-    box-shadow: 0 10px 20px var(--shadow);
-  }
-
-  .header__top-lang:hover .lang__menu-container{
-    display: block;
-  }
-
-  .lang__btn:hover .lang__btn-icon, .lang__btn:hover .icon, .lang__btn:hover span {
-    color: var(--primary);
-  }
-
-  .lang__item {
-    color: var(--text);
-    text-align: center;
-    padding: var(--space-2) var(--space-5);
-    margin: 0;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-
-  .lang__item:hover {
-    background: var(--border);
-  }
-
-  .header__top-right-link {
-    font-size: var(--text-sm);
-    color: var(--text-secondary);
-    font-weight: var(--font-medium);
-    text-decoration: none;
-  }
-
-  .header__top-right-link:hover {
-    color: var(--primary)
-  }
-
   /* ===== Menu PC ===== */
   .header__menu-item a,  .header__menu-item span {
     font-size: var(--text-base);

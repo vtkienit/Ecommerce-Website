@@ -7,8 +7,8 @@ type ProductCardProps = {
   originalPrice?: number;
   discount?: string;
   category?: string;
-  numberSizes: number;
-  numberColors: number;
+  numberSizes?: number;
+  numberColors?: number;
   className?: string;
 };
 
@@ -19,8 +19,8 @@ export default function ProductCard({
   originalPrice,
   discount,
   category,
-  numberSizes,
-  numberColors,
+  numberSizes = 1,
+  numberColors = 1,
   className,
 }: ProductCardProps) {
   return (
