@@ -8,23 +8,23 @@ import lombok.Setter;
 @Entity
 @Table(name = "users")
 @Getter
+@Setter
 @NoArgsConstructor
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Setter
     private String name;
 
     @Column(unique = true)
-    @Setter
     private String email;
 
-    @Setter
     private String password;
 
-    @Setter
+    private String phone;
+
+    private String address;
+
     private String role = "Customer";
 }

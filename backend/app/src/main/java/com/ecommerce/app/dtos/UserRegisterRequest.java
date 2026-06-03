@@ -3,8 +3,14 @@ package com.ecommerce.app.dtos;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-public class CreateUserRequest {
+@Getter
+@Setter
+@NoArgsConstructor
+public class UserRegisterRequest {
 
     @NotBlank(message = "Name is required")
     @Size(min = 2, message = "Name must be at least 2 characters")
@@ -18,18 +24,7 @@ public class CreateUserRequest {
     @Size(min = 4, message = "Password must be at least 4 characters")
     private String password;
 
-    public CreateUserRequest() {
-    }
+    private String phone;
 
-    public String getName() {
-        return name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
+    private String address;
 }
