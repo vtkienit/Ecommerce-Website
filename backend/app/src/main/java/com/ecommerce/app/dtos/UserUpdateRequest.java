@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
-@Setter
 @NoArgsConstructor
 public class UserUpdateRequest {
     @Size(min = 2, message = "Name must be at least 2 characters")

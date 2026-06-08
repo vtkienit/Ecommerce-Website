@@ -9,25 +9,24 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/api/users")
-public class UserController {
+@RequestMapping("/api/auth")
+public class AuthController {
 
     private final UserService userService;
 
-    public UserController(UserService userService) {
+    public AuthController(UserService userService) {
         this.userService = userService;
     }
 
-    @GetMapping
-    public List<UserResponse> getAllUsers(@RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
-        return userService.getAllUsers(authorizationHeader);
+    @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserResponse createUser(@Valid @RequestBody UserRegisterRequest request) {
+        return userService.createUser(request);
     }
 
-    @GetMapping("/by-email")
-    public UserResponse getUserByEmail(@RequestParam String email) {
-        return userService.getUserByEmail(email);
+    @PostMapping("/login")
+    public UserLoginResponse login(@Valid @RequestBody UserLoginRequest request) {
+        return userService.login(request);
     }
 }

@@ -16,22 +16,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BaseException.class)
     public ResponseEntity<ErrorResponse> handleBaseException(BaseException ex) {
 
-        ErrorResponse response = new ErrorResponse(ex.getStatus().value(), ex.getMessage());
+        ErrorResponse response = new ErrorResponse(ex.getMessage());
 
         return ResponseEntity
                 .status(ex.getStatus())
-                .body(response);
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleException(Exception ex) {
-
-        log.error("Unexpected error", ex);
-
-        ErrorResponse response = new ErrorResponse(500, "Internal server error");
-
-        return ResponseEntity
-                .internalServerError()
                 .body(response);
     }
 
@@ -43,10 +31,20 @@ public class GlobalExceptionHandler {
                 .getFieldError()
                 .getDefaultMessage();
 
-        ErrorResponse response = new ErrorResponse(400, message);
+        ErrorResponse response = new ErrorResponse(message);
 
         return ResponseEntity
                 .badRequest()
+                .body(response);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleException(Exception ex) {
+
+        ErrorResponse response = new ErrorResponse("Internal server error");
+
+        return ResponseEntity
+                .internalServerError()
                 .body(response);
     }
 }
