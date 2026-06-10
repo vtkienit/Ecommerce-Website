@@ -63,9 +63,7 @@ public class UserService {
         return new UserLoginResponse(token, userResponse);
     }
 
-    public List<UserResponse> getAllUsers(String authorizationHeader) {
-
-        checkAdmin(authorizationHeader);
+    public List<UserResponse> getAllUsers() {
 
         return userRepository.findAll()
                 .stream()
@@ -79,19 +77,6 @@ public class UserService {
                 .orElseThrow(() -> new BaseException("User not found", HttpStatus.NOT_FOUND));
 
         return toResponse(user);
-    }
-
-    private void checkAdmin(String authorizationHeader) {
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            throw new BaseException("Missing or invalid token", HttpStatus.UNAUTHORIZED);
-        }
-
-        String token = authorizationHeader.substring(7);
-
-        String role = jwtService.extractRole(token);
-        if (!"Admin".equalsIgnoreCase(role)) {
-            throw new BaseException("Access denied", HttpStatus.FORBIDDEN);
-        }
     }
 
     private UserResponse toResponse(User user) {

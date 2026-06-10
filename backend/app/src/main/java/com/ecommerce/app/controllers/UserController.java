@@ -22,8 +22,8 @@ public class UserController {
     }
 
     @GetMapping
-    public List<UserResponse> getAllUsers(@RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
-        return userService.getAllUsers(authorizationHeader);
+    public List<UserResponse> getAllUsers() {
+        return userService.getAllUsers();
     }
 
     @GetMapping("/by-email")
