@@ -27,4 +27,7 @@ public class User {
     private String address;
 
     private String role = "Customer";
+
+    @OneToOne(mappedBy = "user")
+    private Cart cart;
 }
