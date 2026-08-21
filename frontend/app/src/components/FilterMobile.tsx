@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, ChevronDown, SlidersHorizontal, X} from "lucide-react";
 import type { ReactNode } from "react";
-import { useLanguage } from "../contexts/LanguageProvider";
+import { useLanguage } from "../contexts/LanguageContext";
 
 type FilterMobileProps = {
   open: boolean;
@@ -22,7 +22,6 @@ type FilterMobileProps = {
 
   toggleSelection: (
     value: string,
-    selected: string[],
     setSelected: React.Dispatch<React.SetStateAction<string[]>>
   ) => void;
 
@@ -205,7 +204,6 @@ export default function FilterMobile({
                     onClick={() =>
                         toggleSelection(
                         price,
-                        selectedPrices,
                         setSelectedPrices
                         )
                     }
@@ -227,7 +225,6 @@ export default function FilterMobile({
                   onClick={() =>
                     toggleSelection(
                       discount,
-                      selectedDiscounts,
                       setSelectedDiscounts
                     )
                   }
@@ -249,7 +246,6 @@ export default function FilterMobile({
                     onClick={() =>
                         toggleSelection(
                         size,
-                        selectedSizes,
                         setSelectedSizes
                         )
                     }
@@ -272,7 +268,6 @@ export default function FilterMobile({
                         onClick={() =>
                         toggleSelection(
                             color.name,
-                            selectedColors,
                             setSelectedColors
                         )
                         }

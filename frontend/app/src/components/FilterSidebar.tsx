@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { ChevronDown, SlidersHorizontal, Check } from "lucide-react";
-import { useLanguage } from "../contexts/LanguageProvider";
+import { useLanguage } from "../contexts/LanguageContext";
 import type { ReactNode } from "react";
 
 type FilterSidebarProps = {
@@ -14,7 +14,6 @@ type FilterSidebarProps = {
 
   toggleSelection: (
     value: string,
-    selected: string[],
     setSelected: React.Dispatch<React.SetStateAction<string[]>>
   ) => void;
 
@@ -137,7 +136,6 @@ export default function FilterSidebar({
               onClick={() =>
                 toggleSelection(
                   price,
-                  selectedPrices,
                   setSelectedPrices
                 )
               }
@@ -159,7 +157,6 @@ export default function FilterSidebar({
               onClick={() =>
                 toggleSelection(
                   discount,
-                  selectedDiscounts,
                   setSelectedDiscounts
                 )
               }
@@ -181,7 +178,6 @@ export default function FilterSidebar({
               onClick={() =>
                 toggleSelection(
                   size,
-                  selectedSizes,
                   setSelectedSizes
                 )
               }
@@ -204,7 +200,6 @@ export default function FilterSidebar({
                 onClick={() =>
                   toggleSelection(
                     color.name,
-                    selectedColors,
                     setSelectedColors
                   )
                 }

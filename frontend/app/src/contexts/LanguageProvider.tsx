@@ -1,20 +1,10 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import {translations} from "../i18n/i18n";
+import { LanguageContext } from "./LanguageContext";
+import type { Language, TranslationKey } from "./LanguageContext";
 
-type Language = "vi" | "en";
-
-type TranslationKey = keyof typeof translations["en"];
-
-type LanguageContextType = {
-  lang: Language;
-  setLang: (lang: Language) => void;
-  t: (key: TranslationKey) => string;
-};
-
-
-const LanguageContext = createContext<LanguageContextType | null>(null);
-
-export const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
+export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [lang, setLang] = useState<Language>(() => {
     const saved = localStorage.getItem("lang");
     return (saved === "vi" || saved === "en") ? saved : "vi";
@@ -37,10 +27,4 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
       {children}
     </LanguageContext.Provider>
   );
-};
-
-export const useLanguage = () => {
-  const context = useContext(LanguageContext);
-  if (!context) throw new Error("useLanguage must be used inside provider");
-  return context;
 };

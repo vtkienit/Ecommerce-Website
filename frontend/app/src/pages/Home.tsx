@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useRef } from 'react';
+import type { ReactNode } from 'react';
 import MainLayout from "../layouts/MainLayout";
 import { Helmet } from "react-helmet-async";
-import { useLanguage } from "../contexts/LanguageProvider";
+import { useLanguage } from "../contexts/LanguageContext";
 import { motion } from "framer-motion";
 import { Timer, ShieldCheck, Truck, Award, ChevronRight } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
-import clsx from 'clsx';
 import bannerImg from "../assets/images/home_banner.png";
 import mattressImg from "../assets/images/mattress.png";
 import beddingSetsImg from "../assets/images/bedding_sets.png";
@@ -94,9 +94,11 @@ const categories = [
 
 export default function Home() {
   const { t } = useLanguage();
-  const [timeLeft, setTimeLeft] = useState('02 : 45 : 12');
-  const flashSaleSlider = useDragScroll();
-  const collectionsSlider = useDragScroll();
+  const timeLeft = '02 : 45 : 12';
+  const flashSaleSliderRef = useRef<HTMLDivElement>(null);
+  const collectionsSliderRef = useRef<HTMLDivElement>(null);
+  const flashSaleDragEvents = useDragScroll(flashSaleSliderRef);
+  const collectionsDragEvents = useDragScroll(collectionsSliderRef);
   
   return (
     <MainLayout>
@@ -183,8 +185,8 @@ export default function Home() {
           </div>
 
           <div
-            ref={flashSaleSlider.sliderRef}
-            {...flashSaleSlider.dragEvents}
+            ref={flashSaleSliderRef}
+            {...flashSaleDragEvents}
             className="
               flex gap-3 lg:gap-5
               overflow-x-auto hide-scrollbar
@@ -219,11 +221,12 @@ export default function Home() {
           </div>
           
           <div 
-            ref={collectionsSlider.sliderRef}
-            {...collectionsSlider.dragEvents}
+            ref={collectionsSliderRef}
+            {...collectionsDragEvents}
             className="flex gap-3 md:gap-5 py-2 md:py-3 overflow-x-auto hide-scrollbar pb-10 cursor-grab active:cursor-grabbing select-none touch-pan-y">
             {categories.map((cat) => (
               <div
+                key={cat.id}
                 className="
                 min-w-[200px] lg:min-w-[280px] relative group cursor-pointer bg-bg rounded-md overflow-hidden
                 shadow-sm hover:shadow-lg transition-shadow duration-500
@@ -270,7 +273,7 @@ export default function Home() {
   );
 }
 
-function FeatureCard({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
+function FeatureCard({ icon, title, desc }: { icon: ReactNode, title: string, desc: string }) {
   return (
     <div className="flex flex-col items-center text-center">
       <div className="w-24 h-24 rounded-full border border-border bg-bg flex items-center justify-center mb-5 shadow-sm hover:scale-110 transition-transform duration-500">

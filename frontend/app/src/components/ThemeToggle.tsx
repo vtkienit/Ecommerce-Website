@@ -1,4 +1,4 @@
-import { useTheme } from "../contexts/ThemeProvider";
+import { useTheme } from "../contexts/ThemeContext";
 import LightIcon from "../assets/icons/light.svg?react";
 import DarkIcon from "../assets/icons/dark.svg?react";
 import clsx from "clsx";
@@ -8,7 +8,8 @@ const ThemeToggle = () => {
 
   return (
     <button
-      className="w-11 h-5 bg-primary rounded-full relative cursor-pointer border-none flex items-center px-[var(--space-1)]"
+      type="button"
+      className="relative flex h-5 w-11 cursor-pointer items-center rounded-full border-none bg-primary px-1"
       onClick={() => setTheme(theme === "light" ? "dark" : "light")}
       aria-label="Toggle theme"
     >
@@ -20,9 +21,12 @@ const ThemeToggle = () => {
         )}
       </div>
 
-      <div className={clsx
-        ("w-[18px] h-[18px] bg-white rounded-full absolute top-[1px] left-[1px] transition-all duration-200"
-        , theme === "dark" && "left-[26px]")} />
+      <div
+        className={clsx(
+          "absolute left-px top-px h-[18px] w-[18px] rounded-full bg-white transition-all duration-200",
+          theme === "dark" && "left-[26px]",
+        )}
+      />
     </button>
   );
 };

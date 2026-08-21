@@ -1,0 +1,128 @@
+package com.ecommerce.app;
+
+import com.ecommerce.app.repositories.UserRepository;
+import com.ecommerce.app.services.GoogleIdentityService;
+import com.ecommerce.app.services.GoogleUserInfo;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+class AuthFlowTests {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @MockitoBean
+    private GoogleIdentityService googleIdentityService;
+
+    @BeforeEach
+    void cleanDatabase() {
+        userRepository.deleteAll();
+    }
+
+    @Test
+    void registerThenLoginReturnsTheSameUserAndAJwt() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Quy Dung",
+                                  "email": "USER@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.newUser").value(true))
+                .andExpect(jsonPath("$.user.email").value("user@example.com"));
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "user@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.newUser").value(false))
+                .andExpect(jsonPath("$.user.name").value("Quy Dung"));
+    }
+
+    @Test
+    void googleEndpointCreatesOnceThenLogsInTheExistingUser() throws Exception {
+        when(googleIdentityService.verify(anyString()))
+                .thenReturn(new GoogleUserInfo("google-subject-123", "google@example.com", "Google User"));
+
+        mockMvc.perform(post("/api/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"credential\":\"valid-google-id-token\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.newUser").value(true))
+                .andExpect(jsonPath("$.user.email").value("google@example.com"));
+
+        mockMvc.perform(post("/api/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"credential\":\"valid-google-id-token\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.newUser").value(false))
+                .andExpect(jsonPath("$.user.email").value("google@example.com"));
+
+        org.assertj.core.api.Assertions.assertThat(userRepository.count()).isEqualTo(1);
+    }
+
+    @Test
+    void googleEndpointLinksAnExistingPasswordAccountByVerifiedEmail() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Existing User",
+                                  "email": "existing@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        when(googleIdentityService.verify(anyString()))
+                .thenReturn(new GoogleUserInfo(
+                        "google-subject-existing",
+                        "existing@example.com",
+                        "Existing User"
+                ));
+
+        mockMvc.perform(post("/api/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"credential\":\"valid-google-id-token\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.newUser").value(false))
+                .andExpect(jsonPath("$.user.email").value("existing@example.com"));
+
+        org.assertj.core.api.Assertions.assertThat(userRepository.count()).isEqualTo(1);
+        org.assertj.core.api.Assertions.assertThat(
+                userRepository.findByEmailIgnoreCase("existing@example.com")
+                        .orElseThrow()
+                        .getGoogleSubject()
+        ).isEqualTo("google-subject-existing");
+    }
+}

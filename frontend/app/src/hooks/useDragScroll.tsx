@@ -1,17 +1,15 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
+import type { RefObject } from "react";
 
-export default function useDragScroll() {
-  const sliderRef = useRef<HTMLDivElement>(null);
-
-  const [isDragging, setIsDragging] = useState(false);
-
+export default function useDragScroll(sliderRef: RefObject<HTMLDivElement | null>) {
+  const isDragging = useRef(false);
   const startX = useRef(0);
   const scrollLeft = useRef(0);
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!sliderRef.current) return;
 
-    setIsDragging(true);
+    isDragging.current = true;
 
     sliderRef.current.setPointerCapture(e.pointerId);
 
@@ -20,7 +18,7 @@ export default function useDragScroll() {
   };
 
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging || !sliderRef.current) return;
+    if (!isDragging.current || !sliderRef.current) return;
 
     e.preventDefault();
 
@@ -32,18 +30,17 @@ export default function useDragScroll() {
   const stopDragging = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!sliderRef.current) return;
 
-    setIsDragging(false);
+    isDragging.current = false;
 
-    sliderRef.current.releasePointerCapture(e.pointerId);
+    if (sliderRef.current.hasPointerCapture(e.pointerId)) {
+      sliderRef.current.releasePointerCapture(e.pointerId);
+    }
   };
 
   return {
-    sliderRef,
-    dragEvents: {
-      onPointerDown,
-      onPointerMove,
-      onPointerUp: stopDragging,
-      onPointerLeave: stopDragging,
-    },
+    onPointerDown,
+    onPointerMove,
+    onPointerUp: stopDragging,
+    onPointerLeave: stopDragging,
   };
 }

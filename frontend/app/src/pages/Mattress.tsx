@@ -2,10 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import { Helmet } from "react-helmet-async";
-import { useLanguage } from "../contexts/LanguageProvider";
+import { useLanguage } from "../contexts/LanguageContext";
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import bannerImg from "../assets/images/mattress_banner.png"
-import clsx from "clsx";
 import ProductCard from "../components/ProductCard";
 import { motion } from "framer-motion";
 import FilterSidebar from "../components/FilterSidebar";
@@ -109,7 +108,6 @@ export default function Mattress() {
 
   const toggleSelection = (
     value: string,
-    selected: string[],
     setSelected: React.Dispatch<React.SetStateAction<string[]>>
   ) => {
     setSelected(prev =>

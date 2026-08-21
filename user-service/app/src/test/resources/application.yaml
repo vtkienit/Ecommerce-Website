@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:user-service;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+security:
+  jwt:
+    secret: test-jwt-secret-that-is-longer-than-thirty-two-bytes
+    expiration-ms: 3600000
+
+google:
+  oauth:
+    client-id: ""
+
+app:
+  cors:
+    allowed-origins: http://localhost:5173

@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { ShoppingCart, Minus, Plus } from "lucide-react";
 import MainLayout from "../layouts/MainLayout";
 import ProductCard from "../components/ProductCard";
-import { useLanguage } from "../contexts/LanguageProvider";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const productImages = [
   "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1200&auto=format&fit=crop",
