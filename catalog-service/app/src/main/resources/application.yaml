@@ -1,0 +1,27 @@
+server:
+  port: ${CATALOG_SERVICE_PORT:8081}
+
+spring:
+  application:
+    name: catalog-service
+
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:../.env[.properties]
+      - optional:file:../../.env[.properties]
+
+  datasource:
+    url: ${CATALOG_DB_URL:${DB_URL}}
+    username: ${CATALOG_DB_USERNAME:${DB_USERNAME}}
+    password: ${CATALOG_DB_PASSWORD:${DB_PASSWORD}}
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_schema: ${CATALOG_DB_SCHEMA:catalog}
+        hbm2ddl:
+          create_namespaces: true
