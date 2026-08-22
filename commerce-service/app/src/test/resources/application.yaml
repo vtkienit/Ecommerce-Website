@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:commerce-service;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE;INIT=CREATE SCHEMA IF NOT EXISTS commerce
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        default_schema: commerce
+        hbm2ddl:
+          create_namespaces: true
