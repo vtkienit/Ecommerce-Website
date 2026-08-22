@@ -305,9 +305,9 @@ export default function AuthPage({ mode }: AuthPageProps) {
                       />
                       {t("rememberMe")}
                     </label>
-                    <button type="button" className="cursor-pointer font-medium text-primary hover:underline">
+                    <Link to="/forgot-password" className="font-medium text-primary hover:underline">
                       {t("forgotPassword")}
-                    </button>
+                    </Link>
                   </div>
                 )}
 

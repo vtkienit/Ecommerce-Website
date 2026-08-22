@@ -2,7 +2,7 @@ package com.ecommerce.app;
 
 import com.ecommerce.app.repositories.UserRepository;
 import com.ecommerce.app.services.GoogleIdentityService;
-import com.ecommerce.app.services.GoogleUserInfo;
+import com.ecommerce.app.dtos.GoogleUserInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -124,5 +125,39 @@ class AuthFlowTests {
                         .orElseThrow()
                         .getGoogleSubject()
         ).isEqualTo("google-subject-existing");
+    }
+
+    @Test
+    void malformedJsonReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{invalid-json"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid request body"));
+    }
+
+    @Test
+    void currentUserComesFromTheAuthenticatedToken() throws Exception {
+        String registerResponse = mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Current User",
+                                  "email": "current@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String token = com.jayway.jsonpath.JsonPath.read(registerResponse, "$.token");
+
+        mockMvc.perform(get("/api/users/me")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Current User"))
+                .andExpect(jsonPath("$.email").value("current@example.com"));
     }
 }

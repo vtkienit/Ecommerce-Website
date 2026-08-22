@@ -24,6 +24,10 @@ export type RegisterRequest = LoginRequest & {
   name: string;
 };
 
+export type ResetTokenResponse = {
+  resetToken: string;
+};
+
 type ErrorResponse = {
   message?: string;
 };
@@ -42,7 +46,7 @@ export class AuthApiError extends Error {
   }
 }
 
-async function post<TRequest>(path: string, body: TRequest): Promise<AuthResponse> {
+async function post<TResponse>(path: string, body: unknown): Promise<TResponse> {
   let response: Response;
 
   try {
@@ -70,15 +74,33 @@ async function post<TRequest>(path: string, body: TRequest): Promise<AuthRespons
     throw new AuthApiError(message, response.status);
   }
 
-  return (await response.json()) as AuthResponse;
+  if (response.status === 204) {
+    return undefined as TResponse;
+  }
+
+  return (await response.json()) as TResponse;
 }
 
-export const login = (request: LoginRequest) => post("/api/auth/login", request);
+export const login = (request: LoginRequest) =>
+  post<AuthResponse>("/api/auth/login", request);
 
-export const register = (request: RegisterRequest) => post("/api/auth/register", request);
+export const register = (request: RegisterRequest) =>
+  post<AuthResponse>("/api/auth/register", request);
 
 export const authenticateWithGoogle = (credential: string) =>
-  post("/api/auth/google", { credential });
+  post<AuthResponse>("/api/auth/google", { credential });
+
+export const requestPasswordReset = (email: string) =>
+  post<void>("/api/auth/forgot-password", { email });
+
+export const verifyPasswordResetCode = (email: string, code: string) =>
+  post<ResetTokenResponse>("/api/auth/verify-reset-code", { email, code });
+
+export const resetPassword = (
+  resetToken: string,
+  newPassword: string,
+  confirmPassword: string,
+) => post<void>("/api/auth/reset-password", { resetToken, newPassword, confirmPassword });
 
 export function saveAuthSession(response: AuthResponse, persistent: boolean) {
   clearAuthSession();

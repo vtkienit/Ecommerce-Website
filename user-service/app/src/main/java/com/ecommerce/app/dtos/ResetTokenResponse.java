@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class ErrorResponse {
+public class ResetTokenResponse {
 
-    private String message;
+    private String resetToken;
 }

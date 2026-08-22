@@ -1,13 +1,23 @@
-import { useState } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
-import { ChevronDown, Menu, Search, ShoppingCart, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import {
+  ChevronDown,
+  LogIn,
+  LogOut,
+  Menu,
+  Search,
+  ShoppingCart,
+  UserRound,
+  UserRoundPlus,
+  X,
+} from "lucide-react";
 import clsx from "clsx";
 import Language from "../assets/icons/language.svg?react";
 import User from "../assets/icons/user.svg?react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useTheme } from "../contexts/ThemeContext";
 import ThemeToggle from "./ThemeToggle";
-import { getStoredUser } from "../services/auth";
+import { clearAuthSession, getStoredUser } from "../services/auth";
 
 const desktopNavLink =
   "relative cursor-pointer py-2 text-base font-medium text-text-secondary no-underline transition-colors " +
@@ -21,15 +31,61 @@ const mobileAccordion = "flex w-full items-center justify-between text-left text
 const mobileSecondaryItem = "ml-2.5";
 
 const Header = () => {
-  const userName = getStoredUser()?.name || "";
   const { lang, setLang, t } = useLanguage();
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+  const [authUser, setAuthUser] = useState(() => getStoredUser());
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuItemOpen, setMenuItemOpen] = useState<Record<number, boolean>>({});
   const location = useLocation();
   const isAccessoriesActive = location.pathname.startsWith("/accessories");
 
+  useEffect(() => {
+    const syncAuthUser = () => setAuthUser(getStoredUser());
+    window.addEventListener("storage", syncAuthUser);
+
+    return () => window.removeEventListener("storage", syncAuthUser);
+  }, []);
+
+  useEffect(() => {
+    if (!accountMenuOpen) {
+      return;
+    }
+
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (!accountMenuRef.current?.contains(event.target as Node)) {
+        setAccountMenuOpen(false);
+      }
+    };
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setAccountMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [accountMenuOpen]);
+
   const closeMenu = () => setMenuOpen(false);
+
+  const closeAccountMenu = () => setAccountMenuOpen(false);
+
+  const handleLogout = () => {
+    clearAuthSession();
+    setAuthUser(null);
+    closeAccountMenu();
+    closeMenu();
+    navigate("/login", { replace: true });
+  };
 
   const toggleMenuItem = (id: number) => {
     setMenuItemOpen((current) => ({
@@ -206,18 +262,79 @@ const Header = () => {
               </span>
             </button>
 
-            <Link
-              to="/login"
-              className="flex cursor-pointer items-center gap-2 text-text-secondary transition-colors hover:text-primary"
-              aria-label={userName ? `${t("hi")}, ${userName}` : t("login")}
-            >
-              <User width={25} height={25} aria-hidden="true" />
-              {userName && (
-                <span className="hidden lg:inline">
-                  {t("hi")}, {userName}
-                </span>
+            <div ref={accountMenuRef} className="relative">
+              <button
+                type="button"
+                className={clsx(
+                  "flex cursor-pointer items-center gap-2 rounded-md py-2 text-text-secondary transition-colors hover:text-primary",
+                  accountMenuOpen && "text-primary",
+                )}
+                aria-label={authUser ? `${t("hi")}, ${authUser.name}` : t("account")}
+                aria-haspopup="menu"
+                aria-expanded={accountMenuOpen}
+                aria-controls="account-menu"
+                onClick={() => setAccountMenuOpen((current) => !current)}
+              >
+                <User width={25} height={25} aria-hidden="true" />
+                {authUser && (
+                  <span className="hidden max-w-48 truncate lg:inline">
+                    {t("hi")}, {authUser.name}
+                  </span>
+                )}
+              </button>
+
+              {accountMenuOpen && (
+                <div
+                  id="account-menu"
+                  role="menu"
+                  className="absolute right-0 top-full z-[110] mt-2 w-52 overflow-hidden rounded-lg border border-border bg-bg p-1.5 text-sm shadow-xl"
+                >
+                  {authUser ? (
+                    <>
+                      <Link
+                        to="/profile"
+                        role="menuitem"
+                        className="flex items-center gap-3 rounded-md px-3 py-2.5 font-medium text-text-secondary transition-colors hover:bg-bg-secondary hover:text-primary"
+                        onClick={closeAccountMenu}
+                      >
+                        <UserRound size={18} aria-hidden="true" />
+                        {t("profile")}
+                      </Link>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-left font-medium text-red-600 transition-colors hover:bg-red-500/10 dark:text-red-400"
+                        onClick={handleLogout}
+                      >
+                        <LogOut size={18} aria-hidden="true" />
+                        {t("logout")}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        to="/login"
+                        role="menuitem"
+                        className="flex items-center gap-3 rounded-md px-3 py-2.5 font-medium text-text-secondary transition-colors hover:bg-bg-secondary hover:text-primary"
+                        onClick={closeAccountMenu}
+                      >
+                        <LogIn size={18} aria-hidden="true" />
+                        {t("login")}
+                      </Link>
+                      <Link
+                        to="/register"
+                        role="menuitem"
+                        className="flex items-center gap-3 rounded-md px-3 py-2.5 font-medium text-text-secondary transition-colors hover:bg-bg-secondary hover:text-primary"
+                        onClick={closeAccountMenu}
+                      >
+                        <UserRoundPlus size={18} aria-hidden="true" />
+                        {t("register")}
+                      </Link>
+                    </>
+                  )}
+                </div>
               )}
-            </Link>
+            </div>
 
             <button
               type="button"

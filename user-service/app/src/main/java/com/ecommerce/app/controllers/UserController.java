@@ -2,8 +2,7 @@ package com.ecommerce.app.controllers;
 
 import com.ecommerce.app.dtos.UserResponse;
 import com.ecommerce.app.services.UserService;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,8 +22,8 @@ public class UserController {
         return userService.getAllUsers();
     }
 
-    @GetMapping("/by-email")
-    public UserResponse getUserByEmail(@RequestParam String email) {
-        return userService.getUserByEmail(email);
+    @GetMapping("/me")
+    public UserResponse getCurrentUser(Authentication authentication) {
+        return userService.getCurrentUser(authentication.getName());
     }
 }

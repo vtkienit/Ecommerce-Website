@@ -5,7 +5,9 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class ErrorResponse {
+public class GoogleUserInfo {
 
-    private String message;
+    private String subject;
+    private String email;
+    private String name;
 }

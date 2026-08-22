@@ -2,6 +2,7 @@ package com.ecommerce.app.services;
 
 import com.ecommerce.app.dtos.AuthResponse;
 import com.ecommerce.app.dtos.GoogleAuthRequest;
+import com.ecommerce.app.dtos.GoogleUserInfo;
 import com.ecommerce.app.dtos.UserLoginRequest;
 import com.ecommerce.app.dtos.UserRegisterRequest;
 import com.ecommerce.app.dtos.UserResponse;
@@ -15,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 @Service
 @Transactional(readOnly = true)
@@ -50,11 +50,8 @@ public class UserService {
         user.setName(request.getName().trim());
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setPhone(normalizeOptional(request.getPhone()));
-        user.setAddress(normalizeOptional(request.getAddress()));
 
-        User savedUser = userRepository.save(user);
-        return createAuthResponse(savedUser, true);
+        return createAuthResponse(userRepository.save(user), true);
     }
 
     public AuthResponse login(UserLoginRequest request) {
@@ -71,32 +68,27 @@ public class UserService {
     @Transactional
     public AuthResponse authenticateWithGoogle(GoogleAuthRequest request) {
         GoogleUserInfo googleUser = googleIdentityService.verify(request.getCredential());
-        String email = normalizeEmail(googleUser.email());
+        String email = normalizeEmail(googleUser.getEmail());
 
-        Optional<User> userBySubject = userRepository.findByGoogleSubject(googleUser.subject());
-        if (userBySubject.isPresent()) {
-            return createAuthResponse(userBySubject.get(), false);
+        User user = userRepository.findByGoogleSubject(googleUser.getSubject()).orElse(null);
+        if (user != null) {
+            return createAuthResponse(user, false);
         }
 
-        Optional<User> userByEmail = userRepository.findByEmailIgnoreCase(email);
-        if (userByEmail.isPresent()) {
-            User existingUser = userByEmail.get();
+        user = userRepository.findByEmailIgnoreCase(email).orElse(null);
+        boolean newUser = user == null;
 
-            if (existingUser.getGoogleSubject() != null
-                    && !existingUser.getGoogleSubject().equals(googleUser.subject())) {
-                throw new BaseException("This email is linked to another Google account", HttpStatus.CONFLICT);
-            }
-
-            existingUser.setGoogleSubject(googleUser.subject());
-            return createAuthResponse(userRepository.save(existingUser), false);
+        if (newUser) {
+            user = new User();
+            user.setName(resolveGoogleName(googleUser.getName(), email));
+            user.setEmail(email);
+        } else if (user.getGoogleSubject() != null) {
+            throw new BaseException("This email is linked to another Google account", HttpStatus.CONFLICT);
         }
 
-        User newUser = new User();
-        newUser.setName(resolveGoogleName(googleUser.name(), email));
-        newUser.setEmail(email);
-        newUser.setGoogleSubject(googleUser.subject());
+        user.setGoogleSubject(googleUser.getSubject());
 
-        return createAuthResponse(userRepository.save(newUser), true);
+        return createAuthResponse(userRepository.save(user), newUser);
     }
 
     public List<UserResponse> getAllUsers() {
@@ -106,7 +98,7 @@ public class UserService {
                 .toList();
     }
 
-    public UserResponse getUserByEmail(String email) {
+    public UserResponse getCurrentUser(String email) {
         User user = userRepository.findByEmailIgnoreCase(normalizeEmail(email))
                 .orElseThrow(() -> new BaseException("User not found", HttpStatus.NOT_FOUND));
 
@@ -138,20 +130,10 @@ public class UserService {
         return email.trim().toLowerCase(Locale.ROOT);
     }
 
-    private String normalizeOptional(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-
-        return value.trim();
-    }
-
     private String resolveGoogleName(String name, String email) {
-        if (name != null && !name.isBlank()) {
-            return name.trim();
-        }
-
-        return email.substring(0, email.indexOf('@'));
+        return name == null || name.isBlank()
+                ? email.substring(0, email.indexOf('@'))
+                : name.trim();
     }
 
     private BaseException invalidCredentials() {

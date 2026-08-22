@@ -32,7 +32,4 @@ public class User {
 
     @Column(nullable = false)
     private String role = "Customer";
-
-    @OneToOne(mappedBy = "user")
-    private Cart cart;
 }

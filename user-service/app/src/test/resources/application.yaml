@@ -1,10 +1,15 @@
 spring:
+  data:
+    redis:
+      repositories:
+        enabled: false
   datasource:
     url: jdbc:h2:mem:user-service;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
     driver-class-name: org.h2.Driver
     username: sa
     password: ""
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: create-drop
 
@@ -13,9 +18,21 @@ security:
     secret: test-jwt-secret-that-is-longer-than-thirty-two-bytes
     expiration-ms: 3600000
 
+  password-reset:
+    secret: test-password-reset-secret-longer-than-thirty-two-bytes
+    code-ttl-seconds: 300
+    token-ttl-seconds: 600
+    resend-delay-seconds: 60
+    max-attempts: 5
+    max-requests-per-hour: 5
+
 google:
   oauth:
     client-id: ""
+
+resend:
+  api-key: ""
+  from-email: ""
 
 app:
   cors:

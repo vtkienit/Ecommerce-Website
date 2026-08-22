@@ -1,9 +1,14 @@
 package com.ecommerce.app.controllers;
 
 import com.ecommerce.app.dtos.AuthResponse;
+import com.ecommerce.app.dtos.ForgotPasswordRequest;
 import com.ecommerce.app.dtos.GoogleAuthRequest;
+import com.ecommerce.app.dtos.ResetPasswordRequest;
+import com.ecommerce.app.dtos.ResetTokenResponse;
 import com.ecommerce.app.dtos.UserLoginRequest;
 import com.ecommerce.app.dtos.UserRegisterRequest;
+import com.ecommerce.app.dtos.VerifyResetCodeRequest;
+import com.ecommerce.app.services.PasswordResetService;
 import com.ecommerce.app.services.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -14,9 +19,11 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final UserService userService;
+    private final PasswordResetService passwordResetService;
 
-    public AuthController(UserService userService) {
+    public AuthController(UserService userService, PasswordResetService passwordResetService) {
         this.userService = userService;
+        this.passwordResetService = passwordResetService;
     }
 
     @PostMapping("/register")
@@ -33,5 +40,22 @@ public class AuthController {
     @PostMapping("/google")
     public AuthResponse authenticateWithGoogle(@Valid @RequestBody GoogleAuthRequest request) {
         return userService.authenticateWithGoogle(request);
+    }
+
+    @PostMapping("/forgot-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.requestCode(request);
+    }
+
+    @PostMapping("/verify-reset-code")
+    public ResetTokenResponse verifyResetCode(@Valid @RequestBody VerifyResetCodeRequest request) {
+        return passwordResetService.verifyCode(request);
+    }
+
+    @PostMapping("/reset-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request);
     }
 }

@@ -58,11 +58,11 @@ export default function GoogleAuthButton({ mode, onCredential }: GoogleAuthButto
   const { lang, t } = useLanguage();
   const { theme } = useTheme();
   const buttonContainerRef = useRef<HTMLDivElement>(null);
+  const clientId = import.meta.env.GOOGLE_CLIENT_ID?.trim() ?? "";
   const [status, setStatus] = useState<"loading" | "ready" | "missing" | "error">(
-    import.meta.env.GOOGLE_CLIENT_ID ? "loading" : "missing",
+    clientId ? "loading" : "missing",
   );
   const [showConfigurationHelp, setShowConfigurationHelp] = useState(false);
-  const clientId = import.meta.env.GOOGLE_CLIENT_ID?.trim();
 
   useEffect(() => {
     activeCredentialHandler = onCredential;

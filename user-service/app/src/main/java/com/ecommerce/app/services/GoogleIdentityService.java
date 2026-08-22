@@ -1,5 +1,6 @@
 package com.ecommerce.app.services;
 
+import com.ecommerce.app.dtos.GoogleUserInfo;
 import com.ecommerce.app.exceptions.BaseException;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
