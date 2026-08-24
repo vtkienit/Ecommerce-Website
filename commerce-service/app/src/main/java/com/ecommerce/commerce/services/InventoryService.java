@@ -27,7 +27,7 @@ public class InventoryService {
     public InventoryService(
             InventoryRepository inventoryRepository,
             CatalogGateway catalogGateway,
-            @Value("${commerce.inventory.default-stock:0}") int defaultStock
+            @Value("${commerce.inventory.default-stock:10}") int defaultStock
     ) {
         this.inventoryRepository = inventoryRepository;
         this.catalogGateway = catalogGateway;

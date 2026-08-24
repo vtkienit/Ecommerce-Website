@@ -36,7 +36,9 @@ catalog:
 
 commerce:
   inventory:
-    default-stock: ${COMMERCE_DEFAULT_STOCK:0}
+    default-stock: ${COMMERCE_DEFAULT_STOCK:10}
+    seed:
+      enabled: ${COMMERCE_INVENTORY_SEED_ENABLED:true}
 
 payment:
   payos:

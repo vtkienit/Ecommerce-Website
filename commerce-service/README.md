@@ -26,6 +26,6 @@ Online checkout creates a payOS payment link and redirects the customer to its V
 
 The three payOS credentials are read from `PAYOS_CLIENT_ID`, `PAYOS_API_KEY` and `PAYOS_CHECKSUM_KEY`. Local callbacks default to `http://localhost:5173/payment/success` and `http://localhost:5173/payment/cancel`; production deployments can override them with `PAYOS_RETURN_URL` and `PAYOS_CANCEL_URL`. The webhook itself must be configured in the payOS payment channel with a public HTTPS Commerce Service URL.
 
-New Catalog variants start with zero stock after synchronization. An admin must set the actual on-hand quantity before customers can buy them. Stock cannot be reduced below the quantity reserved by active orders.
+On startup, Commerce synchronizes missing Catalog variants into inventory with an initial stock of 10. Existing stock is never overwritten. Set `COMMERCE_DEFAULT_STOCK` to change the initial quantity or `COMMERCE_INVENTORY_SEED_ENABLED=false` to disable automatic synchronization. Stock cannot be reduced below the quantity reserved by active orders.
 
 The service validates the JWT issued by `user-service` using the shared `JWT_SECRET` and runs on port `8082` by default.

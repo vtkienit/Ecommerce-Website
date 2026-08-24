@@ -25,6 +25,8 @@ catalog:
 commerce:
   inventory:
     default-stock: 10
+    seed:
+      enabled: false
 
 payment:
   payos:

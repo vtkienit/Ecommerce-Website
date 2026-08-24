@@ -263,6 +263,11 @@ class CommerceFlowTests {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.availableQuantity").value(7));
+
+        mockMvc.perform(post("/api/admin/inventory/sync")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].onHandQuantity").value(7));
     }
 
     @Test

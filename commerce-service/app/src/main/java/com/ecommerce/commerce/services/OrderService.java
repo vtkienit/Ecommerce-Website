@@ -43,7 +43,7 @@ public class OrderService {
             CatalogGateway catalogGateway,
             OrderLifecycleService orderLifecycleService,
             PaymentService paymentService,
-            @Value("${commerce.inventory.default-stock:0}") int defaultStock
+            @Value("${commerce.inventory.default-stock:10}") int defaultStock
     ) {
         this.cartRepository = cartRepository;
         this.orderRepository = orderRepository;
