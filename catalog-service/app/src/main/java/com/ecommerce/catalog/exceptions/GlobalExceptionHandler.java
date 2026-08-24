@@ -1,0 +1,46 @@
+package com.ecommerce.catalog.exceptions;
+
+import com.ecommerce.catalog.dtos.ErrorResponse;
+import jakarta.validation.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(CatalogException.class)
+    public ResponseEntity<ErrorResponse> handleCatalogException(CatalogException exception) {
+        return ResponseEntity
+                .status(exception.getStatus())
+                .body(new ErrorResponse(exception.getMessage()));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleValidationException(
+            ConstraintViolationException exception
+    ) {
+        String message = exception
+                .getConstraintViolations()
+                .iterator()
+                .next()
+                .getMessage();
+
+        return ResponseEntity
+                .badRequest()
+                .body(new ErrorResponse(message));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleException(Exception exception) {
+        log.error("Unhandled catalog exception", exception);
+
+        return ResponseEntity
+                .internalServerError()
+                .body(new ErrorResponse("Internal server error"));
+    }
+}

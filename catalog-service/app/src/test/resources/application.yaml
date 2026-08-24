@@ -13,3 +13,7 @@ spring:
         default_schema: catalog
         hbm2ddl:
           create_namespaces: true
+
+catalog:
+  seed:
+    enabled: false

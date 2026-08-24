@@ -25,3 +25,11 @@ spring:
         default_schema: ${CATALOG_DB_SCHEMA:catalog}
         hbm2ddl:
           create_namespaces: true
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+
+catalog:
+  seed:
+    enabled: ${CATALOG_SEED_ENABLED:true}

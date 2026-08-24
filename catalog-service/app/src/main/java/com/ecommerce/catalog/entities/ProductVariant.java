@@ -24,6 +24,8 @@ public class ProductVariant {
 
     private String size;
 
+    private String thickness;
+
     private String color;
 
     @Column(nullable = false, precision = 19, scale = 2)
