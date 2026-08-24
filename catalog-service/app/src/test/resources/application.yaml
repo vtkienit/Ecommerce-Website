@@ -17,3 +17,7 @@ spring:
 catalog:
   seed:
     enabled: false
+
+security:
+  jwt:
+    secret: catalog-test-secret-with-at-least-32-bytes

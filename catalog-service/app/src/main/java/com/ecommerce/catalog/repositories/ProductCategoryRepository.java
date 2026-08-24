@@ -11,4 +11,12 @@ public interface ProductCategoryRepository extends JpaRepository<ProductCategory
     List<ProductCategory> findAllByOrderByNameAsc();
 
     Optional<ProductCategory> findBySlugIgnoreCase(String slug);
+
+    boolean existsByNameIgnoreCase(String name);
+
+    boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
+
+    boolean existsBySlugIgnoreCase(String slug);
+
+    boolean existsBySlugIgnoreCaseAndIdNot(String slug, Long id);
 }

@@ -4,17 +4,28 @@ import com.ecommerce.catalog.entities.*;
 import com.ecommerce.catalog.repositories.FlashSaleRepository;
 import com.ecommerce.catalog.repositories.ProductCategoryRepository;
 import com.ecommerce.catalog.repositories.ProductRepository;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
+import javax.crypto.SecretKey;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -22,8 +33,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class CatalogFlowTests {
 
+    private static final String SECRET = "catalog-test-secret-with-at-least-32-bytes";
+
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private JsonMapper objectMapper;
 
     @Autowired
     private ProductRepository productRepository;
@@ -157,6 +173,174 @@ class CatalogFlowTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(4))
                 .andExpect(jsonPath("$[0].id").isNumber());
+    }
+
+    @Test
+    void catalogAdministrationRequiresAdminRole() throws Exception {
+        mockMvc.perform(get("/api/admin/catalog/products"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(get("/api/admin/catalog/products")
+                        .header("Authorization", "Bearer " + token("Customer")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminCanManageCategoriesProductsVariantsAndImages() throws Exception {
+        String authorization = "Bearer " + token("Admin");
+        String categoryBody = mockMvc.perform(post("/api/admin/catalog/categories")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Accessories","slug":""}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.slug").value("accessories"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        long categoryId = objectMapper.readTree(categoryBody).path("id").asLong();
+
+        String productBody = mockMvc.perform(post("/api/admin/catalog/products")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "categoryId":%d,
+                                  "name":"Cotton Blanket",
+                                  "slug":"",
+                                  "brand":"QuyDung",
+                                  "description":"Soft cotton blanket"
+                                }
+                                """.formatted(categoryId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.slug").value("cotton-blanket"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        long productId = objectMapper.readTree(productBody).path("id").asLong();
+
+        String variantBody = mockMvc.perform(post("/api/admin/catalog/products/{id}/variants", productId)
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "sku":" blanket-blue ",
+                                  "size":"200 x 220",
+                                  "color":"Blue",
+                                  "price":650000
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.variants[0].sku").value("BLANKET-BLUE"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        long variantId = firstId(variantBody, "variants");
+
+        String imageBody = mockMvc.perform(post("/api/admin/catalog/products/{id}/images", productId)
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"imageUrl":"blanket.jpg","primary":false}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.images[0].primary").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        long imageId = firstId(imageBody, "images");
+
+        mockMvc.perform(patch("/api/admin/catalog/products/{id}", productId)
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "categoryId":%d,
+                                  "name":"Premium Cotton Blanket",
+                                  "slug":"premium-cotton-blanket",
+                                  "brand":"QuyDung",
+                                  "description":"Updated"
+                                }
+                                """.formatted(categoryId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Premium Cotton Blanket"));
+
+        mockMvc.perform(patch("/api/admin/catalog/variants/{id}", variantId)
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"sku":"BLANKET-BLUE","size":"220 x 240","color":"Blue","price":700000}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.variants[0].price").value(700000));
+
+        mockMvc.perform(patch("/api/admin/catalog/images/{id}", imageId)
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"imageUrl":"blanket-updated.jpg","primary":true}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.images[0].imageUrl").value("blanket-updated.jpg"));
+
+        mockMvc.perform(delete("/api/admin/catalog/images/{id}", imageId)
+                        .header("Authorization", authorization))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.images.length()").value(0));
+        mockMvc.perform(delete("/api/admin/catalog/variants/{id}", variantId)
+                        .header("Authorization", authorization))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.variants.length()").value(0));
+        mockMvc.perform(delete("/api/admin/catalog/products/{id}", productId)
+                        .header("Authorization", authorization))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/admin/catalog/categories/{id}", categoryId)
+                        .header("Authorization", authorization))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void adminCatalogRejectsDuplicatesInvalidJsonAndUnsafeDeletes() throws Exception {
+        String authorization = "Bearer " + token("Admin");
+        long mattressId = cloudMattress.getProductCategory().getId();
+
+        mockMvc.perform(post("/api/admin/catalog/categories")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Another Mattress","slug":"mattress"}
+                                """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Category slug already exists"));
+
+        mockMvc.perform(post("/api/admin/catalog/products")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{invalid"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid JSON request"));
+
+        mockMvc.perform(delete("/api/admin/catalog/categories/{id}", mattressId)
+                        .header("Authorization", authorization))
+                .andExpect(status().isConflict());
+    }
+
+    private long firstId(String responseBody, String collection) throws Exception {
+        JsonNode body = objectMapper.readTree(responseBody);
+        return body.path(collection).get(0).path("id").asLong();
+    }
+
+    private String token(String role) {
+        SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+        return Jwts.builder()
+                .subject("admin@example.com")
+                .claim("id", 1L)
+                .claim("role", role)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 60_000))
+                .signWith(key)
+                .compact();
     }
 
     private ProductCategory createCategory(String name, String slug) {

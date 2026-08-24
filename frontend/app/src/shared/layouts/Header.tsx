@@ -6,6 +6,7 @@ import {
   LogIn,
   LogOut,
   Menu,
+  Package,
   Search,
   ShoppingCart,
   UserRound,
@@ -301,15 +302,26 @@ const Header = () => {
                   {authUser ? (
                     <>
                       {authUser.role.toLowerCase() === "admin" && (
-                        <Link
-                          to="/admin/inventory"
-                          role="menuitem"
-                          className="flex items-center gap-3 rounded-md px-3 py-2.5 font-medium text-text-secondary transition-colors hover:bg-bg-secondary hover:text-primary"
-                          onClick={closeAccountMenu}
-                        >
-                          <Boxes size={18} aria-hidden="true" />
-                          {t("inventoryManagement")}
-                        </Link>
+                        <>
+                          <Link
+                            to="/admin/catalog"
+                            role="menuitem"
+                            className="flex items-center gap-3 rounded-md px-3 py-2.5 font-medium text-text-secondary transition-colors hover:bg-bg-secondary hover:text-primary"
+                            onClick={closeAccountMenu}
+                          >
+                            <Package size={18} aria-hidden="true" />
+                            {t("catalogManagement")}
+                          </Link>
+                          <Link
+                            to="/admin/inventory"
+                            role="menuitem"
+                            className="flex items-center gap-3 rounded-md px-3 py-2.5 font-medium text-text-secondary transition-colors hover:bg-bg-secondary hover:text-primary"
+                            onClick={closeAccountMenu}
+                          >
+                            <Boxes size={18} aria-hidden="true" />
+                            {t("inventoryManagement")}
+                          </Link>
+                        </>
                       )}
                       <Link
                         to="/profile"

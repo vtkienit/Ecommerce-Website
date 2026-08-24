@@ -26,6 +26,10 @@ spring:
         hbm2ddl:
           create_namespaces: true
 
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}

@@ -1,3 +1,4 @@
+import { lazy, Suspense, type ReactNode } from "react";
 import { Route, Routes } from "react-router-dom";
 import AccountPage from "../pages/AccountPage";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage";
@@ -7,7 +8,15 @@ import MattressPage from "../pages/MattressPage";
 import ProductDetailPage from "../pages/ProductDetailPage";
 import RegisterPage from "../pages/RegisterPage";
 import CartPage from "../pages/CartPage";
-import InventoryAdminPage from "../pages/InventoryAdminPage";
+
+const CatalogAdminPage = lazy(() => import("../pages/CatalogAdminPage"));
+const InventoryAdminPage = lazy(() => import("../pages/InventoryAdminPage"));
+
+const adminPage = (page: ReactNode) => (
+  <Suspense fallback={<div className="min-h-screen bg-bg" />}>
+    {page}
+  </Suspense>
+);
 
 export default function AppRouter() {
   return (
@@ -17,7 +26,8 @@ export default function AppRouter() {
       <Route path="/catalog/:categorySlug" element={<MattressPage />} />
       <Route path="/products/:slug" element={<ProductDetailPage />} />
       <Route path="/cart" element={<CartPage />} />
-      <Route path="/admin/inventory" element={<InventoryAdminPage />} />
+      <Route path="/admin/inventory" element={adminPage(<InventoryAdminPage />)} />
+      <Route path="/admin/catalog" element={adminPage(<CatalogAdminPage />)} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
