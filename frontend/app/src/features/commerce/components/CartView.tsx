@@ -1,12 +1,13 @@
 import { useState, type FormEvent } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { LoaderCircle, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { Banknote, LoaderCircle, Minus, Plus, QrCode, ShoppingBag, Trash2 } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
 import MainLayout from "../../../shared/layouts/MainLayout";
 import { getStoredUser } from "../../auth/model/authSession";
 import { checkout } from "../api/commerceApi";
 import { useCart } from "../context/CartContext";
+import type { PaymentMethod } from "../model/commerceTypes";
 
 export default function CartView() {
   const { lang, t } = useLanguage();
@@ -16,6 +17,7 @@ export default function CartView() {
   const [recipientName, setRecipientName] = useState(user?.name ?? "");
   const [recipientPhone, setRecipientPhone] = useState(user?.phone ?? "");
   const [shippingAddress, setShippingAddress] = useState(user?.address ?? "");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
   const [actionError, setActionError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const currency = new Intl.NumberFormat(lang === "vi" ? "vi-VN" : "en-US", {
@@ -53,13 +55,20 @@ export default function CartView() {
     setActionError("");
     setIsSubmitting(true);
     try {
-      await checkout({
+      const order = await checkout({
         recipientName: recipientName.trim(),
         recipientPhone: recipientPhone.trim(),
         shippingAddress: shippingAddress.trim(),
-        paymentMethod: "COD",
+        paymentMethod,
       });
-      await refreshCart();
+
+      if (paymentMethod === "PAYOS") {
+        if (!order.checkoutUrl) throw new Error(t("checkoutError"));
+        window.location.assign(order.checkoutUrl);
+        return;
+      }
+
+      await refreshCart().catch(() => undefined);
       navigate("/purchases", { replace: true });
     } catch (requestError) {
       setActionError(requestError instanceof Error ? requestError.message : t("checkoutError"));
@@ -165,9 +174,25 @@ export default function CartView() {
                       className="mt-2 min-h-24 w-full resize-y rounded-md border border-border bg-bg px-3 py-2.5 text-text outline-none focus:border-primary"
                     />
                   </label>
-                  <div className="rounded-md bg-bg-secondary p-3 text-sm text-text-secondary">
-                    <span className="font-semibold text-text">{t("cashOnDelivery")}</span>
-                  </div>
+                  <fieldset>
+                    <legend className="text-sm font-medium text-text-secondary">{t("paymentMethod")}</legend>
+                    <div className="mt-2 grid gap-2">
+                      <PaymentOption
+                        checked={paymentMethod === "COD"}
+                        icon={<Banknote size={20} />}
+                        title={t("cashOnDelivery")}
+                        description={t("cashOnDeliveryDescription")}
+                        onChange={() => setPaymentMethod("COD")}
+                      />
+                      <PaymentOption
+                        checked={paymentMethod === "PAYOS"}
+                        icon={<QrCode size={20} />}
+                        title={t("onlinePayment")}
+                        description={t("onlinePaymentDescription")}
+                        onChange={() => setPaymentMethod("PAYOS")}
+                      />
+                    </div>
+                  </fieldset>
                 </div>
 
                 <div className="my-5 border-t border-border" />
@@ -184,7 +209,11 @@ export default function CartView() {
                   className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-md bg-primary font-semibold text-white disabled:opacity-60"
                 >
                   {isSubmitting && <LoaderCircle className="animate-spin" size={18} />}
-                  {isSubmitting ? t("processingOrder") : t("placeOrder")}
+                  {isSubmitting
+                    ? t("processingOrder")
+                    : paymentMethod === "PAYOS"
+                      ? t("continueToPayOS")
+                      : t("placeOrder")}
                 </button>
               </aside>
             </form>
@@ -192,6 +221,39 @@ export default function CartView() {
         </div>
       </main>
     </MainLayout>
+  );
+}
+
+function PaymentOption({
+  checked,
+  icon,
+  title,
+  description,
+  onChange,
+}: {
+  checked: boolean;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  onChange: () => void;
+}) {
+  return (
+    <label className={`flex cursor-pointer gap-3 rounded-lg border p-3 transition-colors ${
+      checked ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+    }`}>
+      <input
+        type="radio"
+        name="paymentMethod"
+        checked={checked}
+        onChange={onChange}
+        className="sr-only"
+      />
+      <span className={`mt-0.5 ${checked ? "text-primary" : "text-text-tertiary"}`}>{icon}</span>
+      <span>
+        <span className="block text-sm font-semibold text-text">{title}</span>
+        <span className="mt-0.5 block text-xs leading-5 text-text-tertiary">{description}</span>
+      </span>
+    </label>
   );
 }
 

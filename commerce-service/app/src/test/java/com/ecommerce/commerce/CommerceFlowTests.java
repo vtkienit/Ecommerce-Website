@@ -1,6 +1,7 @@
 package com.ecommerce.commerce;
 
 import com.ecommerce.commerce.clients.CatalogGateway;
+import com.ecommerce.commerce.clients.PayOSGateway;
 import com.ecommerce.commerce.dtos.CatalogVariantSnapshot;
 import com.ecommerce.commerce.entities.Inventory;
 import com.ecommerce.commerce.entities.PaymentStatus;
@@ -21,6 +22,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -30,6 +32,15 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import com.ecommerce.commerce.exceptions.CommerceException;
+import vn.payos.model.v2.paymentRequests.CreatePaymentLinkRequest;
+import vn.payos.model.v2.paymentRequests.CreatePaymentLinkResponse;
+import vn.payos.model.v2.paymentRequests.PaymentLink;
+import vn.payos.model.v2.paymentRequests.PaymentLinkStatus;
+import vn.payos.model.webhooks.WebhookData;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -325,6 +336,90 @@ class CommerceFlowTests {
         assertThat(paymentRepository.findAll().getFirst().getStatus()).isEqualTo(PaymentStatus.PAID);
     }
 
+    @Test
+    void onlineCheckoutCreatesPayOSPaymentLink() throws Exception {
+        String token = token(81L);
+        addToCart(token, 101L, 1);
+
+        mockMvc.perform(post("/api/orders/checkout")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkoutJson("PAYOS")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paymentMethod").value("PAYOS"))
+                .andExpect(jsonPath("$.paymentStatus").value("PENDING"))
+                .andExpect(jsonPath("$.checkoutUrl").value(org.hamcrest.Matchers.startsWith("https://pay.test/")));
+    }
+
+    @Test
+    void validPayOSWebhookMarksOnlinePaymentAsPaid() throws Exception {
+        String token = token(82L);
+        long orderId = checkout(token, 101L, 1, "PAYOS");
+
+        mockMvc.perform(post("/api/payments/payos/webhook")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(webhookJson(orderId, 80000, "valid")))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/orders/{id}", orderId)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paymentStatus").value("PAID"));
+        assertThat(paymentRepository.findAll().getFirst().getProviderReference())
+                .isEqualTo("bank-ref-" + orderId);
+    }
+
+    @Test
+    void payOSWebhookRejectsInvalidSignatureOrAmount() throws Exception {
+        String token = token(83L);
+        long orderId = checkout(token, 101L, 1, "PAYOS");
+
+        mockMvc.perform(post("/api/payments/payos/webhook")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(webhookJson(orderId, 80000, "invalid")))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post("/api/payments/payos/webhook")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(webhookJson(orderId, 1, "valid")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("payOS payment does not match the order"));
+        assertThat(paymentRepository.findAll().getFirst().getStatus()).isEqualTo(PaymentStatus.PENDING);
+    }
+
+    @Test
+    void signedPayOSWebhookForUnknownOrderIsAcknowledged() throws Exception {
+        mockMvc.perform(post("/api/payments/payos/webhook")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(webhookJson(999999L, 1000, "valid")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void onlineOrderCanBeConfirmedOnlyAfterPaymentSync() throws Exception {
+        String customerToken = token(84L);
+        long orderId = checkout(customerToken, 101L, 1, "PAYOS");
+        String adminToken = token(85L, "Admin");
+
+        mockMvc.perform(patch("/api/admin/orders/{id}/status", orderId)
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"CONFIRMED"}
+                                """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value(
+                        "Online payment must be completed before confirming the order"
+                ));
+
+        mockMvc.perform(post("/api/orders/{id}/payment/sync", orderId)
+                        .header("Authorization", "Bearer " + customerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paymentStatus").value("PAID"));
+
+        updateOrderStatus(adminToken, orderId, "CONFIRMED", "CONFIRMED");
+    }
+
     private void addToCart(String token, Long variantId, int quantity) throws Exception {
         mockMvc.perform(post("/api/cart/items")
                         .header("Authorization", "Bearer " + token)
@@ -334,11 +429,15 @@ class CommerceFlowTests {
     }
 
     private long checkout(String token, Long variantId, int quantity) throws Exception {
+        return checkout(token, variantId, quantity, "COD");
+    }
+
+    private long checkout(String token, Long variantId, int quantity, String paymentMethod) throws Exception {
         addToCart(token, variantId, quantity);
         String body = mockMvc.perform(post("/api/orders/checkout")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(checkoutJson()))
+                        .content(checkoutJson(paymentMethod)))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -361,14 +460,36 @@ class CommerceFlowTests {
     }
 
     private String checkoutJson() {
+        return checkoutJson("COD");
+    }
+
+    private String checkoutJson(String paymentMethod) {
         return """
                 {
                   "recipientName":"Kien Vu",
                   "recipientPhone":"0901234567",
                   "shippingAddress":"Ha Noi",
-                  "paymentMethod":"COD"
+                  "paymentMethod":"%s"
                 }
-                """;
+                """.formatted(paymentMethod);
+    }
+
+    private String webhookJson(long orderId, long amount, String signature) {
+        return """
+                {
+                  "code":"00",
+                  "desc":"success",
+                  "success":true,
+                  "data":{
+                    "orderCode":%d,
+                    "amount":%d,
+                    "paymentLinkId":"payos-%d",
+                    "reference":"bank-ref-%d",
+                    "code":"00"
+                  },
+                  "signature":"%s"
+                }
+                """.formatted(orderId, amount, orderId, orderId, signature);
     }
 
     private String token(Long userId) {
@@ -402,6 +523,59 @@ class CommerceFlowTests {
                 @Override
                 public List<CatalogVariantSnapshot> getVariants() {
                     return List.of(createVariant(101L), createVariant(102L));
+                }
+            };
+        }
+
+        @Bean
+        @Primary
+        PayOSGateway payOSGateway() {
+            return new PayOSGateway() {
+                private final Map<Long, Long> amounts = new ConcurrentHashMap<>();
+
+                @Override
+                public CreatePaymentLinkResponse createPaymentLink(CreatePaymentLinkRequest request) {
+                    amounts.put(request.getOrderCode(), request.getAmount());
+                    CreatePaymentLinkResponse response = new CreatePaymentLinkResponse();
+                    response.setOrderCode(request.getOrderCode());
+                    response.setAmount(request.getAmount());
+                    response.setPaymentLinkId("payos-" + request.getOrderCode());
+                    response.setCheckoutUrl("https://pay.test/" + request.getOrderCode());
+                    response.setStatus(PaymentLinkStatus.PENDING);
+                    return response;
+                }
+
+                @Override
+                @SuppressWarnings("unchecked")
+                public WebhookData verifyWebhook(Object payload) {
+                    Map<String, Object> webhook = (Map<String, Object>) payload;
+                    if (!"valid".equals(webhook.get("signature"))) {
+                        throw new CommerceException("Invalid payOS webhook signature", HttpStatus.BAD_REQUEST);
+                    }
+                    Map<String, Object> data = (Map<String, Object>) webhook.get("data");
+                    WebhookData result = new WebhookData();
+                    result.setOrderCode(((Number) data.get("orderCode")).longValue());
+                    result.setAmount(((Number) data.get("amount")).longValue());
+                    result.setPaymentLinkId((String) data.get("paymentLinkId"));
+                    result.setReference((String) data.get("reference"));
+                    result.setCode((String) data.get("code"));
+                    return result;
+                }
+
+                @Override
+                public PaymentLink getPaymentLink(Long orderCode) {
+                    long amount = amounts.get(orderCode);
+                    PaymentLink paymentLink = new PaymentLink();
+                    paymentLink.setId("payos-" + orderCode);
+                    paymentLink.setOrderCode(orderCode);
+                    paymentLink.setAmount(amount);
+                    paymentLink.setAmountPaid(amount);
+                    paymentLink.setStatus(PaymentLinkStatus.PAID);
+                    return paymentLink;
+                }
+
+                @Override
+                public void cancelPaymentLink(Long orderCode) {
                 }
             };
         }

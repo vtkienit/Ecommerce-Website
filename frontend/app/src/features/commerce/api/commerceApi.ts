@@ -51,6 +51,9 @@ export const getOrders = () => commerceRequest<Order[]>("/api/orders");
 export const cancelOrder = (orderId: number) =>
   commerceRequest<Order>(`/api/orders/${orderId}/cancel`, "PATCH");
 
+export const syncOrderPayment = (orderId: number) =>
+  commerceRequest<Order>(`/api/orders/${orderId}/payment/sync`, "POST");
+
 export const getAdminOrders = (status?: OrderStatus) =>
   commerceRequest<Order[]>(`/api/admin/orders${status ? `?status=${status}` : ""}`);
 

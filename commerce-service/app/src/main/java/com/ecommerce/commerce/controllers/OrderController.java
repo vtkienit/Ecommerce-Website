@@ -53,4 +53,12 @@ public class OrderController {
     ) {
         return orderService.cancelOrder(userId, orderId);
     }
+
+    @PostMapping("/{orderId}/payment/sync")
+    public OrderResponse syncPayment(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long orderId
+    ) {
+        return orderService.syncPayment(userId, orderId);
+    }
 }

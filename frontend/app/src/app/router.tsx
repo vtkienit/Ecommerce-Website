@@ -8,6 +8,7 @@ import MattressPage from "../pages/MattressPage";
 import ProductDetailPage from "../pages/ProductDetailPage";
 import RegisterPage from "../pages/RegisterPage";
 import CartPage from "../pages/CartPage";
+import PaymentResultPage from "../pages/PaymentResultPage";
 
 const CatalogAdminPage = lazy(() => import("../pages/CatalogAdminPage"));
 const InventoryAdminPage = lazy(() => import("../pages/InventoryAdminPage"));
@@ -27,6 +28,8 @@ export default function AppRouter() {
       <Route path="/catalog/:categorySlug" element={<MattressPage />} />
       <Route path="/products/:slug" element={<ProductDetailPage />} />
       <Route path="/cart" element={<CartPage />} />
+      <Route path="/payment/success" element={<PaymentResultPage mode="success" />} />
+      <Route path="/payment/cancel" element={<PaymentResultPage mode="cancel" />} />
       <Route path="/admin/inventory" element={adminPage(<InventoryAdminPage />)} />
       <Route path="/admin/catalog" element={adminPage(<CatalogAdminPage />)} />
       <Route path="/admin/orders" element={adminPage(<OrderAdminPage />)} />

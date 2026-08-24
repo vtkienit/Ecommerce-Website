@@ -32,6 +32,7 @@ public class OrderService {
     private final StockReservationRepository reservationRepository;
     private final CatalogGateway catalogGateway;
     private final OrderLifecycleService orderLifecycleService;
+    private final PaymentService paymentService;
     private final int defaultStock;
 
     public OrderService(
@@ -41,6 +42,7 @@ public class OrderService {
             StockReservationRepository reservationRepository,
             CatalogGateway catalogGateway,
             OrderLifecycleService orderLifecycleService,
+            PaymentService paymentService,
             @Value("${commerce.inventory.default-stock:0}") int defaultStock
     ) {
         this.cartRepository = cartRepository;
@@ -49,13 +51,14 @@ public class OrderService {
         this.reservationRepository = reservationRepository;
         this.catalogGateway = catalogGateway;
         this.orderLifecycleService = orderLifecycleService;
+        this.paymentService = paymentService;
         this.defaultStock = defaultStock;
     }
 
     public OrderResponse checkout(Long userId, CheckoutRequest request) {
         String paymentMethod = request.getPaymentMethod().trim().toUpperCase(Locale.ROOT);
-        if (!paymentMethod.equals("COD")) {
-            throw new CommerceException("Only COD payment is currently supported", HttpStatus.BAD_REQUEST);
+        if (!paymentService.supports(paymentMethod)) {
+            throw new CommerceException("Unsupported payment method", HttpStatus.BAD_REQUEST);
         }
 
         Cart cart = cartRepository
@@ -84,9 +87,12 @@ public class OrderService {
         }
 
         calculateTotals(order);
-        addPayment(order, paymentMethod);
+        Payment payment = addPayment(order, paymentMethod);
         Order savedOrder = orderRepository.save(order);
         createReservations(savedOrder);
+        if (PaymentService.PAYOS.equals(paymentMethod)) {
+            paymentService.createOnlinePayment(savedOrder, payment);
+        }
 
         cart.getItems().clear();
         cartRepository.save(cart);
@@ -111,6 +117,9 @@ public class OrderService {
         Order order = orderRepository
                 .findByIdAndUserIdForUpdate(orderId, userId)
                 .orElseThrow(() -> new CommerceException("Order not found", HttpStatus.NOT_FOUND));
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            return toResponse(order);
+        }
         if (order.getStatus() != OrderStatus.PENDING && order.getStatus() != OrderStatus.CONFIRMED) {
             throw new CommerceException("This order can no longer be cancelled", HttpStatus.CONFLICT);
         }
@@ -118,6 +127,14 @@ public class OrderService {
         orderLifecycleService.cancel(order);
         order.setStatus(OrderStatus.CANCELLED);
         return toResponse(orderRepository.save(order));
+    }
+
+    public OrderResponse syncPayment(Long userId, Long orderId) {
+        Order order = orderRepository
+                .findByIdAndUserIdForUpdate(orderId, userId)
+                .orElseThrow(() -> new CommerceException("Order not found", HttpStatus.NOT_FOUND));
+        paymentService.syncOnlinePayment(order);
+        return toResponse(order);
     }
 
     private Order createOrder(Long userId, CheckoutRequest request) {
@@ -176,7 +193,7 @@ public class OrderService {
         order.setTotalAmount(subtotal);
     }
 
-    private void addPayment(Order order, String paymentMethod) {
+    private Payment addPayment(Order order, String paymentMethod) {
         Payment payment = new Payment();
         payment.setOrder(order);
         payment.setPaymentMethod(paymentMethod);
@@ -184,6 +201,7 @@ public class OrderService {
         payment.setStatus(PaymentStatus.PENDING);
         payment.setCreatedAt(LocalDateTime.now());
         order.getPayments().add(payment);
+        return payment;
     }
 
     private void createReservations(Order order) {
@@ -238,6 +256,7 @@ public class OrderService {
                 order.getStatus(),
                 payment == null ? null : payment.getPaymentMethod(),
                 payment == null ? null : payment.getStatus(),
+                payment == null ? null : payment.getCheckoutUrl(),
                 order.getCreatedAt(),
                 items
         );

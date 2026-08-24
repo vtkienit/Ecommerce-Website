@@ -3,7 +3,7 @@ import { LoaderCircle, PackageCheck, ShoppingBag } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLanguage, type TranslationKey } from "../../../app/contexts/LanguageContext";
 import { cancelOrder, getOrders } from "../../commerce/api/commerceApi";
-import type { Order, OrderStatus } from "../../commerce/model/commerceTypes";
+import type { Order, OrderStatus, PaymentStatus } from "../../commerce/model/commerceTypes";
 import { SectionHeading } from "./AccountFormParts";
 
 const statusKeys: Record<OrderStatus, TranslationKey> = {
@@ -114,15 +114,20 @@ export default function PurchaseList() {
 
               <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
                 <span className="text-sm text-text-secondary">
-                  {order.paymentStatus === "PAID"
-                    ? t("paymentPaid")
-                    : order.paymentStatus === "CANCELLED"
-                      ? t("paymentCancelled")
-                      : t("paymentPending")}
+                  {order.paymentMethod === "PAYOS" ? t("onlinePayment") : t("cashOnDelivery")} · {paymentLabel(order.paymentStatus, t)}
                 </span>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <span className="text-lg font-bold text-red-700">{currency.format(order.totalAmount)}</span>
-                  {(order.status === "PENDING" || order.status === "CONFIRMED") && (
+                  {order.paymentMethod === "PAYOS" && order.paymentStatus === "PENDING" && order.checkoutUrl && (
+                    <a
+                      href={order.checkoutUrl}
+                      className="rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-white"
+                    >
+                      {t("payNow")}
+                    </a>
+                  )}
+                  {(order.status === "PENDING" || order.status === "CONFIRMED")
+                    && !(order.paymentMethod === "PAYOS" && order.paymentStatus === "PAID") && (
                     <button
                       type="button"
                       disabled={cancellingId === order.id}
@@ -146,4 +151,15 @@ function statusClass(status: OrderStatus) {
   if (status === "DELIVERED") return "bg-green-500/10 text-green-700 dark:text-green-300";
   if (status === "CANCELLED") return "bg-red-500/10 text-red-700 dark:text-red-300";
   return "bg-primary/10 text-primary";
+}
+
+function paymentLabel(
+  status: PaymentStatus | null,
+  t: (key: TranslationKey) => string,
+) {
+  if (status === "PAID") return t("paymentPaid");
+  if (status === "CANCELLED") return t("paymentCancelled");
+  if (status === "FAILED") return t("paymentFailed");
+  if (status === "REFUNDED") return t("paymentRefunded");
+  return t("paymentPending");
 }

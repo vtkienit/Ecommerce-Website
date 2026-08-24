@@ -25,8 +25,12 @@ export type CheckoutRequest = {
   recipientName: string;
   recipientPhone: string;
   shippingAddress: string;
-  paymentMethod: "COD";
+  paymentMethod: PaymentMethod;
 };
+
+export type PaymentMethod = "COD" | "PAYOS";
+
+export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "REFUNDED" | "CANCELLED";
 
 export type OrderItem = {
   id: number;
@@ -58,8 +62,9 @@ export type Order = {
   discountAmount: number;
   totalAmount: number;
   status: OrderStatus;
-  paymentMethod: string | null;
-  paymentStatus: "PENDING" | "PAID" | "FAILED" | "REFUNDED" | "CANCELLED" | null;
+  paymentMethod: PaymentMethod | null;
+  paymentStatus: PaymentStatus | null;
+  checkoutUrl: string | null;
   createdAt: string;
   items: OrderItem[];
 };

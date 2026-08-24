@@ -36,6 +36,12 @@ public class Payment {
     @Column(unique = true)
     private String externalTransactionId;
 
+    @Column(unique = true)
+    private String providerReference;
+
+    @Column(length = 1000)
+    private String checkoutUrl;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 }

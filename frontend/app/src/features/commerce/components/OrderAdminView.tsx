@@ -175,8 +175,10 @@ export default function OrderAdminView() {
           ) : (
             <div className="mt-6 space-y-4">
               {filteredOrders.map((order) => {
-                const target = nextStatus[order.status];
-                const canCancel = ["PENDING", "CONFIRMED", "PROCESSING"].includes(order.status);
+                const awaitingOnlinePayment = order.paymentMethod === "PAYOS" && order.paymentStatus !== "PAID";
+                const target = awaitingOnlinePayment ? undefined : nextStatus[order.status];
+                const canCancel = ["PENDING", "CONFIRMED", "PROCESSING"].includes(order.status)
+                  && !(order.paymentMethod === "PAYOS" && order.paymentStatus === "PAID");
                 return (
                   <article key={order.id} className="overflow-hidden rounded-xl border border-border bg-bg shadow-sm">
                     <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border bg-bg-secondary px-4 py-4 sm:px-5">
@@ -217,7 +219,7 @@ export default function OrderAdminView() {
 
                     <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 sm:px-5">
                       <span className="text-sm text-text-secondary">
-                        {order.paymentMethod} · {paymentLabel(order, t)}
+                        {order.paymentMethod === "PAYOS" ? t("onlinePayment") : t("cashOnDelivery")} · {paymentLabel(order, t)}
                       </span>
                       <div className="flex flex-wrap gap-2">
                         {canCancel && (

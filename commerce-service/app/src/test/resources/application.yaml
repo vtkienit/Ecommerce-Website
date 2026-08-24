@@ -26,6 +26,14 @@ commerce:
   inventory:
     default-stock: 10
 
+payment:
+  payos:
+    client-id: test-client-id
+    api-key: test-api-key
+    checksum-key: test-checksum-key
+    return-url: http://localhost:5173/payment/success
+    cancel-url: http://localhost:5173/payment/cancel
+
 app:
   cors:
     allowed-origins: http://localhost:5173
