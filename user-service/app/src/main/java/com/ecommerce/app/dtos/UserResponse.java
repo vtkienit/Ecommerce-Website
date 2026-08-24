@@ -3,6 +3,8 @@ package com.ecommerce.app.dtos;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.time.LocalDate;
+
 @Getter
 @AllArgsConstructor
 public class UserResponse {
@@ -12,5 +14,7 @@ public class UserResponse {
     private String email;
     private String phone;
     private String address;
+    private String gender;
+    private LocalDate dateOfBirth;
     private String role;
 }

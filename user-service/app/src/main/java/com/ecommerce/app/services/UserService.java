@@ -4,6 +4,8 @@ import com.ecommerce.app.dtos.AuthResponse;
 import com.ecommerce.app.dtos.GoogleAuthRequest;
 import com.ecommerce.app.dtos.GoogleUserInfo;
 import com.ecommerce.app.dtos.UserLoginRequest;
+import com.ecommerce.app.dtos.UserAddressUpdateRequest;
+import com.ecommerce.app.dtos.UserProfileUpdateRequest;
 import com.ecommerce.app.dtos.UserRegisterRequest;
 import com.ecommerce.app.dtos.UserResponse;
 import com.ecommerce.app.entities.User;
@@ -99,10 +101,26 @@ public class UserService {
     }
 
     public UserResponse getCurrentUser(String email) {
-        User user = userRepository.findByEmailIgnoreCase(normalizeEmail(email))
-                .orElseThrow(() -> new BaseException("User not found", HttpStatus.NOT_FOUND));
+        return toResponse(findUserByEmail(email));
+    }
 
-        return toResponse(user);
+    @Transactional
+    public UserResponse updateCurrentUser(String email, UserProfileUpdateRequest request) {
+        User user = findUserByEmail(email);
+        user.setName(request.getName().trim());
+        user.setPhone(emptyToNull(request.getPhone()));
+        user.setGender(emptyToNull(request.getGender()));
+        user.setDateOfBirth(request.getDateOfBirth());
+
+        return toResponse(userRepository.save(user));
+    }
+
+    @Transactional
+    public UserResponse updateCurrentAddress(String email, UserAddressUpdateRequest request) {
+        User user = findUserByEmail(email);
+        user.setAddress(request.getAddress().trim());
+
+        return toResponse(userRepository.save(user));
     }
 
     private AuthResponse createAuthResponse(User user, boolean newUser) {
@@ -122,8 +140,19 @@ public class UserService {
                 user.getEmail(),
                 user.getPhone(),
                 user.getAddress(),
+                user.getGender(),
+                user.getDateOfBirth(),
                 user.getRole()
         );
+    }
+
+    private User findUserByEmail(String email) {
+        return userRepository.findByEmailIgnoreCase(normalizeEmail(email))
+                .orElseThrow(() -> new BaseException("User not found", HttpStatus.NOT_FOUND));
+    }
+
+    private String emptyToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private String normalizeEmail(String email) {

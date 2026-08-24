@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -159,5 +160,49 @@ class AuthFlowTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Current User"))
                 .andExpect(jsonPath("$.email").value("current@example.com"));
+    }
+
+    @Test
+    void authenticatedUserCanUpdateProfileAndAddress() throws Exception {
+        String registerResponse = mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Original Name",
+                                  "email": "profile@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String token = com.jayway.jsonpath.JsonPath.read(registerResponse, "$.token");
+        String authorization = "Bearer " + token;
+
+        mockMvc.perform(patch("/api/users/me")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Updated Name",
+                                  "phone": "+84 912 345 678",
+                                  "gender": "MALE",
+                                  "dateOfBirth": "2000-01-15"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Updated Name"))
+                .andExpect(jsonPath("$.phone").value("+84 912 345 678"))
+                .andExpect(jsonPath("$.gender").value("MALE"))
+                .andExpect(jsonPath("$.dateOfBirth").value("2000-01-15"));
+
+        mockMvc.perform(patch("/api/users/me/address")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"address\":\"123 Nguyen Trai, Ha Noi\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.address").value("123 Nguyen Trai, Ha Noi"));
     }
 }
