@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
@@ -40,6 +40,28 @@ export default function ForgotPassword() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const [remainingAttempts, setRemainingAttempts] = useState(0);
+  const [maxAttempts, setMaxAttempts] = useState(0);
+
+  useEffect(() => {
+    if (step !== "code") {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setRemainingSeconds((current) => {
+        if (current <= 1) {
+          window.clearInterval(timer);
+          return 0;
+        }
+
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [step]);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -55,9 +77,21 @@ export default function ForgotPassword() {
       return;
     }
 
-    if (step === "code" && !/^\d{6}$/.test(code)) {
-      setError(t("resetCodeInvalid"));
-      return;
+    if (step === "code") {
+      if (remainingSeconds === 0) {
+        setError(t("resetCodeExpired"));
+        return;
+      }
+
+      if (remainingAttempts === 0) {
+        setError(t("resetCodeNoAttempts"));
+        return;
+      }
+
+      if (!/^\d{6}$/.test(code)) {
+        setError(t("resetCodeInvalid"));
+        return;
+      }
     }
 
     if (step === "password") {
@@ -76,7 +110,10 @@ export default function ForgotPassword() {
 
     try {
       if (step === "email") {
-        await requestPasswordReset(email.trim());
+        const response = await requestPasswordReset(email.trim());
+        setRemainingSeconds(response.expiresInSeconds);
+        setRemainingAttempts(response.maxAttempts);
+        setMaxAttempts(response.maxAttempts);
         setStep("code");
       } else if (step === "code") {
         const response = await verifyPasswordResetCode(email.trim(), code);
@@ -90,6 +127,17 @@ export default function ForgotPassword() {
     } catch (requestError) {
       if (requestError instanceof AuthApiError && requestError.status === 404) {
         setError(t("emailNotRegistered"));
+      } else if (
+        requestError instanceof AuthApiError
+        && requestError.status === 400
+        && typeof requestError.remainingAttempts === "number"
+      ) {
+        setRemainingAttempts(requestError.remainingAttempts);
+        setError(
+          requestError.remainingAttempts > 0
+            ? t("resetCodeIncorrect").replace("{count}", String(requestError.remainingAttempts))
+            : t("resetCodeNoAttempts"),
+        );
       } else {
         setError(requestError instanceof Error ? requestError.message : t("resetRequestFailed"));
       }
@@ -114,6 +162,8 @@ export default function ForgotPassword() {
         ? t("newPasswordSubtitle")
         : t("passwordResetDoneSubtitle");
 
+  const countdown = `${String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:${String(remainingSeconds % 60).padStart(2, "0")}`;
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-bg-subtle text-text">
       <Helmet>
@@ -134,6 +184,9 @@ export default function ForgotPassword() {
             setError("");
             setCode("");
             setResetToken("");
+            setRemainingSeconds(0);
+            setRemainingAttempts(0);
+            setMaxAttempts(0);
             setStep("email");
           }
         }}
@@ -208,6 +261,18 @@ export default function ForgotPassword() {
                     <div className="rounded-md border border-primary/15 bg-primary/5 p-3 text-sm text-text-secondary">
                       {t("codeSentTo")} <span className="font-semibold text-text">{email}</span>
                     </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                      <span className={remainingSeconds === 0 ? "font-medium text-red-600" : "text-text-secondary"}>
+                        {remainingSeconds === 0
+                          ? t("resetCodeExpired")
+                          : <>{t("codeExpiresIn")} <strong className="text-primary">{countdown}</strong></>}
+                      </span>
+                      <span className={remainingAttempts === 0 ? "font-medium text-red-600" : "text-text-secondary"}>
+                        {t("attemptsRemaining")
+                          .replace("{count}", String(remainingAttempts))
+                          .replace("{max}", String(maxAttempts))}
+                      </span>
+                    </div>
                     <ResetInput
                       id="reset-code"
                       label={t("resetCode")}
@@ -216,6 +281,7 @@ export default function ForgotPassword() {
                       autoComplete="one-time-code"
                       maxLength={6}
                       centered
+                      disabled={remainingSeconds === 0 || remainingAttempts === 0}
                       icon={<KeyRound size={19} />}
                       onChange={(value) => {
                         setCode(value.replace(/\D/g, "").slice(0, 6));
@@ -277,7 +343,10 @@ export default function ForgotPassword() {
 
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={
+                    isSubmitting
+                    || (step === "code" && (remainingSeconds === 0 || remainingAttempts === 0))
+                  }
                   className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-5 font-semibold text-white shadow-sm transition-all hover:bg-primary/90 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSubmitting && <LoaderCircle className="animate-spin" size={18} aria-hidden="true" />}
@@ -309,6 +378,7 @@ type ResetInputProps = {
   inputMode?: "numeric";
   maxLength?: number;
   centered?: boolean;
+  disabled?: boolean;
   action?: ReactNode;
 };
 
@@ -323,6 +393,7 @@ function ResetInput({
   inputMode,
   maxLength,
   centered,
+  disabled,
   action,
 }: ResetInputProps) {
   return (
@@ -339,9 +410,10 @@ function ResetInput({
           inputMode={inputMode}
           maxLength={maxLength}
           autoComplete={autoComplete}
+          disabled={disabled}
           onChange={(event) => onChange(event.target.value)}
           className={clsx(
-            "h-12 w-full rounded-md border border-border bg-bg pl-11 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10",
+            "h-12 w-full rounded-md border border-border bg-bg pl-11 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-bg-secondary disabled:opacity-60",
             action ? "pr-12" : "pr-4",
             centered && "text-center text-lg font-semibold tracking-[0.35em]",
           )}

@@ -3,6 +3,7 @@ package com.ecommerce.app.controllers;
 import com.ecommerce.app.dtos.AuthResponse;
 import com.ecommerce.app.dtos.ForgotPasswordRequest;
 import com.ecommerce.app.dtos.GoogleAuthRequest;
+import com.ecommerce.app.dtos.PasswordResetChallengeResponse;
 import com.ecommerce.app.dtos.ResetPasswordRequest;
 import com.ecommerce.app.dtos.ResetTokenResponse;
 import com.ecommerce.app.dtos.UserLoginRequest;
@@ -43,9 +44,8 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        passwordResetService.requestCode(request);
+    public PasswordResetChallengeResponse forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        return passwordResetService.requestCode(request);
     }
 
     @PostMapping("/verify-reset-code")

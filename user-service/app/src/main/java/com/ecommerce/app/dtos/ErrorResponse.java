@@ -1,11 +1,19 @@
 package com.ecommerce.app.dtos;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
-@AllArgsConstructor
 public class ErrorResponse {
 
-    private String message;
+    private final String message;
+    private final Integer remainingAttempts;
+
+    public ErrorResponse(String message) {
+        this(message, null);
+    }
+
+    public ErrorResponse(String message, Integer remainingAttempts) {
+        this.message = message;
+        this.remainingAttempts = remainingAttempts;
+    }
 }

@@ -28,8 +28,14 @@ export type ResetTokenResponse = {
   resetToken: string;
 };
 
+export type PasswordResetChallengeResponse = {
+  expiresInSeconds: number;
+  maxAttempts: number;
+};
+
 type ErrorResponse = {
   message?: string;
+  remainingAttempts?: number;
 };
 
 const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/$/, "");
@@ -38,11 +44,13 @@ const userKey = "quydung.auth.user";
 
 export class AuthApiError extends Error {
   status: number;
+  remainingAttempts?: number;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, remainingAttempts?: number) {
     super(message);
     this.name = "AuthApiError";
     this.status = status;
+    this.remainingAttempts = remainingAttempts;
   }
 }
 
@@ -63,15 +71,19 @@ async function post<TResponse>(path: string, body: unknown): Promise<TResponse> 
 
   if (!response.ok) {
     let message = "Authentication failed";
+    let remainingAttempts: number | undefined;
 
     try {
       const error = (await response.json()) as ErrorResponse;
       message = error.message || message;
+      remainingAttempts = typeof error.remainingAttempts === "number"
+        ? error.remainingAttempts
+        : undefined;
     } catch {
       // The fallback message is used when the server does not return JSON.
     }
 
-    throw new AuthApiError(message, response.status);
+    throw new AuthApiError(message, response.status, remainingAttempts);
   }
 
   if (response.status === 204) {
@@ -91,7 +103,7 @@ export const authenticateWithGoogle = (credential: string) =>
   post<AuthResponse>("/api/auth/google", { credential });
 
 export const requestPasswordReset = (email: string) =>
-  post<void>("/api/auth/forgot-password", { email });
+  post<PasswordResetChallengeResponse>("/api/auth/forgot-password", { email });
 
 export const verifyPasswordResetCode = (email: string, code: string) =>
   post<ResetTokenResponse>("/api/auth/verify-reset-code", { email, code });

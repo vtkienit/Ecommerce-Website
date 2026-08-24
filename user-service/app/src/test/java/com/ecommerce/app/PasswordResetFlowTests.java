@@ -60,7 +60,9 @@ class PasswordResetFlowTests {
         mockMvc.perform(post("/api/auth/forgot-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"reset@example.com\"}"))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.expiresInSeconds").value(300))
+                .andExpect(jsonPath("$.maxAttempts").value(5));
 
         ArgumentCaptor<String> codeCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> codeHashCaptor = ArgumentCaptor.forClass(String.class);
@@ -119,6 +121,28 @@ class PasswordResetFlowTests {
         verify(emailService, never()).sendCode(anyString(), anyString());
         verify(resetStore, never()).allowRequest(anyString());
         verify(resetStore, never()).saveCode(anyLong(), anyString());
+    }
+
+    @Test
+    void wrongResetCodeReturnsTheRemainingAttempts() throws Exception {
+        registerUser();
+        User user = userRepository.findByEmailIgnoreCase("reset@example.com").orElseThrow();
+        when(resetStore.getCodeHash(user.getId())).thenReturn("another-code-hash");
+        when(resetStore.incrementAttempts(user.getId())).thenReturn(1L);
+
+        mockMvc.perform(post("/api/auth/verify-reset-code")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "reset@example.com",
+                                  "code": "123456"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid or expired reset code"))
+                .andExpect(jsonPath("$.remainingAttempts").value(4));
+
+        verify(resetStore, never()).deleteCode(user.getId());
     }
 
     @Test

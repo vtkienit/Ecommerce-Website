@@ -1,6 +1,7 @@
 package com.ecommerce.app.services;
 
 import com.ecommerce.app.dtos.ForgotPasswordRequest;
+import com.ecommerce.app.dtos.PasswordResetChallengeResponse;
 import com.ecommerce.app.dtos.ResetPasswordRequest;
 import com.ecommerce.app.dtos.ResetTokenResponse;
 import com.ecommerce.app.dtos.VerifyResetCodeRequest;
@@ -33,6 +34,7 @@ public class PasswordResetService {
     private final SecretKeySpec secretKey;
     private final SecureRandom secureRandom = new SecureRandom();
     private final int maxAttempts;
+    private final long codeTtlSeconds;
 
     public PasswordResetService(
             UserRepository userRepository,
@@ -40,7 +42,8 @@ public class PasswordResetService {
             PasswordResetEmailService emailService,
             PasswordEncoder passwordEncoder,
             @Value("${security.password-reset.secret}") String secret,
-            @Value("${security.password-reset.max-attempts:5}") int maxAttempts
+            @Value("${security.password-reset.max-attempts:5}") int maxAttempts,
+            @Value("${security.password-reset.code-ttl-seconds:300}") long codeTtlSeconds
     ) {
         if (secret.getBytes(StandardCharsets.UTF_8).length < 32) {
             throw new IllegalArgumentException("Password reset secret must contain at least 32 bytes");
@@ -52,9 +55,10 @@ public class PasswordResetService {
         this.passwordEncoder = passwordEncoder;
         this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         this.maxAttempts = maxAttempts;
+        this.codeTtlSeconds = codeTtlSeconds;
     }
 
-    public void requestCode(ForgotPasswordRequest request) {
+    public PasswordResetChallengeResponse requestCode(ForgotPasswordRequest request) {
         String email = normalizeEmail(request.getEmail());
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new BaseException("Email does not exist", HttpStatus.NOT_FOUND));
@@ -73,26 +77,33 @@ public class PasswordResetService {
         resetStore.saveCode(user.getId(), hashCode(user.getId(), code));
 
         emailService.sendCode(email, code);
+        return new PasswordResetChallengeResponse(codeTtlSeconds, maxAttempts);
     }
 
     public ResetTokenResponse verifyCode(VerifyResetCodeRequest request) {
         User user = userRepository.findByEmailIgnoreCase(normalizeEmail(request.getEmail()))
-                .orElseThrow(this::invalidCode);
+                .orElseThrow(() -> invalidCode(0));
 
         String savedCodeHash = resetStore.getCodeHash(user.getId());
         if (savedCodeHash == null) {
-            throw invalidCode();
+            throw invalidCode(0);
         }
 
         long attempts = resetStore.incrementAttempts(user.getId());
         if (attempts > maxAttempts) {
             resetStore.deleteCode(user.getId());
-            throw invalidCode();
+            throw invalidCode(0);
         }
 
         String providedCodeHash = hashCode(user.getId(), request.getCode());
         if (!secureEquals(savedCodeHash, providedCodeHash)) {
-            throw invalidCode();
+            int remainingAttempts = Math.max(0, maxAttempts - (int) attempts);
+
+            if (remainingAttempts == 0) {
+                resetStore.deleteCode(user.getId());
+            }
+
+            throw invalidCode(remainingAttempts);
         }
 
         resetStore.deleteCode(user.getId());
@@ -150,7 +161,11 @@ public class PasswordResetService {
         return email.trim().toLowerCase(Locale.ROOT);
     }
 
-    private BaseException invalidCode() {
-        return new BaseException("Invalid or expired reset code", HttpStatus.BAD_REQUEST);
+    private BaseException invalidCode(int remainingAttempts) {
+        return new BaseException(
+                "Invalid or expired reset code",
+                HttpStatus.BAD_REQUEST,
+                remainingAttempts
+        );
     }
 }

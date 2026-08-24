@@ -194,31 +194,6 @@ export default function AuthPage({ mode }: AuthPageProps) {
             <div className="relative overflow-hidden rounded-xl border border-border bg-bg p-5 shadow-sm sm:p-8">
               <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent" />
 
-              <div className="mb-7 grid grid-cols-2 rounded-md bg-bg-secondary p-1">
-                <Link
-                  to="/login"
-                  className={clsx(
-                    "rounded px-4 py-2.5 text-center text-sm font-semibold transition-all",
-                    !isRegister
-                      ? "bg-bg text-primary shadow-sm"
-                      : "text-text-secondary hover:text-text",
-                  )}
-                >
-                  {t("login")}
-                </Link>
-                <Link
-                  to="/register"
-                  className={clsx(
-                    "rounded px-4 py-2.5 text-center text-sm font-semibold transition-all",
-                    isRegister
-                      ? "bg-bg text-primary shadow-sm"
-                      : "text-text-secondary hover:text-text",
-                  )}
-                >
-                  {t("register")}
-                </Link>
-              </div>
-
               <div className={clsx(isSubmitting && "pointer-events-none opacity-60")}>
                 <GoogleAuthButton mode={mode} onCredential={handleGoogleCredential} />
               </div>
