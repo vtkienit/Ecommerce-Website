@@ -46,6 +46,7 @@ const Header = () => {
   const [menuItemOpen, setMenuItemOpen] = useState<Record<number, boolean>>({});
   const location = useLocation();
   const isAccessoriesActive = location.pathname.startsWith("/accessories");
+  const isAdmin = authUser?.role.toLowerCase() === "admin";
 
   useEffect(() => {
     const syncAuthUser = () => setAuthUser(getStoredUser());
@@ -155,6 +156,16 @@ const Header = () => {
             </div>
 
             <ThemeToggle />
+
+            {isAdmin && (
+              <Link
+                to="/admin/catalog"
+                className="flex items-center gap-1.5 text-base font-semibold text-primary transition-colors hover:text-primary/80"
+              >
+                <Package size={17} aria-hidden="true" />
+                {t("catalogManagement")}
+              </Link>
+            )}
 
             <Link
               to="/purchases"
@@ -302,7 +313,7 @@ const Header = () => {
                 >
                   {authUser ? (
                     <>
-                      {authUser.role.toLowerCase() === "admin" && (
+                      {isAdmin && (
                         <>
                           <Link
                             to="/admin/catalog"
@@ -481,6 +492,13 @@ const Header = () => {
                   {t("manageOrder")}
                 </Link>
               </li>
+              {isAdmin && (
+                <li className={mobileItem}>
+                  <Link className={`${mobileLink} text-primary`} to="/admin/catalog" onClick={closeMenu}>
+                    {t("catalogManagement")}
+                  </Link>
+                </li>
+              )}
             </ul>
           </nav>
 
