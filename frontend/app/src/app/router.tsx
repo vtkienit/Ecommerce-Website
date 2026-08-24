@@ -11,6 +11,7 @@ import CartPage from "../pages/CartPage";
 
 const CatalogAdminPage = lazy(() => import("../pages/CatalogAdminPage"));
 const InventoryAdminPage = lazy(() => import("../pages/InventoryAdminPage"));
+const OrderAdminPage = lazy(() => import("../pages/OrderAdminPage"));
 
 const adminPage = (page: ReactNode) => (
   <Suspense fallback={<div className="min-h-screen bg-bg" />}>
@@ -28,6 +29,7 @@ export default function AppRouter() {
       <Route path="/cart" element={<CartPage />} />
       <Route path="/admin/inventory" element={adminPage(<InventoryAdminPage />)} />
       <Route path="/admin/catalog" element={adminPage(<CatalogAdminPage />)} />
+      <Route path="/admin/orders" element={adminPage(<OrderAdminPage />)} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />

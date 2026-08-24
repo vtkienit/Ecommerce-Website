@@ -1,6 +1,12 @@
 import { ApiError, apiRequest } from "../../../shared/api/httpClient";
 import { getAuthToken } from "../../auth/model/authSession";
-import type { Cart, CheckoutRequest, InventoryItem, Order } from "../model/commerceTypes";
+import type {
+  Cart,
+  CheckoutRequest,
+  InventoryItem,
+  Order,
+  OrderStatus,
+} from "../model/commerceTypes";
 
 const commerceApiUrl = (
   import.meta.env.VITE_COMMERCE_API_URL || "http://localhost:8082"
@@ -44,6 +50,12 @@ export const getOrders = () => commerceRequest<Order[]>("/api/orders");
 
 export const cancelOrder = (orderId: number) =>
   commerceRequest<Order>(`/api/orders/${orderId}/cancel`, "PATCH");
+
+export const getAdminOrders = (status?: OrderStatus) =>
+  commerceRequest<Order[]>(`/api/admin/orders${status ? `?status=${status}` : ""}`);
+
+export const updateOrderStatus = (orderId: number, status: OrderStatus) =>
+  commerceRequest<Order>(`/api/admin/orders/${orderId}/status`, "PATCH", { status });
 
 export const getInventory = () =>
   commerceRequest<InventoryItem[]>("/api/admin/inventory");

@@ -50,6 +50,7 @@ export type OrderStatus =
 export type Order = {
   id: number;
   orderNumber: string;
+  userId: number;
   recipientName: string;
   recipientPhone: string;
   shippingAddress: string;
@@ -58,7 +59,7 @@ export type Order = {
   totalAmount: number;
   status: OrderStatus;
   paymentMethod: string | null;
-  paymentStatus: "PENDING" | "PAID" | "FAILED" | "REFUNDED" | null;
+  paymentStatus: "PENDING" | "PAID" | "FAILED" | "REFUNDED" | "CANCELLED" | null;
   createdAt: string;
   items: OrderItem[];
 };

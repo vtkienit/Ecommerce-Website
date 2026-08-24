@@ -3,9 +3,12 @@ package com.ecommerce.commerce;
 import com.ecommerce.commerce.clients.CatalogGateway;
 import com.ecommerce.commerce.dtos.CatalogVariantSnapshot;
 import com.ecommerce.commerce.entities.Inventory;
+import com.ecommerce.commerce.entities.PaymentStatus;
+import com.ecommerce.commerce.entities.StockReservationStatus;
 import com.ecommerce.commerce.repositories.CartRepository;
 import com.ecommerce.commerce.repositories.InventoryRepository;
 import com.ecommerce.commerce.repositories.OrderRepository;
+import com.ecommerce.commerce.repositories.PaymentRepository;
 import com.ecommerce.commerce.repositories.StockReservationRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -62,6 +65,9 @@ class CommerceFlowTests {
 
     @Autowired
     private StockReservationRepository reservationRepository;
+
+    @Autowired
+    private PaymentRepository paymentRepository;
 
     @BeforeEach
     void clearDatabase() {
@@ -122,7 +128,8 @@ class CommerceFlowTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(checkoutJson()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("CONFIRMED"))
+                .andExpect(jsonPath("$.status").value("PENDING"))
+                .andExpect(jsonPath("$.userId").value(11))
                 .andExpect(jsonPath("$.paymentStatus").value("PENDING"))
                 .andExpect(jsonPath("$.totalAmount").value(160000.00))
                 .andExpect(jsonPath("$.items[0].unitPrice").value(80000.00))
@@ -141,7 +148,10 @@ class CommerceFlowTests {
 
         Inventory inventory = inventoryRepository.findByVariantId(101L).orElseThrow();
         assertThat(inventory.getReservedQuantity()).isEqualTo(2);
-        assertThat(reservationRepository.findByOrderId(orderId)).hasSize(1);
+        assertThat(reservationRepository.findByOrderId(orderId))
+                .singleElement()
+                .extracting("status")
+                .isEqualTo(StockReservationStatus.ACTIVE);
     }
 
     @Test
@@ -160,10 +170,14 @@ class CommerceFlowTests {
         mockMvc.perform(patch("/api/orders/{id}/cancel", orderId)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("CANCELLED"));
+                .andExpect(jsonPath("$.status").value("CANCELLED"))
+                .andExpect(jsonPath("$.paymentStatus").value("CANCELLED"));
 
         Inventory inventory = inventoryRepository.findByVariantId(101L).orElseThrow();
         assertThat(inventory.getReservedQuantity()).isZero();
+        assertThat(reservationRepository.findByOrderId(orderId).getFirst().getStatus())
+                .isEqualTo(StockReservationStatus.RELEASED);
+        assertThat(paymentRepository.findAll().getFirst().getStatus()).isEqualTo(PaymentStatus.CANCELLED);
     }
 
     @Test
@@ -260,12 +274,90 @@ class CommerceFlowTests {
                 .andExpect(jsonPath("$.message").value("Stock cannot be lower than the reserved quantity"));
     }
 
+    @Test
+    void orderManagementRequiresAdminRole() throws Exception {
+        mockMvc.perform(get("/api/admin/orders")
+                        .header("Authorization", "Bearer " + token(71L)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminCannotSkipOrderLifecycleSteps() throws Exception {
+        String customerToken = token(72L);
+        long orderId = checkout(customerToken, 101L, 1);
+
+        mockMvc.perform(patch("/api/admin/orders/{id}/status", orderId)
+                        .header("Authorization", "Bearer " + token(73L, "Admin"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"SHIPPED"}
+                                """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Order cannot move from PENDING to SHIPPED"));
+    }
+
+    @Test
+    void adminCanCompleteOrderLifecycle() throws Exception {
+        String customerToken = token(74L);
+        long orderId = checkout(customerToken, 101L, 2);
+        String adminToken = token(75L, "Admin");
+
+        mockMvc.perform(get("/api/admin/orders?status=PENDING")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(orderId))
+                .andExpect(jsonPath("$[0].userId").value(74));
+
+        updateOrderStatus(adminToken, orderId, "CONFIRMED", "CONFIRMED");
+        assertThat(reservationRepository.findByOrderId(orderId).getFirst().getStatus())
+                .isEqualTo(StockReservationStatus.CONFIRMED);
+
+        updateOrderStatus(adminToken, orderId, "PROCESSING", "PROCESSING");
+        updateOrderStatus(adminToken, orderId, "SHIPPED", "SHIPPED");
+
+        Inventory shippedInventory = inventoryRepository.findByVariantId(101L).orElseThrow();
+        assertThat(shippedInventory.getOnHandQuantity()).isEqualTo(8);
+        assertThat(shippedInventory.getReservedQuantity()).isZero();
+        assertThat(reservationRepository.findByOrderId(orderId).getFirst().getStatus())
+                .isEqualTo(StockReservationStatus.CONSUMED);
+
+        updateOrderStatus(adminToken, orderId, "DELIVERED", "DELIVERED");
+        assertThat(paymentRepository.findAll().getFirst().getStatus()).isEqualTo(PaymentStatus.PAID);
+    }
+
     private void addToCart(String token, Long variantId, int quantity) throws Exception {
         mockMvc.perform(post("/api/cart/items")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"variantId\":" + variantId + ",\"quantity\":" + quantity + "}"))
                 .andExpect(status().isOk());
+    }
+
+    private long checkout(String token, Long variantId, int quantity) throws Exception {
+        addToCart(token, variantId, quantity);
+        String body = mockMvc.perform(post("/api/orders/checkout")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkoutJson()))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return objectMapper.readTree(body).path("id").asLong();
+    }
+
+    private void updateOrderStatus(
+            String token,
+            long orderId,
+            String requestedStatus,
+            String expectedStatus
+    ) throws Exception {
+        mockMvc.perform(patch("/api/admin/orders/{id}/status", orderId)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"" + requestedStatus + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(expectedStatus));
     }
 
     private String checkoutJson() {

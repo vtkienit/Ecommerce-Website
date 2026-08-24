@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Boxes,
   ChevronDown,
+  ClipboardList,
   LogIn,
   LogOut,
   Menu,
@@ -320,6 +321,15 @@ const Header = () => {
                           >
                             <Boxes size={18} aria-hidden="true" />
                             {t("inventoryManagement")}
+                          </Link>
+                          <Link
+                            to="/admin/orders"
+                            role="menuitem"
+                            className="flex items-center gap-3 rounded-md px-3 py-2.5 font-medium text-text-secondary transition-colors hover:bg-bg-secondary hover:text-primary"
+                            onClick={closeAccountMenu}
+                          >
+                            <ClipboardList size={18} aria-hidden="true" />
+                            {t("orderManagement")}
                           </Link>
                         </>
                       )}

@@ -114,7 +114,11 @@ export default function PurchaseList() {
 
               <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
                 <span className="text-sm text-text-secondary">
-                  {order.paymentStatus === "PAID" ? t("paymentPaid") : t("paymentPending")}
+                  {order.paymentStatus === "PAID"
+                    ? t("paymentPaid")
+                    : order.paymentStatus === "CANCELLED"
+                      ? t("paymentCancelled")
+                      : t("paymentPending")}
                 </span>
                 <div className="flex items-center gap-3">
                   <span className="text-lg font-bold text-red-700">{currency.format(order.totalAmount)}</span>

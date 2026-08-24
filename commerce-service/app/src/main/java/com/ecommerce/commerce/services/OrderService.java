@@ -31,6 +31,7 @@ public class OrderService {
     private final InventoryRepository inventoryRepository;
     private final StockReservationRepository reservationRepository;
     private final CatalogGateway catalogGateway;
+    private final OrderLifecycleService orderLifecycleService;
     private final int defaultStock;
 
     public OrderService(
@@ -39,13 +40,15 @@ public class OrderService {
             InventoryRepository inventoryRepository,
             StockReservationRepository reservationRepository,
             CatalogGateway catalogGateway,
-            @Value("${commerce.inventory.default-stock:100}") int defaultStock
+            OrderLifecycleService orderLifecycleService,
+            @Value("${commerce.inventory.default-stock:0}") int defaultStock
     ) {
         this.cartRepository = cartRepository;
         this.orderRepository = orderRepository;
         this.inventoryRepository = inventoryRepository;
         this.reservationRepository = reservationRepository;
         this.catalogGateway = catalogGateway;
+        this.orderLifecycleService = orderLifecycleService;
         this.defaultStock = defaultStock;
     }
 
@@ -105,25 +108,14 @@ public class OrderService {
     }
 
     public OrderResponse cancelOrder(Long userId, Long orderId) {
-        Order order = getRequiredOrder(userId, orderId);
+        Order order = orderRepository
+                .findByIdAndUserIdForUpdate(orderId, userId)
+                .orElseThrow(() -> new CommerceException("Order not found", HttpStatus.NOT_FOUND));
         if (order.getStatus() != OrderStatus.PENDING && order.getStatus() != OrderStatus.CONFIRMED) {
             throw new CommerceException("This order can no longer be cancelled", HttpStatus.CONFLICT);
         }
 
-        for (StockReservation reservation : reservationRepository.findByOrderId(orderId)) {
-            if (reservation.getStatus() == StockReservationStatus.ACTIVE
-                    || reservation.getStatus() == StockReservationStatus.CONFIRMED) {
-                Inventory inventory = inventoryRepository
-                        .findByVariantIdForUpdate(reservation.getInventory().getVariantId())
-                        .orElseThrow(() -> new CommerceException("Inventory not found", HttpStatus.CONFLICT));
-                inventory.setReservedQuantity(Math.max(
-                        0,
-                        inventory.getReservedQuantity() - reservation.getQuantity()
-                ));
-                reservation.setStatus(StockReservationStatus.RELEASED);
-            }
-        }
-
+        orderLifecycleService.cancel(order);
         order.setStatus(OrderStatus.CANCELLED);
         return toResponse(orderRepository.save(order));
     }
@@ -138,7 +130,7 @@ public class OrderService {
         order.setSubtotal(BigDecimal.ZERO);
         order.setVoucherDiscountAmount(BigDecimal.ZERO);
         order.setTotalAmount(BigDecimal.ZERO);
-        order.setStatus(OrderStatus.CONFIRMED);
+        order.setStatus(OrderStatus.PENDING);
         order.setCreatedAt(LocalDateTime.now());
         return order;
     }
@@ -203,7 +195,7 @@ public class OrderService {
             reservation.setOrder(order);
             reservation.setInventory(inventory);
             reservation.setQuantity(item.getQuantity());
-            reservation.setStatus(StockReservationStatus.CONFIRMED);
+            reservation.setStatus(StockReservationStatus.ACTIVE);
             reservation.setCreatedAt(LocalDateTime.now());
             reservation.setExpiresAt(LocalDateTime.now().plusHours(24));
             reservationRepository.save(reservation);
@@ -216,7 +208,7 @@ public class OrderService {
                 .orElseThrow(() -> new CommerceException("Order not found", HttpStatus.NOT_FOUND));
     }
 
-    private OrderResponse toResponse(Order order) {
+    OrderResponse toResponse(Order order) {
         Payment payment = order.getPayments().stream().findFirst().orElse(null);
         List<OrderItemResponse> items = order
                 .getItems()
@@ -236,6 +228,7 @@ public class OrderService {
         return new OrderResponse(
                 order.getId(),
                 order.getOrderNumber(),
+                order.getUserId(),
                 order.getRecipientName(),
                 order.getRecipientPhone(),
                 order.getShippingAddress(),

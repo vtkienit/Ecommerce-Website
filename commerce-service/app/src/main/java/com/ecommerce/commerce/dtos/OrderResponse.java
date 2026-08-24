@@ -15,6 +15,7 @@ public class OrderResponse {
 
     private Long id;
     private String orderNumber;
+    private Long userId;
     private String recipientName;
     private String recipientPhone;
     private String shippingAddress;
