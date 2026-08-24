@@ -13,3 +13,19 @@ spring:
         default_schema: commerce
         hbm2ddl:
           create_namespaces: true
+
+security:
+  jwt:
+    secret: commerce-test-secret-with-at-least-32-bytes
+
+catalog:
+  service:
+    base-url: http://catalog.test
+
+commerce:
+  inventory:
+    default-stock: 10
+
+app:
+  cors:
+    allowed-origins: http://localhost:5173
