@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+:root {
+  --text: var(--color-gray-900);
+  --text-secondary: var(--color-gray-600);
+  --text-tertiary: var(--color-gray-400);
+  --text-muted: var(--color-gray-300);
+
+  --bg: var(--color-white);
+  --bg-subtle: #f7f7f8;
+  --bg-secondary: var(--color-gray-100);
+  --bg-tertiary: var(--color-gray-200);
+
+  --border: var(--color-gray-200);
+  --primary: var(--color-blue-600);
+}
+
+[data-theme="dark"] {
+  --text: var(--color-gray-50);
+  --text-secondary: var(--color-gray-300);
+  --text-tertiary: var(--color-gray-400);
+  --text-muted: var(--color-gray-500);
+
+  --bg: #020617;
+  --bg-subtle: #111827;
+  --bg-secondary: var(--color-gray-800);
+  --bg-tertiary: var(--color-gray-600);
+
+  --border: var(--color-gray-700);
+  --primary: var(--color-blue-400);
+}
+
+@theme inline {
+  --color-primary: var(--primary);
+
+  --color-text: var(--text);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-muted: var(--text-muted);
+
+  --color-bg: var(--bg);
+  --color-bg-subtle: var(--bg-subtle);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+
+  --color-border: var(--border);
+}
+
+@layer base {
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-subtle);
+    font-family: var(--font-sans);
+    font-weight: var(--font-weight-normal);
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    margin: 0;
+    appearance: none;
+  }
+
+  input[type="number"] {
+    appearance: textfield;
+  }
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

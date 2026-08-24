@@ -1,0 +1,215 @@
+import { useEffect, useMemo, useState } from "react";
+import { Helmet } from "react-helmet-async";
+import { Navigate } from "react-router-dom";
+import { LoaderCircle, PackageSearch, RefreshCw, Save, Search } from "lucide-react";
+import { useLanguage } from "../../../app/contexts/LanguageContext";
+import MainLayout from "../../../shared/layouts/MainLayout";
+import { getStoredUser } from "../../auth/model/authSession";
+import { getInventory, syncInventory, updateInventory } from "../api/commerceApi";
+import type { InventoryItem } from "../model/commerceTypes";
+
+export default function InventoryAdminView() {
+  const { t } = useLanguage();
+  const user = getStoredUser();
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [drafts, setDrafts] = useState<Record<number, string>>({});
+  const [search, setSearch] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [savingId, setSavingId] = useState<number | null>(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    if (user?.role.toLowerCase() !== "admin") return;
+
+    let active = true;
+    getInventory()
+      .then((data) => {
+        if (!active) return;
+        setInventory(data);
+        setDrafts(toDrafts(data));
+      })
+      .catch((requestError: unknown) => {
+        if (active) setError(requestError instanceof Error ? requestError.message : t("inventoryLoadError"));
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [t, user?.role]);
+
+  const filteredInventory = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+    if (!keyword) return inventory;
+    return inventory.filter((item) =>
+      [item.productName, item.sku, item.size, item.color]
+        .filter(Boolean)
+        .some((value) => value?.toLowerCase().includes(keyword)),
+    );
+  }, [inventory, search]);
+
+  if (!user) {
+    return <Navigate to="/login?returnTo=/admin/inventory" replace />;
+  }
+
+  if (user.role.toLowerCase() !== "admin") {
+    return <Navigate to="/" replace />;
+  }
+
+  const sync = async () => {
+    setIsSyncing(true);
+    setError("");
+    setSuccess("");
+    try {
+      const data = await syncInventory();
+      setInventory(data);
+      setDrafts(toDrafts(data));
+      setSuccess(t("inventorySynced"));
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : t("inventoryLoadError"));
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const save = async (item: InventoryItem) => {
+    const quantity = Number(drafts[item.variantId]);
+    if (!Number.isInteger(quantity) || quantity < 0) {
+      setError(t("inventoryInvalid"));
+      return;
+    }
+
+    setSavingId(item.variantId);
+    setError("");
+    setSuccess("");
+    try {
+      const updated = await updateInventory(item.variantId, quantity);
+      setInventory((current) => current.map((entry) => entry.variantId === updated.variantId ? updated : entry));
+      setDrafts((current) => ({ ...current, [updated.variantId]: String(updated.onHandQuantity) }));
+      setSuccess(t("inventoryUpdated"));
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : t("inventoryLoadError"));
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  return (
+    <MainLayout>
+      <Helmet><title>{t("inventoryManagement")} | QuyDung</title></Helmet>
+      <main className="min-h-[65vh] bg-bg-subtle px-3 py-8 lg:px-8 lg:py-12">
+        <div className="mx-auto max-w-7xl">
+          <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Admin</p>
+              <h1 className="mt-1 text-3xl font-semibold text-text md:text-4xl">{t("inventoryManagement")}</h1>
+              <p className="mt-2 text-sm text-text-secondary">{t("inventoryDescription")}</p>
+            </div>
+            <button
+              type="button"
+              disabled={isSyncing}
+              onClick={() => void sync()}
+              className="flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 font-semibold text-white disabled:opacity-60"
+            >
+              <RefreshCw className={isSyncing ? "animate-spin" : ""} size={18} />
+              {isSyncing ? t("syncingInventory") : t("syncInventory")}
+            </button>
+          </header>
+
+          <div className="mt-7 flex items-center gap-3 rounded-lg border border-border bg-bg px-4 shadow-sm">
+            <Search size={19} className="text-text-tertiary" />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={t("searchInventory")}
+              className="h-12 min-w-0 flex-1 bg-transparent text-text outline-none"
+            />
+            <span className="text-sm text-text-tertiary">{filteredInventory.length}</span>
+          </div>
+
+          {error && <p className="mt-4 rounded-md bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">{error}</p>}
+          {success && <p className="mt-4 rounded-md bg-green-500/10 p-3 text-sm text-green-700 dark:text-green-300">{success}</p>}
+
+          {isLoading ? (
+            <div className="flex min-h-72 items-center justify-center gap-2 text-text-secondary">
+              <LoaderCircle className="animate-spin text-primary" size={21} /> {t("inventoryLoading")}
+            </div>
+          ) : filteredInventory.length === 0 ? (
+            <div className="mt-6 flex min-h-72 flex-col items-center justify-center rounded-xl border border-border bg-bg text-center">
+              <PackageSearch size={36} className="text-text-tertiary" />
+              <p className="mt-3 text-text-secondary">{t("inventoryEmpty")}</p>
+            </div>
+          ) : (
+            <div className="mt-6 overflow-hidden rounded-xl border border-border bg-bg shadow-sm">
+              <div className="hidden grid-cols-[minmax(260px,1fr)_110px_110px_150px_90px] gap-4 border-b border-border bg-bg-secondary px-5 py-3 text-xs font-semibold uppercase tracking-wide text-text-tertiary lg:grid">
+                <span>{t("productDesc")}</span>
+                <span>{t("stockOnHand")}</span>
+                <span>{t("stockReserved")}</span>
+                <span>{t("stockAvailable")}</span>
+                <span />
+              </div>
+              <div className="divide-y divide-border">
+                {filteredInventory.map((item) => (
+                  <article key={item.variantId} className="grid gap-4 p-4 lg:grid-cols-[minmax(260px,1fr)_110px_110px_150px_90px] lg:items-center lg:px-5">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md bg-bg-secondary">
+                        {item.imageUrl && <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-text">{item.productName}</p>
+                        <p className="truncate text-xs text-text-tertiary">{item.sku}</p>
+                        <p className="mt-1 text-xs text-text-secondary">{[item.size, item.thickness, item.color].filter(Boolean).join(" · ")}</p>
+                      </div>
+                    </div>
+                    <label className="flex items-center justify-between gap-3 text-sm text-text-secondary lg:block">
+                      <span className="lg:hidden">{t("stockOnHand")}</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={drafts[item.variantId] ?? "0"}
+                        onChange={(event) => setDrafts((current) => ({
+                          ...current,
+                          [item.variantId]: event.target.value,
+                        }))}
+                        className="h-10 w-28 rounded-md border border-border bg-bg px-3 text-right font-semibold text-text outline-none focus:border-primary lg:w-full lg:text-left"
+                      />
+                    </label>
+                    <StockValue label={t("stockReserved")} value={item.reservedQuantity} />
+                    <StockValue label={t("stockAvailable")} value={item.availableQuantity} highlight={item.availableQuantity <= 5} />
+                    <button
+                      type="button"
+                      disabled={savingId === item.variantId}
+                      onClick={() => void save(item)}
+                      className="flex h-10 items-center justify-center gap-2 rounded-md border border-primary px-3 text-sm font-semibold text-primary disabled:opacity-50"
+                    >
+                      {savingId === item.variantId ? <LoaderCircle className="animate-spin" size={16} /> : <Save size={16} />}
+                      {t("saveChanges")}
+                    </button>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+    </MainLayout>
+  );
+}
+
+function StockValue({ label, value, highlight = false }: { label: string; value: number; highlight?: boolean }) {
+  return (
+    <div className="flex items-center justify-between text-sm lg:block">
+      <span className="text-text-secondary lg:hidden">{label}</span>
+      <span className={highlight ? "font-bold text-red-600" : "font-semibold text-text"}>{value}</span>
+    </div>
+  );
+}
+
+function toDrafts(inventory: InventoryItem[]) {
+  return Object.fromEntries(inventory.map((item) => [item.variantId, String(item.onHandQuantity)]));
+}
