@@ -1,5 +1,11 @@
 import { Link } from "react-router-dom";
 import { useLanguage } from "../../app/contexts/LanguageContext";
+import {
+  SUPPORT_EMAIL,
+  SUPPORT_PHONE,
+  SUPPORT_PHONE_DISPLAY,
+  ZALO_CONTACT_URL,
+} from "../constants/contact";
 
 const Footer = () => {
   const { t } = useLanguage();
@@ -49,8 +55,29 @@ const Footer = () => {
               {t("contact")}
             </h4>
             <ul className="flex flex-col gap-2 text-text-secondary">
-              <li>Email: support@quydung.com</li>
-              <li>Hotline: 0123 456 789</li>
+              <li>
+                Email:{" "}
+                <a className="cursor-pointer transition hover:text-primary" href={`mailto:${SUPPORT_EMAIL}`}>
+                  {SUPPORT_EMAIL}
+                </a>
+              </li>
+              <li>
+                Hotline:{" "}
+                <a className="cursor-pointer transition hover:text-primary" href={`tel:${SUPPORT_PHONE}`}>
+                  {SUPPORT_PHONE_DISPLAY}
+                </a>
+              </li>
+              <li>
+                Zalo:{" "}
+                <a
+                  className="cursor-pointer transition hover:text-primary"
+                  href={ZALO_CONTACT_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {SUPPORT_PHONE_DISPLAY}
+                </a>
+              </li>
               <li>{t("monday")} - {t("sunday")}: 8:00 - 22:00</li>
             </ul>
           </div>

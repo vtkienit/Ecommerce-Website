@@ -6,12 +6,20 @@ import {
   Headphones,
   Mail,
   MapPin,
+  MessageCircle,
   MessageSquareText,
   PhoneCall,
   Send,
+  Sparkles,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLanguage, type Language } from "../app/contexts/LanguageContext";
+import {
+  SUPPORT_EMAIL,
+  SUPPORT_PHONE,
+  SUPPORT_PHONE_DISPLAY,
+  ZALO_CONTACT_URL,
+} from "../shared/constants/contact";
 import MainLayout from "../shared/layouts/MainLayout";
 
 type ContactForm = {
@@ -40,9 +48,15 @@ const contactContent = {
     title: "Chúng tôi luôn sẵn sàng lắng nghe",
     description: "Cho QuyDung biết bạn cần hỗ trợ gì. Thông tin càng chi tiết sẽ giúp việc xử lý nhanh hơn.",
     emailLabel: "Email hỗ trợ",
-    emailValue: "support@quydung.com",
+    emailValue: SUPPORT_EMAIL,
     phoneLabel: "Hotline",
-    phoneValue: "0123 456 789",
+    phoneValue: SUPPORT_PHONE_DISPLAY,
+    introEyebrow: "VỀ QUYDUNG",
+    introTitle: "Chăm chút cho từng giấc ngủ ngon",
+    introDescription: "QuyDung mang đến những sản phẩm phòng ngủ thoải mái, thẩm mỹ và phù hợp với nhu cầu của từng gia đình. Chúng tôi luôn sẵn sàng lắng nghe, tư vấn và đồng hành cùng bạn trước và sau khi mua hàng.",
+    zaloLabel: "Tư vấn nhanh qua Zalo",
+    zaloDescription: "Nhắn tin trực tiếp để được tư vấn sản phẩm, kiểm tra đơn hàng hoặc hỗ trợ nhanh chóng.",
+    zaloButton: "Nhắn tin Zalo",
     hoursLabel: "Thời gian hỗ trợ",
     hoursValue: "Thứ 2 - Chủ nhật, 8:00 - 22:00",
     addressLabel: "Khu vực phục vụ",
@@ -85,9 +99,15 @@ const contactContent = {
     title: "We are always ready to listen",
     description: "Tell QuyDung how we can help. More detail helps us resolve your request faster.",
     emailLabel: "Support email",
-    emailValue: "support@quydung.com",
+    emailValue: SUPPORT_EMAIL,
     phoneLabel: "Hotline",
-    phoneValue: "0123 456 789",
+    phoneValue: SUPPORT_PHONE_DISPLAY,
+    introEyebrow: "ABOUT QUYDUNG",
+    introTitle: "Thoughtful care for better sleep",
+    introDescription: "QuyDung offers comfortable and carefully selected bedroom products for every home. We are ready to listen, advise and support you before and after every purchase.",
+    zaloLabel: "Chat with us on Zalo",
+    zaloDescription: "Message us directly for product advice, order updates or prompt customer support.",
+    zaloButton: "Open Zalo chat",
     hoursLabel: "Support hours",
     hoursValue: "Monday - Sunday, 8:00 AM - 10:00 PM",
     addressLabel: "Service area",
@@ -193,8 +213,42 @@ export default function ContactPage() {
 
         <div className="mx-auto grid max-w-7xl gap-6 px-3 py-10 md:px-6 md:py-14 lg:grid-cols-[0.85fr_1.35fr]">
           <section className="space-y-4">
+            <article className="overflow-hidden rounded-2xl border border-border bg-bg shadow-sm">
+              <div className="border-b border-border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6">
+                <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.2em] text-primary">
+                  <Sparkles size={16} />
+                  {content.introEyebrow}
+                </span>
+                <h2 className="mt-3 text-2xl font-bold leading-tight text-text">{content.introTitle}</h2>
+                <p className="mt-3 leading-7 text-text-secondary">{content.introDescription}</p>
+              </div>
+
+              <div className="p-4">
+                <div className="rounded-xl bg-primary p-5 text-white shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15">
+                      <MessageCircle size={23} />
+                    </span>
+                    <div>
+                      <h3 className="font-bold">{content.zaloLabel}</h3>
+                      <p className="mt-1 text-sm leading-6 text-white/80">{content.zaloDescription}</p>
+                    </div>
+                  </div>
+                  <a
+                    href={ZALO_CONTACT_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-4 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-white px-4 py-3 font-semibold text-primary transition hover:-translate-y-0.5 hover:bg-white/90 hover:shadow-md active:translate-y-0"
+                  >
+                    <MessageCircle size={18} />
+                    {content.zaloButton} · {SUPPORT_PHONE_DISPLAY}
+                  </a>
+                </div>
+              </div>
+            </article>
+
             <ContactInfo icon={Mail} label={content.emailLabel} value={content.emailValue} href={`mailto:${content.emailValue}`} />
-            <ContactInfo icon={PhoneCall} label={content.phoneLabel} value={content.phoneValue} href={`tel:${content.phoneValue.replaceAll(" ", "")}`} />
+            <ContactInfo icon={PhoneCall} label={content.phoneLabel} value={content.phoneValue} href={`tel:${SUPPORT_PHONE}`} />
             <ContactInfo icon={Clock3} label={content.hoursLabel} value={content.hoursValue} />
             <ContactInfo icon={MapPin} label={content.addressLabel} value={content.addressValue} />
 
