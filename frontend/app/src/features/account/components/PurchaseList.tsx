@@ -55,7 +55,7 @@ export default function PurchaseList({ filter = "all" }: { filter?: PurchaseFilt
   });
   const statuses = filterStatuses[filter];
   const visibleOrders = filter === "returns"
-    ? orders.filter((order) => order.returnRequest !== null)
+    ? orders.filter((order) => Boolean(order.returnRequest))
     : statuses.length === 0
     ? orders
     : orders.filter((order) => statuses.includes(order.status));
