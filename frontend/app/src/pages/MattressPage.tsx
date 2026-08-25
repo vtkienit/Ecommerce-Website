@@ -52,7 +52,7 @@ export default function MattressPage() {
     sizes: selectedSizes,
     colors: selectedColors,
     ...priceBounds,
-    size: 3,
+    size: 6,
   });
 
   const toggleFilter = (key: string) => {

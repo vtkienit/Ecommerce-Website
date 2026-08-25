@@ -47,7 +47,7 @@ export default function CatalogAdminView() {
 
   useEffect(() => {
     let active = true;
-    getAdminProducts({ page: productPage, size: 8, search: debouncedSearch })
+    getAdminProducts({ page: productPage, size: 6, search: debouncedSearch })
       .then((data) => {
         if (!active) return;
         setProducts(data.content);

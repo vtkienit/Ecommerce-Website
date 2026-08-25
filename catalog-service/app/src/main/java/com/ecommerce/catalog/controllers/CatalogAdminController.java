@@ -68,7 +68,7 @@ public class CatalogAdminController {
     @GetMapping("/products")
     public PageResponse<AdminProductResponse> getProducts(
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "8") @Min(1) @Max(50) int size,
+            @RequestParam(defaultValue = "6") @Min(1) @Max(50) int size,
             @RequestParam(defaultValue = "") String search
     ) {
         return catalogAdminService.getProducts(page, size, search);

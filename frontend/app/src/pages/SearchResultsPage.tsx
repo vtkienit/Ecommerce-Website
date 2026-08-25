@@ -17,7 +17,7 @@ export default function SearchResultsPage() {
   const { data, isLoading, isLoadingMore, error, hasMore, loadMore } = useProducts({
     search: query || undefined,
     sort: query ? "relevance,desc" : "newest,desc",
-    size: 12,
+    size: 6,
   });
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -83,7 +83,7 @@ export default function SearchResultsPage() {
 
           {data && data.content.length > 0 && (
             <>
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 lg:gap-5">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:gap-5">
                 {data.content.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

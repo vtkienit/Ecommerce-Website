@@ -49,7 +49,7 @@ public class CatalogController {
             @RequestParam(defaultValue = "0")
             @Min(value = 0, message = "Page must be at least 0")
             int page,
-            @RequestParam(name = "size", defaultValue = "12")
+            @RequestParam(name = "size", defaultValue = "6")
             @Min(value = 1, message = "Page size must be at least 1")
             @Max(value = 100, message = "Page size must not exceed 100")
             int pageSize

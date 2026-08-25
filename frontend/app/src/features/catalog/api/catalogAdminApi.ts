@@ -45,7 +45,7 @@ export const updateCategory = (id: number, payload: CategoryPayload) =>
 export const deleteCategory = (id: number) =>
   adminRequest<void>(`/api/admin/catalog/categories/${id}`, "DELETE");
 
-export const getAdminProducts = ({ page = 0, size = 8, search = "" }: PageQuery = {}) => {
+export const getAdminProducts = ({ page = 0, size = 6, search = "" }: PageQuery = {}) => {
   const params = new URLSearchParams({ page: String(page), size: String(size) });
   if (search.trim()) params.set("search", search.trim());
   return adminRequest<PageResponse<AdminProduct>>(`/api/admin/catalog/products?${params}`);
