@@ -372,6 +372,7 @@ function AuthInput({
           name={id}
           type={type}
           value={value}
+          placeholder={label}
           autoComplete={autoComplete}
           inputMode={inputMode}
           aria-invalid={Boolean(error)}

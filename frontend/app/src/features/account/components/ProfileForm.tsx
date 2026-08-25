@@ -65,6 +65,7 @@ export default function ProfileForm({ user, onUserChange }: {
           <input
             className={accountInputClass}
             value={form.name}
+            placeholder={t("fullName")}
             maxLength={100}
             onChange={(event) => setForm({ ...form, name: event.target.value })}
             required
@@ -72,7 +73,7 @@ export default function ProfileForm({ user, onUserChange }: {
         </ProfileField>
 
         <ProfileField label={t("email")} icon={<span className="text-xs">@</span>}>
-          <input className={accountInputClass} value={user.email} disabled />
+          <input className={accountInputClass} value={user.email} placeholder={t("email")} disabled />
         </ProfileField>
 
         <ProfileField label={t("phoneNumber")} icon={<Phone size={16} />}>
@@ -91,6 +92,7 @@ export default function ProfileForm({ user, onUserChange }: {
             className={accountInputClass}
             type="date"
             value={form.dateOfBirth ?? ""}
+            placeholder={t("dateOfBirth")}
             max={new Date().toISOString().slice(0, 10)}
             onChange={(event) => setForm({ ...form, dateOfBirth: event.target.value || null })}
           />

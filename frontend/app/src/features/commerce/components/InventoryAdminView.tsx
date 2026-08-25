@@ -133,6 +133,7 @@ export default function InventoryAdminView() {
                         min="0"
                         step="1"
                         value={drafts[item.variantId] ?? "0"}
+                        placeholder="0"
                         onChange={(event) => setDrafts((current) => ({
                           ...current,
                           [item.variantId]: event.target.value,

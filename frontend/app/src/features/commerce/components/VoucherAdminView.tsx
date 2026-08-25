@@ -157,7 +157,7 @@ export default function VoucherAdminView() {
           {success && <p className="mt-5 rounded-md bg-green-500/10 p-3 text-sm text-green-700 dark:text-green-300">{success}</p>}
 
           <div className="mt-7 grid items-start gap-6 xl:grid-cols-[410px_minmax(0,1fr)]">
-            <form onSubmit={submit} className="rounded-xl border border-border bg-bg p-5 shadow-sm xl:sticky xl:top-28">
+            <form noValidate onSubmit={submit} className="rounded-xl border border-border bg-bg p-5 shadow-sm xl:sticky xl:top-28">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-lg font-semibold text-text">{editingId ? t("editVoucher") : t("createVoucher")}</h2>
                 {editingId && (
@@ -175,16 +175,31 @@ export default function VoucherAdminView() {
                     <option value="FIXED_AMOUNT">{t("fixedDiscount")}</option>
                   </select>
                 </label>
-                <AdminField label={t("discountValue")} type="number" min="0.01" value={draft.discountValue} onChange={(value) => change("discountValue", value)} required />
+                <AdminField
+                  label={t("discountValue")}
+                  type="number"
+                  min="0.01"
+                  max={draft.discountType === "PERCENTAGE" ? "100" : undefined}
+                  step={draft.discountType === "PERCENTAGE" ? "0.01" : "1"}
+                  value={draft.discountValue}
+                  onChange={(value) => change("discountValue", value)}
+                  required
+                />
                 <AdminField label={t("voucherQuantity")} type="number" min="1" step="1" value={draft.quantity} onChange={(value) => change("quantity", value)} required />
-                <AdminField label={t("minimumOrder")} type="number" min="0" value={draft.minOrderAmount} onChange={(value) => change("minOrderAmount", value)} required />
-                <AdminField label={t("maximumDiscount")} type="number" min="0" value={draft.maxDiscountAmount} onChange={(value) => change("maxDiscountAmount", value)} />
+                <AdminField label={t("minimumOrder")} type="number" min="0" step="1" value={draft.minOrderAmount} onChange={(value) => change("minOrderAmount", value)} required />
+                <AdminField label={t("maximumDiscount")} type="number" min="0" step="1" value={draft.maxDiscountAmount} onChange={(value) => change("maxDiscountAmount", value)} />
                 <AdminField label={t("startDate")} type="datetime-local" value={draft.startDate} onChange={(value) => change("startDate", value)} required />
                 <AdminField label={t("endDate")} type="datetime-local" value={draft.endDate} onChange={(value) => change("endDate", value)} required />
               </div>
               <label className="mt-4 block text-sm font-medium text-text-secondary">
                 {t("description")}
-                <textarea value={draft.description} onChange={(event) => change("description", event.target.value)} className={`${inputClass} min-h-20 py-2.5`} />
+                <textarea
+                  value={draft.description}
+                  maxLength={255}
+                  placeholder={t("description")}
+                  onChange={(event) => change("description", event.target.value)}
+                  className={`${inputClass} min-h-20 py-2.5`}
+                />
               </label>
               <button type="submit" disabled={isSaving} className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-md bg-primary font-semibold text-white transition-all hover:brightness-95 hover:shadow-sm active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60">
                 {isSaving ? <LoaderCircle className="animate-spin" size={18} /> : editingId ? <Save size={18} /> : <Plus size={18} />}
@@ -264,19 +279,30 @@ export default function VoucherAdminView() {
 
 const inputClass = "mt-2 h-11 w-full rounded-md border border-border bg-bg px-3 text-text outline-none focus:border-primary";
 
-function AdminField({ label, value, onChange, type = "text", required = false, min, step }: {
+function AdminField({ label, value, onChange, type = "text", required = false, min, max, step }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
   required?: boolean;
   min?: string;
+  max?: string;
   step?: string;
 }) {
   return (
     <label className="text-sm font-medium text-text-secondary">
       {label}
-      <input type={type} required={required} min={min} step={step} value={value} onChange={(event) => onChange(event.target.value)} className={inputClass} />
+      <input
+        type={type}
+        required={required}
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        placeholder={label}
+        onChange={(event) => onChange(event.target.value)}
+        className={inputClass}
+      />
     </label>
   );
 }
@@ -307,11 +333,20 @@ function toPayload(draft: VoucherDraft): VoucherPayload | null {
   const minOrderAmount = Number(draft.minOrderAmount);
   const maxDiscountAmount = draft.maxDiscountAmount.trim() ? Number(draft.maxDiscountAmount) : null;
   const quantity = Number(draft.quantity);
-  if (!draft.code.trim() || !draft.startDate || !draft.endDate
+  const startDate = new Date(draft.startDate);
+  const endDate = new Date(draft.endDate);
+  const hasWholeVndAmounts = Number.isInteger(minOrderAmount)
+    && (maxDiscountAmount === null || Number.isInteger(maxDiscountAmount))
+    && (draft.discountType !== "FIXED_AMOUNT" || Number.isInteger(discountValue));
+  if (!/^[A-Za-z0-9_-]{3,30}$/.test(draft.code.trim()) || !draft.startDate || !draft.endDate
     || !Number.isFinite(discountValue) || discountValue <= 0
+    || (draft.discountType === "PERCENTAGE" && discountValue > 100)
     || !Number.isFinite(minOrderAmount) || minOrderAmount < 0
     || (maxDiscountAmount !== null && (!Number.isFinite(maxDiscountAmount) || maxDiscountAmount <= 0))
-    || !Number.isInteger(quantity) || quantity < 1) return null;
+    || !Number.isInteger(quantity) || quantity < 1
+    || !hasWholeVndAmounts
+    || Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())
+    || endDate <= startDate) return null;
   return {
     code: draft.code.trim(),
     description: draft.description.trim(),

@@ -192,6 +192,7 @@ export default function CartView() {
                     <textarea
                       required
                       value={shippingAddress}
+                      placeholder={t("shippingAddress")}
                       onChange={(event) => setShippingAddress(event.target.value)}
                       className="mt-2 min-h-24 w-full resize-y rounded-md border border-border bg-bg px-3 py-2.5 text-text outline-none focus:border-primary"
                     />
@@ -353,6 +354,7 @@ function CheckoutField({
       <input
         required
         value={value}
+        placeholder={label}
         onChange={(event) => onChange(event.target.value)}
         className="mt-2 h-11 w-full rounded-md border border-border bg-bg px-3 text-text outline-none focus:border-primary"
       />

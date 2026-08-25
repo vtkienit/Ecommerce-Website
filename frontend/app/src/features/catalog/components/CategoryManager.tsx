@@ -88,7 +88,7 @@ export default function CategoryManager({ categories, onChange, onMessage }: Pro
         <div className="mt-5 space-y-4">
           <label className="block text-sm font-medium text-text">
             {t("categoryName")}
-            <input className={`${fieldClass} mt-1.5`} value={name} onChange={(event) => setName(event.target.value)} />
+            <input className={`${fieldClass} mt-1.5`} value={name} placeholder={t("categoryName")} onChange={(event) => setName(event.target.value)} />
           </label>
           <label className="block text-sm font-medium text-text">
             Slug

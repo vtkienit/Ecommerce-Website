@@ -208,7 +208,7 @@ export default function ProductManager({
               </label>
               <label className="block text-sm font-medium text-text">
                 {t("productName")}
-                <input className={`${fieldClass} mt-1.5`} value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
+                <input className={`${fieldClass} mt-1.5`} value={draft.name} placeholder={t("productName")} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
               </label>
               <label className="block text-sm font-medium text-text">
                 Slug
@@ -216,13 +216,14 @@ export default function ProductManager({
               </label>
               <label className="block text-sm font-medium text-text">
                 {t("brand")}
-                <input className={`${fieldClass} mt-1.5`} value={draft.brand} onChange={(event) => setDraft({ ...draft, brand: event.target.value })} />
+                <input className={`${fieldClass} mt-1.5`} value={draft.brand} placeholder={t("brand")} onChange={(event) => setDraft({ ...draft, brand: event.target.value })} />
               </label>
               <label className="block text-sm font-medium text-text md:col-span-2">
                 {t("description")}
                 <textarea
                   className="mt-1.5 min-h-28 w-full resize-y rounded-md border border-border bg-bg p-3 text-sm text-text outline-none focus:border-primary"
                   value={draft.description}
+                  placeholder={t("description")}
                   onChange={(event) => setDraft({ ...draft, description: event.target.value })}
                 />
               </label>

@@ -407,6 +407,7 @@ function ResetInput({
           id={id}
           type={type}
           value={value}
+          placeholder={label}
           inputMode={inputMode}
           maxLength={maxLength}
           autoComplete={autoComplete}
