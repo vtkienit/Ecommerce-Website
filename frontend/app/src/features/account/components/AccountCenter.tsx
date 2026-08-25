@@ -15,15 +15,19 @@ import { getCurrentProfile } from "../api/accountApi";
 import AccountSidebar from "./AccountSidebar";
 import AddressForm from "./AddressForm";
 import ProfileForm from "./ProfileForm";
-import PurchaseList from "./PurchaseList";
+import PurchaseList, { type PurchaseFilter } from "./PurchaseList";
 
 export type AccountSection = "profile" | "address" | "purchases";
 
 type AccountCenterProps = {
   section?: AccountSection;
+  purchaseFilter?: PurchaseFilter;
 };
 
-export default function AccountCenter({ section = "profile" }: AccountCenterProps) {
+export default function AccountCenter({
+  section = "profile",
+  purchaseFilter = "all",
+}: AccountCenterProps) {
   const { t } = useLanguage();
   const storedUser = getStoredUser();
   const [user, setUser] = useState<AuthUser | null>(storedUser);
@@ -79,7 +83,7 @@ export default function AccountCenter({ section = "profile" }: AccountCenterProp
             ) : section === "address" ? (
               <AddressForm user={user} onUserChange={setUser} />
             ) : (
-              <PurchaseList />
+              <PurchaseList filter={purchaseFilter} />
             )}
           </section>
         </div>

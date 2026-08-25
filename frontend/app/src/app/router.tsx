@@ -41,6 +41,11 @@ export default function AppRouter() {
       <Route path="/profile" element={<AccountPage />} />
       <Route path="/profile/address" element={<AccountPage section="address" />} />
       <Route path="/purchases" element={<AccountPage section="purchases" />} />
+      <Route path="/purchases/pending" element={<AccountPage section="purchases" purchaseFilter="pending" />} />
+      <Route path="/purchases/awaiting-shipment" element={<AccountPage section="purchases" purchaseFilter="awaiting-shipment" />} />
+      <Route path="/purchases/shipping" element={<AccountPage section="purchases" purchaseFilter="shipping" />} />
+      <Route path="/purchases/completed" element={<AccountPage section="purchases" purchaseFilter="completed" />} />
+      <Route path="/purchases/cancelled" element={<AccountPage section="purchases" purchaseFilter="cancelled" />} />
     </Routes>
   );
 }

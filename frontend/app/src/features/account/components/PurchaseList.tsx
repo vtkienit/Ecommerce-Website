@@ -15,7 +15,24 @@ const statusKeys: Record<OrderStatus, TranslationKey> = {
   CANCELLED: "orderStatusCancelled",
 };
 
-export default function PurchaseList() {
+export type PurchaseFilter =
+  | "all"
+  | "pending"
+  | "awaiting-shipment"
+  | "shipping"
+  | "completed"
+  | "cancelled";
+
+const filterStatuses: Record<PurchaseFilter, OrderStatus[]> = {
+  all: [],
+  pending: ["PENDING"],
+  "awaiting-shipment": ["CONFIRMED", "PROCESSING"],
+  shipping: ["SHIPPED"],
+  completed: ["DELIVERED"],
+  cancelled: ["CANCELLED"],
+};
+
+export default function PurchaseList({ filter = "all" }: { filter?: PurchaseFilter }) {
   const { lang, t } = useLanguage();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,6 +43,10 @@ export default function PurchaseList() {
     currency: "VND",
     maximumFractionDigits: 0,
   });
+  const statuses = filterStatuses[filter];
+  const visibleOrders = statuses.length === 0
+    ? orders
+    : orders.filter((order) => statuses.includes(order.status));
 
   useEffect(() => {
     let active = true;
@@ -61,26 +82,28 @@ export default function PurchaseList() {
   return (
     <>
       <SectionHeading title={t("purchaseTitle")} subtitle={t("purchaseSubtitle")} />
+      {error && <p className="mx-4 mt-4 rounded-md bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300 sm:mx-6">{error}</p>}
       {isLoading ? (
         <div className="flex min-h-80 items-center justify-center gap-2 text-sm text-text-secondary">
           <LoaderCircle className="animate-spin text-primary" size={20} />
           {t("catalogLoading")}
         </div>
-      ) : orders.length === 0 ? (
+      ) : visibleOrders.length === 0 ? (
         <div className="flex min-h-80 flex-col items-center justify-center px-5 py-12 text-center">
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary">
             <ShoppingBag size={34} />
           </div>
           <h2 className="mt-5 text-lg font-semibold text-text">{t("noPurchases")}</h2>
-          <p className="mt-2 max-w-sm text-sm leading-6 text-text-secondary">{t("noPurchasesDescription")}</p>
+          <p className="mt-2 max-w-sm text-sm leading-6 text-text-secondary">
+            {t(filter === "all" ? "noPurchasesDescription" : "noPurchasesInStatus")}
+          </p>
           <Link to="/mattress" className="mt-5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white">
             {t("startShopping")}
           </Link>
         </div>
       ) : (
         <div className="space-y-4 p-4 sm:p-6">
-          {error && <p className="rounded-md bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">{error}</p>}
-          {orders.map((order) => (
+          {visibleOrders.map((order) => (
             <article key={order.id} className="overflow-hidden rounded-lg border border-border">
               <header className="flex flex-wrap items-center justify-between gap-3 bg-bg-secondary px-4 py-3 text-sm">
                 <div>

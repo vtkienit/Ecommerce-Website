@@ -1,5 +1,16 @@
 import type { ReactNode } from "react";
-import { ChevronRight, ClipboardList, MapPin, UserRound } from "lucide-react";
+import {
+  CheckCircle2,
+  ChevronRight,
+  CircleX,
+  ClipboardList,
+  Clock3,
+  ListFilter,
+  MapPin,
+  Package,
+  Truck,
+  UserRound,
+} from "lucide-react";
 import { NavLink } from "react-router-dom";
 import clsx from "clsx";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
@@ -35,9 +46,28 @@ export default function AccountSidebar({ user }: { user: AuthUser | null }) {
           </AccountLink>
         </div>
 
-        <div className="mt-2">
-          <AccountLink to="/purchases" icon={<ClipboardList size={18} />} prominent>
-            {t("myPurchase")}
+        <div className="mt-3 flex items-center gap-2 px-2 py-2 text-sm font-semibold text-text">
+          <ClipboardList size={18} className="text-primary" />
+          {t("myPurchase")}
+        </div>
+        <div className="ml-4 border-l border-border pl-3">
+          <AccountLink to="/purchases" end icon={<ListFilter size={16} />}>
+            {t("purchaseAll")}
+          </AccountLink>
+          <AccountLink to="/purchases/pending" icon={<Clock3 size={16} />}>
+            {t("purchasePending")}
+          </AccountLink>
+          <AccountLink to="/purchases/awaiting-shipment" icon={<Package size={16} />}>
+            {t("purchaseAwaitingShipment")}
+          </AccountLink>
+          <AccountLink to="/purchases/shipping" icon={<Truck size={16} />}>
+            {t("purchaseShipping")}
+          </AccountLink>
+          <AccountLink to="/purchases/completed" icon={<CheckCircle2 size={16} />}>
+            {t("purchaseCompleted")}
+          </AccountLink>
+          <AccountLink to="/purchases/cancelled" icon={<CircleX size={16} />}>
+            {t("purchaseCancelled")}
           </AccountLink>
         </div>
       </nav>
@@ -50,13 +80,11 @@ function AccountLink({
   end,
   icon,
   children,
-  prominent = false,
 }: {
   to: string;
   end?: boolean;
   icon: ReactNode;
   children: ReactNode;
-  prominent?: boolean;
 }) {
   return (
     <NavLink
@@ -65,7 +93,6 @@ function AccountLink({
       className={({ isActive }) =>
         clsx(
           "group flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition",
-          prominent && "font-semibold",
           isActive
             ? "bg-primary/10 text-primary"
             : "text-text-secondary hover:bg-bg-secondary hover:text-text",
