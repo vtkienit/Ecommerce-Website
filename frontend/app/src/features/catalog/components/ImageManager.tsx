@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Check, ImagePlus, LoaderCircle, Trash2, Upload, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, ImagePlus, LoaderCircle, Save, Trash2, X } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
 import { deleteImage, updateImage, uploadImages } from "../api/catalogAdminApi";
 import type { AdminImage, AdminProduct } from "../model/catalogAdminTypes";
@@ -135,7 +135,7 @@ export default function ImageManager({ product, onChange, onMessage }: Props) {
               }}
             />
             {primaryFile ? (
-              <FilePreview file={primaryFile} />
+              <FilePreview key={fileIdentity(primaryFile)} file={primaryFile} />
             ) : currentPrimary ? (
               <img src={currentPrimary.imageUrl} alt="" className="h-full min-h-52 w-full object-cover" />
             ) : (
@@ -194,7 +194,7 @@ export default function ImageManager({ product, onChange, onMessage }: Props) {
         disabled={isUploading || selectedCount === 0}
         onClick={() => void upload()}
       >
-        {isUploading ? <LoaderCircle className="animate-spin" size={17} /> : <Upload size={17} />}
+        {isUploading ? <LoaderCircle className="animate-spin" size={17} /> : <Save size={17} />}
         {isUploading ? t("uploadingImages") : t("uploadSelectedImages")}
       </button>
 
@@ -253,13 +253,27 @@ function UploadPrompt({ title, subtitle }: { title: string; subtitle: string }) 
 }
 
 function FilePreview({ file }: { file: File }) {
-  const url = useMemo(() => URL.createObjectURL(file), [file]);
+  const [source, setSource] = useState("");
 
   useEffect(() => {
-    return () => URL.revokeObjectURL(url);
-  }, [url]);
+    let active = true;
+    const reader = new FileReader();
+    reader.addEventListener("load", () => {
+      if (active && typeof reader.result === "string") setSource(reader.result);
+    });
+    reader.readAsDataURL(file);
 
-  return <img src={url} alt="" className="h-full w-full object-cover" />;
+    return () => {
+      active = false;
+      if (reader.readyState === FileReader.LOADING) reader.abort();
+    };
+  }, [file]);
+
+  if (!source) {
+    return <LoaderCircle className="m-auto animate-spin text-primary" size={22} />;
+  }
+
+  return <img src={source} alt="" className="h-full w-full object-cover" />;
 }
 
 function fileIdentity(file: File) {
