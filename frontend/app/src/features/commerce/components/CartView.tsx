@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { Banknote, LoaderCircle, Minus, Plus, QrCode, ShoppingBag, TicketPercent, Trash2, X } from "lucide-react";
+import { Banknote, LoaderCircle, QrCode, ShoppingBag, TicketPercent, Trash2, X } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
 import MainLayout from "../../../shared/layouts/MainLayout";
+import QuantityStepper from "../../../shared/components/QuantityStepper";
 import VietnameseAddressFields from "../../address/components/VietnameseAddressFields";
 import { formatVietnameseAddress, type VietnameseAddress } from "../../address/model/addressTypes";
 import { getStoredUser } from "../../auth/model/authSession";
@@ -48,6 +49,7 @@ export default function CartView() {
       await updateItem(itemId, quantity);
     } catch (requestError) {
       setActionError(requestError instanceof Error ? requestError.message : t("checkoutError"));
+      throw requestError;
     }
   };
 
@@ -166,25 +168,14 @@ export default function CartView() {
                       <p className="mt-1 text-xs text-text-tertiary">{[item.size, item.thickness, item.color].filter(Boolean).join(" · ")}</p>
                       <p className="mt-3 font-bold text-red-700">{currency.format(item.unitPrice)}</p>
                       <div className="mt-auto flex items-end justify-between gap-3 pt-3">
-                        <div className="flex h-9 items-center rounded-md border border-border">
-                          <button
-                            type="button"
-                            disabled={item.quantity <= 1}
-                            onClick={() => void changeQuantity(item.id, item.quantity - 1)}
-                            className="flex h-full w-9 items-center justify-center disabled:opacity-35"
-                          >
-                            <Minus size={15} />
-                          </button>
-                          <span className="w-9 text-center text-sm font-semibold">{item.quantity}</span>
-                          <button
-                            type="button"
-                            disabled={item.quantity >= 99}
-                            onClick={() => void changeQuantity(item.id, item.quantity + 1)}
-                            className="flex h-full w-9 items-center justify-center disabled:opacity-35"
-                          >
-                            <Plus size={15} />
-                          </button>
-                        </div>
+                        <QuantityStepper
+                          compact
+                          value={item.quantity}
+                          quantityLabel={t("quantity")}
+                          decreaseLabel={t("decreaseQuantity")}
+                          increaseLabel={t("increaseQuantity")}
+                          onCommit={(quantity) => changeQuantity(item.id, quantity)}
+                        />
                         <button
                           type="button"
                           aria-label={t("remove")}

@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { CheckCircle2, LoaderCircle, Minus, PackageCheck, Plus, ShoppingCart } from "lucide-react";
+import { CheckCircle2, LoaderCircle, PackageCheck, ShoppingCart } from "lucide-react";
 import { useLanguage } from "../app/contexts/LanguageContext";
 import CatalogStatus from "../features/catalog/components/CatalogStatus";
 import ProductCard from "../features/catalog/components/ProductCard";
 import { useProduct } from "../features/catalog/hooks/useCatalog";
 import type { ProductVariant } from "../features/catalog/model/catalogTypes";
 import MainLayout from "../shared/layouts/MainLayout";
+import QuantityStepper from "../shared/components/QuantityStepper";
 import { getAuthToken } from "../features/auth/model/authSession";
 import { useCart } from "../features/commerce/context/CartContext";
 import { useVariantAvailability } from "../features/commerce/hooks/useVariantAvailability";
@@ -275,7 +276,7 @@ export default function ProductDetailPage() {
                       <p className="font-semibold text-red-600">{t("stockUnavailable")}</p>
                     )}
                     {!availability.isLoading && !availability.error && selectedAvailableQuantity !== undefined && (
-                      <p className={`font-semibold ${selectedAvailableQuantity > 0 ? "text-green-700 dark:text-green-300" : "text-red-600"}`}>
+                      <p className={`font-semibold ${selectedAvailableQuantity > 0 ? "text-primary" : "text-red-600"}`}>
                         {selectedAvailableQuantity > 0
                           ? t("itemsAvailable").replace("{count}", String(selectedAvailableQuantity))
                           : t("outOfStock")}
@@ -287,27 +288,15 @@ export default function ProductDetailPage() {
             )}
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <div className="flex h-12 items-center rounded-md border border-border bg-bg">
-                <button
-                  type="button"
-                  aria-label="Decrease quantity"
-                  onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-                  disabled={quantity <= 1}
-                  className="flex h-full w-12 cursor-pointer items-center justify-center text-text-secondary transition hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <Minus size={19} />
-                </button>
-                <span className="w-12 text-center font-semibold text-text">{quantity}</span>
-                <button
-                  type="button"
-                  aria-label="Increase quantity"
-                  onClick={() => setQuantity((current) => Math.min(selectedAvailableQuantity ?? current, current + 1))}
-                  disabled={selectedAvailableQuantity === undefined || quantity >= selectedAvailableQuantity}
-                  className="flex h-full w-12 cursor-pointer items-center justify-center text-text-secondary transition hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <Plus size={19} />
-                </button>
-              </div>
+              <QuantityStepper
+                value={quantity}
+                max={Math.max(1, selectedAvailableQuantity ?? 1)}
+                disabled={!selectedAvailableQuantity}
+                quantityLabel={t("quantity")}
+                decreaseLabel={t("decreaseQuantity")}
+                increaseLabel={t("increaseQuantity")}
+                onCommit={setQuantity}
+              />
               <button
                 type="button"
                 disabled={!selectedVariant || isAdding || availability.isLoading || Boolean(availability.error) || !selectedAvailableQuantity}
