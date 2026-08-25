@@ -36,15 +36,20 @@ export async function apiRequest<TResponse>(
   }: RequestOptions = {},
 ): Promise<TResponse> {
   let response: Response;
+  const formBody = body instanceof FormData;
 
   try {
     response = await fetch(`${baseUrl.replace(/\/$/, "")}${path}`, {
       method,
       headers: {
-        ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+        ...(body === undefined || formBody ? {} : { "Content-Type": "application/json" }),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined
+        ? undefined
+        : formBody
+          ? body
+          : JSON.stringify(body),
     });
   } catch {
     throw new ApiError("Cannot connect to the server", 0);

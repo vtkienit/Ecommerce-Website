@@ -12,6 +12,19 @@ Each backend service is an independent Spring Boot project under its own `app` d
 
 Commerce references users and catalog variants through scalar IDs instead of cross-service JPA relationships. Order items keep product and price snapshots so historical orders remain unchanged when the catalog changes.
 
+## Product image storage
+
+Catalog administrators can upload one main image and multiple secondary images for each product. Files are uploaded by `catalog-service` to the public Supabase Storage bucket `product-images`; the Supabase server key is never sent to the browser.
+
+Add these values to the root `.env` file:
+
+```properties
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_SECRET_KEY=sb_secret_your_server_key
+```
+
+Get the server key from **Supabase Dashboard → Project Settings → API Keys → Secret keys**. A legacy `service_role` key also works, but it must only be used by the backend. The Catalog Service creates the public bucket on the first upload. Images must be JPG, PNG or WEBP, up to 5 MB each, with a maximum of 10 images per product.
+
 ## Run tests
 
 Run `mvnw.cmd test` from each service's `app` directory.

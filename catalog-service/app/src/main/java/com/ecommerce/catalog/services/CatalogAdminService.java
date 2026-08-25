@@ -21,8 +21,10 @@ import com.ecommerce.catalog.repositories.ProductVariantRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.text.Normalizer;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -31,24 +33,29 @@ import java.util.Locale;
 @Transactional
 public class CatalogAdminService {
 
+    private static final int MAX_IMAGES_PER_PRODUCT = 10;
+
     private final ProductCategoryRepository categoryRepository;
     private final ProductRepository productRepository;
     private final ProductVariantRepository variantRepository;
     private final ProductImageRepository imageRepository;
     private final FlashSaleItemRepository flashSaleItemRepository;
+    private final SupabaseStorageService storageService;
 
     public CatalogAdminService(
             ProductCategoryRepository categoryRepository,
             ProductRepository productRepository,
             ProductVariantRepository variantRepository,
             ProductImageRepository imageRepository,
-            FlashSaleItemRepository flashSaleItemRepository
+            FlashSaleItemRepository flashSaleItemRepository,
+            SupabaseStorageService storageService
     ) {
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
         this.variantRepository = variantRepository;
         this.imageRepository = imageRepository;
         this.flashSaleItemRepository = flashSaleItemRepository;
+        this.storageService = storageService;
     }
 
     @Transactional(readOnly = true)
@@ -130,7 +137,10 @@ public class CatalogAdminService {
                     HttpStatus.CONFLICT
             );
         }
+        List<String> imageUrls = product.getImages().stream().map(ProductImage::getImageUrl).toList();
         productRepository.delete(product);
+        productRepository.flush();
+        imageUrls.forEach(storageService::deleteByUrl);
     }
 
     public AdminProductResponse createVariant(Long productId, VariantUpsertRequest request) {
@@ -186,9 +196,64 @@ public class CatalogAdminService {
         return toProductResponse(product);
     }
 
+    public AdminProductResponse uploadImages(
+            Long productId,
+            MultipartFile primaryImage,
+            List<MultipartFile> secondaryImages
+    ) {
+        Product product = findProduct(productId);
+        List<MultipartFile> secondary = secondaryImages == null
+                ? List.of()
+                : secondaryImages.stream().filter(file -> !file.isEmpty()).toList();
+        boolean hasPrimary = primaryImage != null && !primaryImage.isEmpty();
+        int uploadCount = secondary.size() + (hasPrimary ? 1 : 0);
+
+        if (uploadCount == 0) {
+            throw new CatalogException("Please select at least one image", HttpStatus.BAD_REQUEST);
+        }
+        if (product.getImages().size() + uploadCount > MAX_IMAGES_PER_PRODUCT) {
+            throw new CatalogException(
+                    "A product can have at most " + MAX_IMAGES_PER_PRODUCT + " images",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+
+        List<String> uploadedUrls = new ArrayList<>();
+        try {
+            if (hasPrimary) {
+                uploadedUrls.add(storageService.uploadProductImage(productId, primaryImage));
+            }
+            for (MultipartFile file : secondary) {
+                uploadedUrls.add(storageService.uploadProductImage(productId, file));
+            }
+
+            boolean needsPrimary = hasPrimary || product.getImages().isEmpty();
+            if (hasPrimary) {
+                clearPrimaryImage(product);
+            }
+
+            List<ProductImage> uploadedImages = new ArrayList<>();
+            for (int index = 0; index < uploadedUrls.size(); index++) {
+                ProductImage image = new ProductImage();
+                image.setProduct(product);
+                image.setImageUrl(uploadedUrls.get(index));
+                image.setPrimaryImage(needsPrimary && index == 0);
+                product.getImages().add(image);
+                uploadedImages.add(image);
+            }
+            imageRepository.saveAll(uploadedImages);
+            imageRepository.flush();
+            return toProductResponse(product);
+        } catch (RuntimeException exception) {
+            storageService.deleteUploadedFiles(uploadedUrls);
+            throw exception;
+        }
+    }
+
     public AdminProductResponse updateImage(Long id, ImageUpsertRequest request) {
         ProductImage image = findImage(id);
         Product product = image.getProduct();
+        String previousUrl = image.getImageUrl();
         image.setImageUrl(request.getImageUrl().trim());
 
         if (request.isPrimary()) {
@@ -206,6 +271,10 @@ public class CatalogAdminService {
                     );
         }
 
+        imageRepository.flush();
+        if (!previousUrl.equals(image.getImageUrl())) {
+            storageService.deleteByUrl(previousUrl);
+        }
         return toProductResponse(product);
     }
 
@@ -222,6 +291,8 @@ public class CatalogAdminService {
                     .min(Comparator.comparing(ProductImage::getId))
                     .ifPresent(candidate -> candidate.setPrimaryImage(true));
         }
+        imageRepository.flush();
+        storageService.deleteByUrl(image.getImageUrl());
         return toProductResponse(product);
     }
 

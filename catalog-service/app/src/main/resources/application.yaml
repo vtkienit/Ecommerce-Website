@@ -26,6 +26,11 @@ spring:
         hbm2ddl:
           create_namespaces: true
 
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 55MB
+
 security:
   jwt:
     secret: ${JWT_SECRET}
@@ -37,3 +42,10 @@ app:
 catalog:
   seed:
     enabled: ${CATALOG_SEED_ENABLED:true}
+
+supabase:
+  storage:
+    url: ${SUPABASE_URL:}
+    secret-key: ${SUPABASE_SECRET_KEY:}
+    bucket: product-images
+    max-file-size-bytes: 5242880

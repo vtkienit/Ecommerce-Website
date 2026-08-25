@@ -63,8 +63,21 @@ export const updateVariant = (id: number, payload: VariantPayload) =>
 export const deleteVariant = (id: number) =>
   adminRequest<AdminProduct>(`/api/admin/catalog/variants/${id}`, "DELETE");
 
-export const createImage = (productId: number, payload: ImagePayload) =>
-  adminRequest<AdminProduct>(`/api/admin/catalog/products/${productId}/images`, "POST", payload);
+export const uploadImages = (
+  productId: number,
+  primaryImage: File | null,
+  secondaryImages: File[],
+) => {
+  const formData = new FormData();
+  if (primaryImage) formData.append("primaryImage", primaryImage);
+  secondaryImages.forEach((image) => formData.append("secondaryImages", image));
+
+  return adminRequest<AdminProduct>(
+    `/api/admin/catalog/products/${productId}/images/upload`,
+    "POST",
+    formData,
+  );
+};
 
 export const updateImage = (id: number, payload: ImagePayload) =>
   adminRequest<AdminProduct>(`/api/admin/catalog/images/${id}`, "PATCH", payload);

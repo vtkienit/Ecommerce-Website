@@ -231,7 +231,7 @@ export default function ProductManager({ categories, products, onChange, onMessa
           {selectedProduct && (
             <>
               <VariantManager product={selectedProduct} onChange={replaceProduct} onMessage={onMessage} />
-              <ImageManager product={selectedProduct} onChange={replaceProduct} onMessage={onMessage} />
+              <ImageManager key={selectedProduct.id} product={selectedProduct} onChange={replaceProduct} onMessage={onMessage} />
             </>
           )}
         </div>

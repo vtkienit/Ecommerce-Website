@@ -4,6 +4,7 @@ import com.ecommerce.catalog.entities.*;
 import com.ecommerce.catalog.repositories.FlashSaleRepository;
 import com.ecommerce.catalog.repositories.ProductCategoryRepository;
 import com.ecommerce.catalog.repositories.ProductRepository;
+import com.ecommerce.catalog.services.SupabaseStorageService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +14,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.mock.web.MockMultipartFile;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -23,11 +26,17 @@ import java.time.LocalDateTime;
 import java.util.Date;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -49,6 +58,9 @@ class CatalogFlowTests {
 
     @Autowired
     private FlashSaleRepository flashSaleRepository;
+
+    @MockitoBean
+    private SupabaseStorageService storageService;
 
     private Product cloudMattress;
 
@@ -298,6 +310,60 @@ class CatalogFlowTests {
         mockMvc.perform(delete("/api/admin/catalog/categories/{id}", categoryId)
                         .header("Authorization", authorization))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void adminCanUploadMainAndMultipleSecondaryImages() throws Exception {
+        String authorization = "Bearer " + token("Admin");
+        MockMultipartFile mainImage = new MockMultipartFile(
+                "primaryImage",
+                "main.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                "main".getBytes(StandardCharsets.UTF_8)
+        );
+        MockMultipartFile secondaryOne = new MockMultipartFile(
+                "secondaryImages",
+                "side.png",
+                MediaType.IMAGE_PNG_VALUE,
+                "side".getBytes(StandardCharsets.UTF_8)
+        );
+        MockMultipartFile secondaryTwo = new MockMultipartFile(
+                "secondaryImages",
+                "detail.webp",
+                "image/webp",
+                "detail".getBytes(StandardCharsets.UTF_8)
+        );
+
+        when(storageService.uploadProductImage(anyLong(), any()))
+                .thenReturn("https://storage.test/main.jpg")
+                .thenReturn("https://storage.test/side.png")
+                .thenReturn("https://storage.test/detail.webp");
+
+        mockMvc.perform(multipart(
+                        "/api/admin/catalog/products/{id}/images/upload",
+                        cloudMattress.getId()
+                )
+                        .file(mainImage)
+                        .file(secondaryOne)
+                        .file(secondaryTwo)
+                        .header("Authorization", authorization))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.images.length()").value(4))
+                .andExpect(jsonPath("$.images[0].imageUrl").value("https://storage.test/main.jpg"))
+                .andExpect(jsonPath("$.images[0].primary").value(true));
+
+        verify(storageService, times(3)).uploadProductImage(anyLong(), any());
+    }
+
+    @Test
+    void imageUploadRequiresAtLeastOneFile() throws Exception {
+        mockMvc.perform(multipart(
+                        "/api/admin/catalog/products/{id}/images/upload",
+                        cloudMattress.getId()
+                )
+                        .header("Authorization", "Bearer " + token("Admin")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Please select at least one image"));
     }
 
     @Test
