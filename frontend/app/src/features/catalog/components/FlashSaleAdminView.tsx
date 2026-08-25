@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   CalendarClock,
@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
 import AdminPagination from "../../../shared/components/AdminPagination";
+import useDebouncedValue from "../../../shared/hooks/useDebouncedValue";
 import {
   createFlashSale,
   deleteFlashSale,
@@ -42,15 +43,22 @@ export default function FlashSaleAdminView() {
   const [draft, setDraft] = useState<FlashSaleDraft>(() => emptyDraft());
   const [editingId, setEditingId] = useState<number | null>(null);
   const [productSearch, setProductSearch] = useState("");
+  const [productPage, setProductPage] = useState(0);
+  const [productTotalElements, setProductTotalElements] = useState(0);
+  const [productTotalPages, setProductTotalPages] = useState(0);
   const [page, setPage] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [reloadKey, setReloadKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadedProductRequestKey, setLoadedProductRequestKey] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const debouncedProductSearch = useDebouncedValue(productSearch);
+  const productRequestKey = `${productPage}:${debouncedProductSearch}`;
+  const productsLoading = loadedProductRequestKey !== productRequestKey;
   const dateTime = new Intl.DateTimeFormat(lang === "vi" ? "vi-VN" : "en-US", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -58,16 +66,12 @@ export default function FlashSaleAdminView() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([
-      getFlashSales({ page, size: 6 }),
-      getAdminProducts({ page: 0, size: 50 }),
-    ])
-      .then(([salesPage, productsPage]) => {
+    getFlashSales({ page, size: 6 })
+      .then((salesPage) => {
         if (!active) return;
         setFlashSales(salesPage.content);
         setTotalElements(salesPage.totalElements);
         setTotalPages(salesPage.totalPages);
-        setProducts(productsPage.content);
       })
       .catch((requestError: unknown) => {
         if (active) setError(requestError instanceof Error ? requestError.message : t("flashSaleAdminError"));
@@ -80,13 +84,26 @@ export default function FlashSaleAdminView() {
     };
   }, [page, reloadKey, t]);
 
-  const visibleProducts = useMemo(() => {
-    const keyword = productSearch.trim().toLowerCase();
-    if (!keyword) return products;
-    return products.filter((product) =>
-      `${product.name} ${product.categoryName}`.toLowerCase().includes(keyword)
-    );
-  }, [productSearch, products]);
+  useEffect(() => {
+    let active = true;
+    getAdminProducts({ page: productPage, size: 6, search: debouncedProductSearch })
+      .then((productsPage) => {
+        if (!active) return;
+        setProducts(productsPage.content);
+        setProductTotalElements(productsPage.totalElements);
+        setProductTotalPages(productsPage.totalPages);
+      })
+      .catch((requestError: unknown) => {
+        if (active) setError(requestError instanceof Error ? requestError.message : t("flashSaleAdminError"));
+      })
+      .finally(() => {
+        if (active) setLoadedProductRequestKey(productRequestKey);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [debouncedProductSearch, productPage, productRequestKey, t]);
 
   const change = (field: Exclude<keyof FlashSaleDraft, "productIds">, value: string) => {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -105,6 +122,7 @@ export default function FlashSaleAdminView() {
     setEditingId(null);
     setDraft(emptyDraft());
     setProductSearch("");
+    setProductPage(0);
     setError("");
   };
 
@@ -119,6 +137,7 @@ export default function FlashSaleAdminView() {
       productIds: flashSale.productIds,
     });
     setProductSearch("");
+    setProductPage(0);
     setError("");
     setSuccess("");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -143,6 +162,7 @@ export default function FlashSaleAdminView() {
       setEditingId(null);
       setDraft(emptyDraft());
       setProductSearch("");
+      setProductPage(0);
       setPage(0);
       setIsLoading(true);
       setReloadKey((current) => current + 1);
@@ -178,7 +198,7 @@ export default function FlashSaleAdminView() {
     <>
       <Helmet><title>{t("flashSaleManagement")} | QuyDung</title></Helmet>
       <main className="min-h-[calc(100vh-4rem)] px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
-        <div className="mx-auto max-w-7xl">
+        <div className="mx-auto max-w-[1600px]">
           <header>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Admin</p>
             <h1 className="mt-1 text-3xl font-semibold text-text md:text-4xl">{t("flashSaleManagement")}</h1>
@@ -188,20 +208,20 @@ export default function FlashSaleAdminView() {
           {error && <p className="mt-5 rounded-md bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">{error}</p>}
           {success && <p className="mt-5 rounded-md bg-green-500/10 p-3 text-sm text-green-700 dark:text-green-300">{success}</p>}
 
-          <div className="mt-7 grid items-start gap-6 xl:grid-cols-[430px_minmax(0,1fr)]">
-            <form noValidate onSubmit={submit} className="rounded-xl border border-border bg-bg p-5 shadow-sm xl:sticky xl:top-28">
+          <div className="mt-7 grid items-start gap-7 xl:grid-cols-[minmax(560px,1.05fr)_minmax(480px,0.95fr)] 2xl:grid-cols-[minmax(680px,1.1fr)_minmax(560px,0.9fr)]">
+            <form noValidate onSubmit={submit} className="rounded-2xl border border-border bg-bg p-5 shadow-sm sm:p-6 2xl:p-7">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-text">
+                <h2 className="text-xl font-semibold text-text">
                   {editingId ? t("editFlashSale") : t("createFlashSale")}
                 </h2>
                 {editingId && (
-                  <button type="button" onClick={reset} className="rounded-md p-2 text-text-tertiary hover:bg-bg-secondary">
+                  <button type="button" onClick={reset} className="cursor-pointer rounded-md p-2 text-text-tertiary transition hover:bg-bg-secondary hover:text-text">
                     <X size={18} />
                   </button>
                 )}
               </div>
 
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div className="mt-6 grid gap-5 sm:grid-cols-2">
                 <AdminField label={t("flashSaleName")} value={draft.name} onChange={(value) => change("name", value)} className="sm:col-span-2" />
                 <AdminField label={t("startDate")} type="datetime-local" value={draft.startDate} onChange={(value) => change("startDate", value)} />
                 <AdminField label={t("endDate")} type="datetime-local" value={draft.endDate} onChange={(value) => change("endDate", value)} />
@@ -217,65 +237,100 @@ export default function FlashSaleAdminView() {
                 />
               </div>
 
-              <label className="mt-4 block text-sm font-medium text-text-secondary">
+              <label className="mt-5 block text-sm font-medium text-text-secondary">
                 {t("description")}
                 <textarea
                   value={draft.description}
                   maxLength={255}
                   placeholder={t("description")}
                   onChange={(event) => change("description", event.target.value)}
-                  className={`${inputClass} min-h-20 py-2.5`}
+                  className={`${inputClass} min-h-24 resize-y py-3`}
                 />
               </label>
 
-              <div className="mt-5">
+              <div className="mt-7 border-t border-border pt-6">
                 <div className="flex items-center justify-between gap-3">
-                  <label className="text-sm font-semibold text-text">{t("saleProducts")}</label>
-                  <span className="text-xs font-semibold text-primary">
+                  <label className="font-semibold text-text">{t("saleProducts")}</label>
+                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                     {t("productsSelected").replace("{count}", String(draft.productIds.length))}
                   </span>
                 </div>
-                <label className="mt-2 flex items-center gap-2 rounded-md border border-border bg-bg px-3">
-                  <Search size={16} className="text-text-tertiary" />
+                <label className="mt-3 flex items-center gap-3 rounded-lg border border-border bg-bg px-4 transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
+                  <Search size={18} className="text-text-tertiary" />
                   <input
                     value={productSearch}
-                    onChange={(event) => setProductSearch(event.target.value)}
+                    onChange={(event) => {
+                      setProductSearch(event.target.value);
+                      setProductPage(0);
+                    }}
                     placeholder={t("searchProducts")}
-                    className="h-10 min-w-0 flex-1 bg-transparent text-sm text-text outline-none"
+                    className="h-12 min-w-0 flex-1 bg-transparent text-sm text-text outline-none"
                   />
                 </label>
-                <div className="mt-2 max-h-64 space-y-2 overflow-y-auto pr-1">
-                  {visibleProducts.map((product) => {
-                    const selected = draft.productIds.includes(product.id);
-                    const image = product.images.find((item) => item.primary) ?? product.images[0];
-                    return (
-                      <button
-                        key={product.id}
-                        type="button"
-                        onClick={() => toggleProduct(product.id)}
-                        className={`flex w-full items-center gap-3 rounded-lg border p-2 text-left transition-colors ${selected ? "border-primary bg-primary/8" : "border-border bg-bg hover:border-primary/40"}`}
-                      >
-                        <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-md bg-bg-secondary text-text-tertiary">
-                          {image ? <img src={image.imageUrl} alt="" className="h-full w-full object-cover" /> : <Package size={18} />}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <strong className="block truncate text-sm text-text">{product.name}</strong>
-                          <small className="text-text-tertiary">{product.categoryName}</small>
-                        </span>
-                        <input type="checkbox" checked={selected} readOnly className="pointer-events-none h-4 w-4 accent-primary" />
-                      </button>
-                    );
-                  })}
-                </div>
+                {productsLoading ? (
+                  <div className="flex min-h-52 items-center justify-center gap-2 text-sm text-text-secondary">
+                    <LoaderCircle className="animate-spin text-primary" size={20} /> {t("catalogAdminLoading")}
+                  </div>
+                ) : products.length === 0 ? (
+                  <div className="mt-3 flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-border text-center text-text-secondary">
+                    <Package size={30} className="text-text-tertiary" />
+                    <p className="mt-2 text-sm">{t("catalogEmpty")}</p>
+                  </div>
+                ) : (
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {products.map((product) => {
+                      const selected = draft.productIds.includes(product.id);
+                      const image = product.images.find((item) => item.primary) ?? product.images[0];
+                      return (
+                        <label
+                          key={product.id}
+                          className={`flex min-h-20 cursor-pointer items-center gap-3 rounded-xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${selected ? "border-primary bg-primary/8" : "border-border bg-bg hover:border-primary/40"}`}
+                        >
+                          <span className="grid h-13 w-13 shrink-0 place-items-center overflow-hidden rounded-lg bg-bg-secondary text-text-tertiary">
+                            {image ? <img src={image.imageUrl} alt="" className="h-full w-full object-cover" /> : <Package size={20} />}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <strong className="block line-clamp-2 text-sm text-text">{product.name}</strong>
+                            <small className="mt-1 block truncate text-text-tertiary">{product.categoryName}</small>
+                          </span>
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={() => toggleProduct(product.id)}
+                            className="h-4 w-4 shrink-0 cursor-pointer accent-primary"
+                          />
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+                <AdminPagination
+                  page={productPage}
+                  totalPages={productTotalPages}
+                  totalElements={productTotalElements}
+                  alwaysVisible
+                  onChange={(nextPage) => {
+                    setProductPage(nextPage);
+                  }}
+                />
               </div>
 
-              <button type="submit" disabled={isSaving} className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-md bg-primary font-semibold text-white transition-all hover:brightness-95 hover:shadow-sm active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60">
+              <button type="submit" disabled={isSaving} className="mt-6 flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary font-semibold text-white transition-all hover:-translate-y-0.5 hover:brightness-95 hover:shadow-md active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60">
                 {isSaving ? <LoaderCircle className="animate-spin" size={18} /> : editingId ? <Pencil size={18} /> : <Plus size={18} />}
                 {editingId ? t("saveChanges") : t("createFlashSale")}
               </button>
             </form>
 
-            <section>
+            <section className="min-w-0">
+              <div className="mb-4 flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-semibold text-text">{t("flashSaleCampaigns")}</h2>
+                  <p className="mt-1 text-sm text-text-secondary">{t("totalRecords").replace("{count}", String(totalElements))}</p>
+                </div>
+                <span className="grid h-11 w-11 place-items-center rounded-xl bg-red-500/10 text-red-600">
+                  <Flame size={22} />
+                </span>
+              </div>
               {isLoading ? (
                 <div className="flex min-h-72 items-center justify-center gap-2 text-text-secondary">
                   <LoaderCircle className="animate-spin text-primary" size={21} /> {t("flashSaleLoading")}
@@ -287,33 +342,33 @@ export default function FlashSaleAdminView() {
                 </div>
               ) : (
                 <>
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-4">
                     {flashSales.map((flashSale) => {
                       const status = getFlashSaleStatus(flashSale);
                       return (
-                        <article key={flashSale.id} className="rounded-xl border border-border bg-bg p-5 shadow-sm">
+                        <article key={flashSale.id} className="rounded-2xl border border-border bg-bg p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md sm:p-6">
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
-                                <h2 className="truncate font-semibold text-text">{flashSale.name}</h2>
+                                <h2 className="truncate text-lg font-semibold text-text">{flashSale.name}</h2>
                                 <StatusBadge status={status} />
                               </div>
                               {flashSale.description && <p className="mt-1 line-clamp-2 text-sm text-text-secondary">{flashSale.description}</p>}
                             </div>
                             <div className="flex shrink-0 gap-1">
-                              <button type="button" onClick={() => edit(flashSale)} className="rounded-md p-2 text-text-secondary hover:bg-bg-secondary hover:text-primary"><Pencil size={17} /></button>
-                              <button type="button" disabled={deletingId === flashSale.id} onClick={() => void remove(flashSale)} className="rounded-md p-2 text-text-secondary hover:bg-red-500/10 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50">
+                              <button type="button" onClick={() => edit(flashSale)} className="cursor-pointer rounded-md p-2 text-text-secondary transition hover:bg-bg-secondary hover:text-primary"><Pencil size={18} /></button>
+                              <button type="button" disabled={deletingId === flashSale.id} onClick={() => void remove(flashSale)} className="cursor-pointer rounded-md p-2 text-text-secondary transition hover:bg-red-500/10 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50">
                                 {deletingId === flashSale.id ? <LoaderCircle className="animate-spin" size={17} /> : <Trash2 size={17} />}
                               </button>
                             </div>
                           </div>
-                          <p className="mt-5 text-3xl font-bold text-red-600">-{flashSale.discountPercentage}%</p>
-                          <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 text-sm">
+                          <p className="mt-5 text-4xl font-bold text-red-600">-{flashSale.discountPercentage}%</p>
+                          <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-5 text-sm">
                             <Info label={t("productsLabel")} value={String(flashSale.productCount)} />
                             <Info label={t("productVariants")} value={String(flashSale.variantCount)} />
                           </dl>
-                          <div className="mt-4 flex gap-2 text-xs leading-5 text-text-tertiary">
-                            <CalendarClock className="mt-0.5 shrink-0" size={15} />
+                          <div className="mt-5 flex gap-2 rounded-lg bg-bg-secondary px-3 py-2.5 text-sm leading-6 text-text-secondary">
+                            <CalendarClock className="mt-0.5 shrink-0 text-primary" size={17} />
                             <span>{dateTime.format(new Date(flashSale.startDate))}<br />{dateTime.format(new Date(flashSale.endDate))}</span>
                           </div>
                         </article>
@@ -324,6 +379,7 @@ export default function FlashSaleAdminView() {
                     page={page}
                     totalPages={totalPages}
                     totalElements={totalElements}
+                    alwaysVisible
                     onChange={(nextPage) => {
                       setIsLoading(true);
                       setPage(nextPage);
