@@ -1,6 +1,7 @@
 import { ApiError, apiRequest } from "../../../shared/api/httpClient";
 import { getAuthToken } from "../../auth/model/authSession";
 import type { AuthUser } from "../../auth/model/authTypes";
+import type { VietnameseAddress } from "../../address/model/addressTypes";
 import type { ProfileUpdateRequest } from "../model/accountTypes";
 
 const authenticatedRequest = <TResponse>(
@@ -23,5 +24,5 @@ export const getCurrentProfile = () =>
 export const updateProfile = (request: ProfileUpdateRequest) =>
   authenticatedRequest<AuthUser>("/api/users/me", "PATCH", request);
 
-export const updateAddress = (address: string) =>
-  authenticatedRequest<AuthUser>("/api/users/me/address", "PATCH", { address });
+export const updateAddress = (address: VietnameseAddress) =>
+  authenticatedRequest<AuthUser>("/api/users/me/address", "PATCH", address);

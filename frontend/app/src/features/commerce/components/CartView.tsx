@@ -4,6 +4,8 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { Banknote, LoaderCircle, Minus, Plus, QrCode, ShoppingBag, TicketPercent, Trash2, X } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
 import MainLayout from "../../../shared/layouts/MainLayout";
+import VietnameseAddressFields from "../../address/components/VietnameseAddressFields";
+import { formatVietnameseAddress, type VietnameseAddress } from "../../address/model/addressTypes";
 import { getStoredUser } from "../../auth/model/authSession";
 import { checkout, previewVoucher } from "../api/commerceApi";
 import { useCart } from "../context/CartContext";
@@ -16,7 +18,13 @@ export default function CartView() {
   const { cart, isLoading, error: cartError, refreshCart, updateItem, removeItem } = useCart();
   const [recipientName, setRecipientName] = useState(user?.name ?? "");
   const [recipientPhone, setRecipientPhone] = useState(user?.phone ?? "");
-  const [shippingAddress, setShippingAddress] = useState(user?.address ?? "");
+  const [shippingAddress, setShippingAddress] = useState<VietnameseAddress>({
+    provinceCode: user?.provinceCode ?? null,
+    provinceName: user?.provinceName ?? "",
+    wardCode: user?.wardCode ?? null,
+    wardName: user?.wardName ?? "",
+    addressLine: user?.addressLine ?? user?.address ?? "",
+  });
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
   const [voucherCode, setVoucherCode] = useState("");
   const [voucher, setVoucher] = useState<VoucherPreview | null>(null);
@@ -74,12 +82,21 @@ export default function CartView() {
     if (cart.items.length === 0 || isSubmitting) return;
 
     setActionError("");
+    if (
+      shippingAddress.provinceCode === null
+      || shippingAddress.wardCode === null
+      || !shippingAddress.addressLine.trim()
+    ) {
+      setActionError(t("addressRequired"));
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const order = await checkout({
         recipientName: recipientName.trim(),
         recipientPhone: recipientPhone.trim(),
-        shippingAddress: shippingAddress.trim(),
+        shippingAddress: formatVietnameseAddress(shippingAddress),
         paymentMethod,
         voucherCode: voucher?.code,
       });
@@ -187,16 +204,14 @@ export default function CartView() {
                 <div className="mt-5 space-y-4">
                   <CheckoutField label={t("recipientName")} value={recipientName} onChange={setRecipientName} />
                   <CheckoutField label={t("recipientPhone")} value={recipientPhone} onChange={setRecipientPhone} />
-                  <label className="block text-sm font-medium text-text-secondary">
-                    {t("shippingAddress")}
-                    <textarea
-                      required
+                  <div>
+                    <p className="mb-3 text-sm font-medium text-text-secondary">{t("shippingAddress")}</p>
+                    <VietnameseAddressFields
+                      compact
                       value={shippingAddress}
-                      placeholder={t("shippingAddress")}
-                      onChange={(event) => setShippingAddress(event.target.value)}
-                      className="mt-2 min-h-24 w-full resize-y rounded-md border border-border bg-bg px-3 py-2.5 text-text outline-none focus:border-primary"
+                      onChange={setShippingAddress}
                     />
-                  </label>
+                  </div>
                   <fieldset>
                     <legend className="text-sm font-medium text-text-secondary">{t("paymentMethod")}</legend>
                     <div className="mt-2 grid gap-2">

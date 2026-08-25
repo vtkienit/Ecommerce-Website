@@ -201,8 +201,19 @@ class AuthFlowTests {
         mockMvc.perform(patch("/api/users/me/address")
                         .header("Authorization", authorization)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"address\":\"123 Nguyen Trai, Ha Noi\"}"))
+                        .content("""
+                                {
+                                  "addressLine": "123 Nguyen Trai",
+                                  "provinceCode": 1,
+                                  "provinceName": "Thanh pho Ha Noi",
+                                  "wardCode": 4,
+                                  "wardName": "Phuong Ba Dinh"
+                                }
+                                """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.address").value("123 Nguyen Trai, Ha Noi"));
+                .andExpect(jsonPath("$.address").value("123 Nguyen Trai, Phuong Ba Dinh, Thanh pho Ha Noi"))
+                .andExpect(jsonPath("$.addressLine").value("123 Nguyen Trai"))
+                .andExpect(jsonPath("$.provinceCode").value(1))
+                .andExpect(jsonPath("$.wardCode").value(4));
     }
 }

@@ -118,7 +118,16 @@ public class UserService {
     @Transactional
     public UserResponse updateCurrentAddress(String email, UserAddressUpdateRequest request) {
         User user = findUserByEmail(email);
-        user.setAddress(request.getAddress().trim());
+        String addressLine = request.getAddressLine().trim();
+        String wardName = request.getWardName().trim();
+        String provinceName = request.getProvinceName().trim();
+
+        user.setAddressLine(addressLine);
+        user.setProvinceCode(request.getProvinceCode());
+        user.setProvinceName(provinceName);
+        user.setWardCode(request.getWardCode());
+        user.setWardName(wardName);
+        user.setAddress(String.join(", ", addressLine, wardName, provinceName));
 
         return toResponse(userRepository.save(user));
     }
@@ -140,6 +149,11 @@ public class UserService {
                 user.getEmail(),
                 user.getPhone(),
                 user.getAddress(),
+                user.getAddressLine(),
+                user.getProvinceCode(),
+                user.getProvinceName(),
+                user.getWardCode(),
+                user.getWardName(),
                 user.getGender(),
                 user.getDateOfBirth(),
                 user.getRole()

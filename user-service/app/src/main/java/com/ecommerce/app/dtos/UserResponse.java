@@ -14,6 +14,11 @@ public class UserResponse {
     private String email;
     private String phone;
     private String address;
+    private String addressLine;
+    private Integer provinceCode;
+    private String provinceName;
+    private Integer wardCode;
+    private String wardName;
     private String gender;
     private LocalDate dateOfBirth;
     private String role;

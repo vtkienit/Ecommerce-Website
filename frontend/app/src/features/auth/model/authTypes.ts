@@ -4,6 +4,11 @@ export type AuthUser = {
   email: string;
   phone: string | null;
   address: string | null;
+  addressLine: string | null;
+  provinceCode: number | null;
+  provinceName: string | null;
+  wardCode: number | null;
+  wardName: string | null;
   gender: "MALE" | "FEMALE" | "OTHER" | null;
   dateOfBirth: string | null;
   role: string;

@@ -30,7 +30,23 @@ public class User {
 
     private String phone;
 
+    @Column(length = 500)
     private String address;
+
+    @Column(name = "address_line", length = 255)
+    private String addressLine;
+
+    @Column(name = "province_code")
+    private Integer provinceCode;
+
+    @Column(name = "province_name", length = 100)
+    private String provinceName;
+
+    @Column(name = "ward_code")
+    private Integer wardCode;
+
+    @Column(name = "ward_name", length = 100)
+    private String wardName;
 
     private String gender;
 
