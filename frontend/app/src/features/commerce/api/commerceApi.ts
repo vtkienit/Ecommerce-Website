@@ -87,9 +87,6 @@ export const updateReturnRequestStatus = (
 export const getInventory = (query: PageQuery = {}) =>
   commerceRequest<PageResponse<InventoryItem>>(`/api/admin/inventory?${adminParams(query)}`);
 
-export const syncInventory = (query: PageQuery = {}) =>
-  commerceRequest<PageResponse<InventoryItem>>(`/api/admin/inventory/sync?${adminParams(query)}`, "POST");
-
 export const updateInventory = (variantId: number, onHandQuantity: number) =>
   commerceRequest<InventoryItem>(`/api/admin/inventory/${variantId}`, "PATCH", { onHandQuantity });
 

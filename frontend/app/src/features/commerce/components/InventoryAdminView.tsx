@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { LoaderCircle, PackageSearch, RefreshCw, Save, Search } from "lucide-react";
+import { LoaderCircle, PackageSearch, Save, Search } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
 import AdminPagination from "../../../shared/components/AdminPagination";
 import useDebouncedValue from "../../../shared/hooks/useDebouncedValue";
-import { getInventory, syncInventory, updateInventory } from "../api/commerceApi";
+import { getInventory, updateInventory } from "../api/commerceApi";
 import type { InventoryItem } from "../model/commerceTypes";
 
 export default function InventoryAdminView() {
@@ -16,7 +16,6 @@ export default function InventoryAdminView() {
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [savingId, setSavingId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -43,24 +42,6 @@ export default function InventoryAdminView() {
       active = false;
     };
   }, [debouncedSearch, page, t]);
-
-  const sync = async () => {
-    setIsSyncing(true);
-    setError("");
-    setSuccess("");
-    try {
-      const data = await syncInventory({ page, size: 10, search: debouncedSearch });
-      setInventory(data.content);
-      setDrafts(toDrafts(data.content));
-      setTotalElements(data.totalElements);
-      setTotalPages(data.totalPages);
-      setSuccess(t("inventorySynced"));
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : t("inventoryLoadError"));
-    } finally {
-      setIsSyncing(false);
-    }
-  };
 
   const save = async (item: InventoryItem) => {
     const quantity = Number(drafts[item.variantId]);
@@ -89,21 +70,12 @@ export default function InventoryAdminView() {
       <Helmet><title>{t("inventoryManagement")} | QuyDung</title></Helmet>
       <main className="min-h-[calc(100vh-4rem)] px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
         <div className="mx-auto max-w-7xl">
-          <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <header>
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Admin</p>
               <h1 className="mt-1 text-3xl font-semibold text-text md:text-4xl">{t("inventoryManagement")}</h1>
               <p className="mt-2 text-sm text-text-secondary">{t("inventoryDescription")}</p>
             </div>
-            <button
-              type="button"
-              disabled={isSyncing}
-              onClick={() => void sync()}
-              className="flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 font-semibold text-white transition-all hover:brightness-95 hover:shadow-sm active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <RefreshCw className={isSyncing ? "animate-spin" : ""} size={18} />
-              {isSyncing ? t("syncingInventory") : t("syncInventory")}
-            </button>
           </header>
 
           <div className="mt-7 flex items-center gap-3 rounded-lg border border-border bg-bg px-4 shadow-sm">
