@@ -13,6 +13,8 @@ spring:
         default_schema: commerce
         hbm2ddl:
           create_namespaces: true
+  flyway:
+    enabled: false
 
 security:
   jwt:
