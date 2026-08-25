@@ -10,6 +10,8 @@ import ProductDetailPage from "../pages/ProductDetailPage";
 import RegisterPage from "../pages/RegisterPage";
 import CartPage from "../pages/CartPage";
 import PaymentResultPage from "../pages/PaymentResultPage";
+import ContactPage from "../pages/ContactPage";
+import SupportPage from "../pages/SupportPage";
 
 const CatalogAdminPage = lazy(() => import("../pages/CatalogAdminPage"));
 const DashboardAdminPage = lazy(() => import("../pages/DashboardAdminPage"));
@@ -38,6 +40,8 @@ export default function AppRouter() {
       <Route path="/accessories/pillow" element={<Navigate to="/catalog/pillows" replace />} />
       <Route path="/products/:slug" element={<ProductDetailPage />} />
       <Route path="/cart" element={<CartPage />} />
+      <Route path="/support" element={<SupportPage />} />
+      <Route path="/contact" element={<ContactPage />} />
       <Route path="/payment/success" element={<PaymentResultPage mode="success" />} />
       <Route path="/payment/cancel" element={<PaymentResultPage mode="cancel" />} />
       <Route path="/admin" element={<AdminLayout />}>

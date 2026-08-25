@@ -38,7 +38,7 @@ const Footer = () => {
               {t("support")}
             </h4>
             <ul className="flex flex-col gap-2 text-text-secondary">
-              <li><Link className="hover:text-primary" to="/contact">{t("faq")}</Link></li>
+              <li><Link className="hover:text-primary" to="/support">{t("faq")}</Link></li>
               <li><Link className="hover:text-primary" to="/purchases">{t("manageOrder")}</Link></li>
             </ul>
           </div>
