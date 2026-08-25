@@ -152,7 +152,10 @@ export default function CatalogSearch() {
             <Search className="shrink-0 text-text-tertiary" size={20} aria-hidden="true" />
             <input
               ref={inputRef}
-              type="search"
+              type="text"
+              inputMode="search"
+              enterKeyHint="search"
+              autoComplete="off"
               value={query}
               onChange={(event) => updateQuery(event.target.value)}
               onKeyDown={handleKeyDown}
@@ -167,7 +170,7 @@ export default function CatalogSearch() {
             {query && (
               <button
                 type="button"
-                className="rounded-full p-1 text-text-tertiary transition hover:bg-bg-secondary hover:text-text"
+                className="cursor-pointer rounded-full p-1 text-text-tertiary transition hover:bg-bg-secondary hover:text-text"
                 aria-label={t("clearProductSearch")}
                 onClick={() => updateQuery("")}
               >
