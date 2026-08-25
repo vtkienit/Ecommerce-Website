@@ -171,7 +171,7 @@ class CatalogFlowTests {
                         .param("q", "q")
                         .param("limit", "5"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.length()").value(3));
     }
 
     @Test

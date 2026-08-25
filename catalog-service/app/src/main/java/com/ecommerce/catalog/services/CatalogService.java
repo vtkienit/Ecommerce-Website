@@ -150,7 +150,7 @@ public class CatalogService {
 
     public List<ProductSuggestionResponse> getProductSuggestions(String search, int limit) {
         String keyword = SearchTextNormalizer.normalize(search);
-        if (keyword.length() < 2) {
+        if (keyword.isEmpty()) {
             return List.of();
         }
 

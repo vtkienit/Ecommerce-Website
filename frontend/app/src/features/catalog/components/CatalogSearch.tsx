@@ -34,7 +34,7 @@ export default function CatalogSearch() {
   const [error, setError] = useState("");
   const normalizedQuery = query.trim();
   const debouncedQuery = useDebouncedValue(normalizedQuery, 300);
-  const canSearch = normalizedQuery.length >= 2;
+  const canSearch = normalizedQuery.length > 0;
   const currency = new Intl.NumberFormat(lang === "vi" ? "vi-VN" : "en-US", {
     style: "currency",
     currency: "VND",
@@ -65,7 +65,7 @@ export default function CatalogSearch() {
   }, [open]);
 
   useEffect(() => {
-    if (debouncedQuery.length < 2) return;
+    if (!debouncedQuery) return;
 
     const controller = new AbortController();
     requestRef.current = controller;
@@ -127,7 +127,7 @@ export default function CatalogSearch() {
     setSuggestions([]);
     setActiveIndex(-1);
     setError("");
-    setLoading(value.trim().length >= 2);
+    setLoading(Boolean(value.trim()));
   };
 
   return (
