@@ -2,9 +2,7 @@ import { useState } from "react";
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Boxes,
-  ChevronDown,
   ClipboardList,
-  Globe2,
   Home,
   LayoutDashboard,
   LogOut,
@@ -18,6 +16,7 @@ import {
 import clsx from "clsx";
 import { useLanguage } from "../../app/contexts/LanguageContext";
 import { clearAuthSession, getStoredUser } from "../../features/auth/model/authSession";
+import LanguageSelector from "./LanguageSelector";
 import ThemeToggle from "./ThemeToggle";
 
 const navigation = [
@@ -29,7 +28,7 @@ const navigation = [
 ] as const;
 
 export default function AdminLayout() {
-  const { lang, setLang, t } = useLanguage();
+  const { t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
   const user = getStoredUser();
@@ -122,51 +121,7 @@ export default function AdminLayout() {
           </button>
           <p className="hidden text-sm text-text-secondary sm:block">{t("adminWorkspace")}</p>
           <div className="ml-auto flex items-center gap-3">
-            <div className="group relative">
-              <button
-                type="button"
-                className="flex h-9 items-center gap-2 rounded-lg px-2 text-sm font-medium text-text-secondary transition-colors hover:bg-bg-secondary hover:text-primary"
-                aria-label={lang === "vi" ? t("vietnamese") : t("english")}
-                aria-haspopup="menu"
-              >
-                <Globe2 size={18} aria-hidden="true" />
-                <span className="hidden md:inline">
-                  {lang === "vi" ? t("vietnamese") : t("english")}
-                </span>
-                <ChevronDown
-                  size={15}
-                  className="transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180"
-                  aria-hidden="true"
-                />
-              </button>
-
-              <div className="invisible absolute right-0 top-full z-50 pt-2 opacity-0 transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-                <div role="menu" className="w-36 overflow-hidden rounded-xl border border-border bg-bg p-1.5 shadow-xl">
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className={clsx(
-                      "w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-text-secondary hover:bg-bg-secondary hover:text-primary",
-                      lang === "vi" && "bg-primary/10 text-primary",
-                    )}
-                    onClick={() => setLang("vi")}
-                  >
-                    {t("vietnamese")}
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className={clsx(
-                      "w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-text-secondary hover:bg-bg-secondary hover:text-primary",
-                      lang === "en" && "bg-primary/10 text-primary",
-                    )}
-                    onClick={() => setLang("en")}
-                  >
-                    {t("english")}
-                  </button>
-                </div>
-              </div>
-            </div>
+            <LanguageSelector hideLabelOnSmall />
             <ThemeToggle />
             <div className="hidden text-right sm:block">
               <p className="max-w-48 truncate text-sm font-semibold text-text">{user.name}</p>

@@ -13,11 +13,11 @@ import {
   X,
 } from "lucide-react";
 import clsx from "clsx";
-import Language from "../../assets/icons/language.svg?react";
 import User from "../../assets/icons/user.svg?react";
 import { useLanguage } from "../../app/contexts/LanguageContext";
 import { useTheme } from "../../app/contexts/ThemeContext";
 import ThemeToggle from "./ThemeToggle";
+import LanguageSelector from "./LanguageSelector";
 import { clearAuthSession, getStoredUser, onAuthChange } from "../../features/auth/model/authSession";
 import { useCart } from "../../features/commerce/context/CartContext";
 
@@ -111,46 +111,7 @@ const Header = () => {
           <span className="text-base font-medium text-primary">{t("slogan")}</span>
 
           <div className="flex items-center gap-4">
-            <div className="group relative">
-              <button
-                type="button"
-                className="flex cursor-pointer items-center gap-2 text-text-secondary transition-colors hover:text-primary"
-                aria-haspopup="menu"
-              >
-                <Language width={16} height={16} aria-hidden="true" />
-                <span>{lang === "vi" ? t("vietnamese") : t("english")}</span>
-                <ChevronDown
-                  size={16}
-                  className="transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180"
-                  aria-hidden="true"
-                />
-              </button>
-
-              <div className="invisible absolute right-0 top-full z-[100] pt-1.5 opacity-0 transition-opacity duration-200 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-                <div className="overflow-hidden rounded border border-border bg-bg text-text-secondary shadow-lg">
-                  <button
-                    type="button"
-                    className={clsx(
-                      "block w-full cursor-pointer whitespace-nowrap px-6 py-2 text-center hover:bg-bg-secondary",
-                      lang === "vi" && "text-primary",
-                    )}
-                    onClick={() => setLang("vi")}
-                  >
-                    {t("vietnamese")}
-                  </button>
-                  <button
-                    type="button"
-                    className={clsx(
-                      "block w-full cursor-pointer whitespace-nowrap px-6 py-2 text-center hover:bg-bg-secondary",
-                      lang === "en" && "text-primary",
-                    )}
-                    onClick={() => setLang("en")}
-                  >
-                    {t("english")}
-                  </button>
-                </div>
-              </div>
-            </div>
+            <LanguageSelector />
 
             <ThemeToggle />
 
