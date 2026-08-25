@@ -6,7 +6,6 @@ import {
   LogIn,
   LogOut,
   Menu,
-  Search,
   ShoppingCart,
   UserRound,
   UserRoundPlus,
@@ -20,6 +19,7 @@ import ThemeToggle from "./ThemeToggle";
 import LanguageSelector from "./LanguageSelector";
 import { clearAuthSession, getStoredUser, onAuthChange } from "../../features/auth/model/authSession";
 import { useCart } from "../../features/commerce/context/CartContext";
+import CatalogSearch from "../../features/catalog/components/CatalogSearch";
 
 const desktopNavLink =
   "relative cursor-pointer py-2 text-base font-medium text-text-secondary no-underline transition-colors " +
@@ -212,13 +212,7 @@ const Header = () => {
           </nav>
 
           <div className="flex items-center gap-4">
-            <button
-              type="button"
-              className="cursor-pointer text-text-secondary transition-colors hover:text-primary"
-              aria-label="Search"
-            >
-              <Search width={25} height={25} aria-hidden="true" />
-            </button>
+            <CatalogSearch />
 
             <Link
               to={authUser ? "/cart" : "/login?returnTo=/cart"}

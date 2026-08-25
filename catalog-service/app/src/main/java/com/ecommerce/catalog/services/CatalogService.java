@@ -37,7 +37,8 @@ public class CatalogService {
             "name,asc",
             "name,desc",
             "price,asc",
-            "price,desc"
+            "price,desc",
+            "relevance,desc"
     );
 
     private final ProductRepository productRepository;
@@ -146,6 +147,25 @@ public class CatalogService {
         );
     }
 
+    public List<ProductSuggestionResponse> getProductSuggestions(String search, int limit) {
+        String keyword = search == null ? "" : search.trim().toLowerCase(Locale.ROOT);
+        if (keyword.length() < 2) {
+            return List.of();
+        }
+
+        Map<Long, FlashSaleItem> discounts = getActiveDiscounts(LocalDateTime.now());
+        return productRepository
+                .findSearchSuggestions(
+                        keyword,
+                        keyword + "%",
+                        "%" + keyword + "%",
+                        PageRequest.of(0, limit)
+                )
+                .stream()
+                .map(product -> toSuggestion(product, discounts))
+                .toList();
+    }
+
     public CatalogVariantResponse getVariant(Long id) {
         ProductVariant variant = variantRepository
                 .findWithProductById(id)
@@ -247,7 +267,10 @@ public class CatalogService {
                 predicates.add(criteriaBuilder.or(
                         criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), search),
                         criteriaBuilder.like(criteriaBuilder.lower(root.get("brand")), search),
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), search)
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("productCategory").get("name")),
+                                search
+                        )
                 ));
             }
 
@@ -300,6 +323,31 @@ public class CatalogService {
                                 ? criteriaBuilder.asc(priceQuery)
                                 : criteriaBuilder.desc(priceQuery),
                         criteriaBuilder.desc(root.get("id"))
+                );
+            }
+
+            if (sort.equals("relevance,desc")
+                    && hasText(criteria.getSearch())
+                    && query.getResultType() != Long.class) {
+                String keyword = criteria.getSearch().trim().toLowerCase(Locale.ROOT);
+                String prefix = keyword + "%";
+                var productName = criteriaBuilder.lower(root.<String>get("name"));
+                var brand = criteriaBuilder.lower(root.<String>get("brand"));
+                var categoryName = criteriaBuilder.lower(
+                        root.get("productCategory").<String>get("name")
+                );
+                var relevance = criteriaBuilder.<Integer>selectCase()
+                        .when(criteriaBuilder.equal(productName, keyword), 0)
+                        .when(criteriaBuilder.like(productName, prefix), 1)
+                        .when(criteriaBuilder.equal(brand, keyword), 2)
+                        .when(criteriaBuilder.like(brand, prefix), 3)
+                        .when(criteriaBuilder.equal(categoryName, keyword), 4)
+                        .when(criteriaBuilder.like(categoryName, prefix), 5)
+                        .otherwise(6);
+
+                query.orderBy(
+                        criteriaBuilder.asc(relevance),
+                        criteriaBuilder.asc(root.get("name"))
                 );
             }
 
@@ -357,6 +405,22 @@ public class CatalogService {
                 lowestPrice.getDiscountPercentage(),
                 numberSizes,
                 numberColors
+        );
+    }
+
+    private ProductSuggestionResponse toSuggestion(
+            Product product,
+            Map<Long, FlashSaleItem> discounts
+    ) {
+        ProductSummaryResponse summary = toSummary(product, discounts);
+        return new ProductSuggestionResponse(
+                summary.getId(),
+                summary.getSlug(),
+                summary.getName(),
+                summary.getBrand(),
+                summary.getCategoryName(),
+                summary.getImageUrl(),
+                summary.getPrice()
         );
     }
 
@@ -447,7 +511,7 @@ public class CatalogService {
         return switch (sort) {
             case "name,asc" -> Sort.by(Sort.Direction.ASC, "name");
             case "name,desc" -> Sort.by(Sort.Direction.DESC, "name");
-            case "price,asc", "price,desc" -> Sort.unsorted();
+            case "price,asc", "price,desc", "relevance,desc" -> Sort.unsorted();
             default -> Sort.by(Sort.Direction.DESC, "id");
         };
     }

@@ -5,6 +5,7 @@ import com.ecommerce.catalog.services.CatalogService;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -71,6 +72,19 @@ public class CatalogController {
     @GetMapping("/products/{slug}")
     public ProductDetailResponse getProduct(@PathVariable String slug) {
         return catalogService.getProduct(slug);
+    }
+
+    @GetMapping("/products/search/suggestions")
+    public List<ProductSuggestionResponse> getProductSuggestions(
+            @RequestParam
+            @Size(max = 100, message = "Search query must not exceed 100 characters")
+            String q,
+            @RequestParam(defaultValue = "5")
+            @Min(value = 1, message = "Suggestion limit must be at least 1")
+            @Max(value = 5, message = "Suggestion limit must not exceed 5")
+            int limit
+    ) {
+        return catalogService.getProductSuggestions(q, limit);
     }
 
     @GetMapping("/variants/{id}")

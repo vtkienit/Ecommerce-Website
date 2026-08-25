@@ -7,6 +7,7 @@ type RequestOptions = {
   method?: "GET" | "POST" | "PATCH" | "DELETE";
   body?: unknown;
   token?: string;
+  signal?: AbortSignal;
   fallbackMessage?: string;
   baseUrl?: string;
 };
@@ -31,6 +32,7 @@ export async function apiRequest<TResponse>(
     method = "GET",
     body,
     token,
+    signal,
     fallbackMessage = "The request could not be completed",
     baseUrl = apiUrl,
   }: RequestOptions = {},
@@ -50,8 +52,10 @@ export async function apiRequest<TResponse>(
         : formBody
           ? body
           : JSON.stringify(body),
+      signal,
     });
-  } catch {
+  } catch (error) {
+    if (signal?.aborted) throw error;
     throw new ApiError("Cannot connect to the server", 0);
   }
 

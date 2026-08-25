@@ -20,6 +20,16 @@ export type ProductSummary = {
   numberColors: number;
 };
 
+export type ProductSuggestion = {
+  id: number;
+  slug: string;
+  name: string;
+  brand: string | null;
+  categoryName: string;
+  imageUrl: string | null;
+  price: number;
+};
+
 export type ProductImage = {
   id: number;
   imageUrl: string;
@@ -72,7 +82,7 @@ export type ProductQuery = {
   maxPrice?: number;
   sizes?: string[];
   colors?: string[];
-  sort?: "newest,desc" | "name,asc" | "name,desc" | "price,asc" | "price,desc";
+  sort?: "newest,desc" | "name,asc" | "name,desc" | "price,asc" | "price,desc" | "relevance,desc";
   page?: number;
   size?: number;
 };

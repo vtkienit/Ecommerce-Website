@@ -137,6 +137,44 @@ class CatalogFlowTests {
     }
 
     @Test
+    void productsCanBeSearchedByBrandAndCategory() throws Exception {
+        mockMvc.perform(get("/api/products")
+                        .param("search", "quydung")
+                        .param("sort", "relevance,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(3));
+
+        mockMvc.perform(get("/api/products")
+                        .param("search", "pillows")
+                        .param("sort", "relevance,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].slug").value("bamboo-pillow"));
+    }
+
+    @Test
+    void productSuggestionsAreRankedAndLimited() throws Exception {
+        mockMvc.perform(get("/api/products/search/suggestions")
+                        .param("q", "cloud")
+                        .param("limit", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].slug").value("cloud-mattress"))
+                .andExpect(jsonPath("$[0].categoryName").value("Mattress"));
+
+        mockMvc.perform(get("/api/products/search/suggestions")
+                        .param("q", "quydung")
+                        .param("limit", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+
+        mockMvc.perform(get("/api/products/search/suggestions")
+                        .param("q", "q")
+                        .param("limit", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
     void productsCanBeSortedByTheirLowestVariantPrice() throws Exception {
         mockMvc.perform(get("/api/products")
                         .param("category", "mattress")

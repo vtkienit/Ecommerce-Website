@@ -5,6 +5,7 @@ import type {
   PageResponse,
   ProductDetail,
   ProductQuery,
+  ProductSuggestion,
   ProductSummary,
 } from "../model/catalogTypes";
 
@@ -12,10 +13,11 @@ const catalogApiUrl = (
   import.meta.env.VITE_CATALOG_API_URL || "http://localhost:8081"
 ).replace(/\/$/, "");
 
-const catalogRequest = <TResponse>(path: string) =>
+const catalogRequest = <TResponse>(path: string, signal?: AbortSignal) =>
   apiRequest<TResponse>(path, {
     baseUrl: catalogApiUrl,
     fallbackMessage: "Catalog request failed",
+    signal,
   });
 
 export const getCategories = () =>
@@ -42,6 +44,14 @@ export const getProducts = (query: ProductQuery = {}) => {
 
 export const getProduct = (slug: string) =>
   catalogRequest<ProductDetail>(`/api/products/${encodeURIComponent(slug)}`);
+
+export const getProductSuggestions = (query: string, signal?: AbortSignal) => {
+  const params = new URLSearchParams({ q: query.trim(), limit: "5" });
+  return catalogRequest<ProductSuggestion[]>(
+    `/api/products/search/suggestions?${params.toString()}`,
+    signal,
+  );
+};
 
 export const getCurrentFlashSale = () =>
   catalogRequest<FlashSale | null>("/api/flash-sales/current");
