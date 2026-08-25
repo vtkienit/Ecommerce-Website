@@ -23,6 +23,8 @@ spring:
     properties:
       hibernate:
         default_schema: ${CATALOG_DB_SCHEMA:catalog}
+        default_batch_fetch_size: 50
+        batch_fetch_style: DYNAMIC
         hbm2ddl:
           create_namespaces: true
 

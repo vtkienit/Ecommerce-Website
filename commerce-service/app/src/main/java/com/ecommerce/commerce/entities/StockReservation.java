@@ -8,7 +8,16 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "stock_reservations")
+@Table(
+        name = "stock_reservations",
+        indexes = {
+                @Index(name = "stock_reservations_order_idx", columnList = "order_id"),
+                @Index(
+                        name = "stock_reservations_inventory_status_expiry_idx",
+                        columnList = "inventory_id,status,expires_at"
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor

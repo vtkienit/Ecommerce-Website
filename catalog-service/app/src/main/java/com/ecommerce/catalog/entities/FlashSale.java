@@ -4,13 +4,17 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "flash_sales")
+@Table(
+        name = "flash_sales",
+        indexes = @Index(name = "flash_sales_period_idx", columnList = "start_date,end_date")
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -32,5 +36,6 @@ public class FlashSale {
     private LocalDateTime endDate;
 
     @OneToMany(mappedBy = "flashSale", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     private List<FlashSaleItem> items = new ArrayList<>();
 }

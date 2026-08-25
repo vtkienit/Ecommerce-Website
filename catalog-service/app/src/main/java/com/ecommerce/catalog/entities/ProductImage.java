@@ -6,7 +6,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "product_images")
+@Table(
+        name = "product_images",
+        indexes = @Index(
+                name = "product_images_product_primary_idx",
+                columnList = "product_id,is_primary"
+        )
+)
 @Getter
 @Setter
 @NoArgsConstructor

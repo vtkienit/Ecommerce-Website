@@ -57,16 +57,7 @@ public class CatalogService {
     }
 
     public List<CategoryResponse> getCategories() {
-        return categoryRepository
-                .findAllByOrderByNameAsc()
-                .stream()
-                .map(category -> new CategoryResponse(
-                        category.getId(),
-                        category.getSlug(),
-                        category.getName(),
-                        productRepository.countByProductCategoryId(category.getId())
-                ))
-                .toList();
+        return categoryRepository.findAllSummaries();
     }
 
     public PageResponse<ProductSummaryResponse> getProducts(ProductSearchCriteria criteria) {

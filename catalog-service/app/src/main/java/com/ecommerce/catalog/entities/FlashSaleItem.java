@@ -8,7 +8,13 @@ import lombok.Setter;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "flash_sale_items")
+@Table(
+        name = "flash_sale_items",
+        indexes = {
+                @Index(name = "flash_sale_items_sale_idx", columnList = "flash_sale_id"),
+                @Index(name = "flash_sale_items_variant_idx", columnList = "product_variant_id")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor

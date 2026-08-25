@@ -60,11 +60,7 @@ public class CatalogAdminService {
 
     @Transactional(readOnly = true)
     public List<CategoryResponse> getCategories() {
-        return categoryRepository
-                .findAllByOrderByNameAsc()
-                .stream()
-                .map(this::toCategoryResponse)
-                .toList();
+        return categoryRepository.findAllSummaries();
     }
 
     public CategoryResponse createCategory(CategoryUpsertRequest request) {

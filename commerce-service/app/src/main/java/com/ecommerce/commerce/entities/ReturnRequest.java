@@ -8,6 +8,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -18,7 +19,19 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "return_requests")
+@Table(
+        name = "return_requests",
+        indexes = {
+                @Index(
+                        name = "return_requests_status_requested_at_idx",
+                        columnList = "status,requested_at"
+                ),
+                @Index(
+                        name = "return_requests_user_requested_at_idx",
+                        columnList = "user_id,requested_at"
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
