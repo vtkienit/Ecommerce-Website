@@ -99,7 +99,7 @@ export default function InventoryAdminView() {
               type="button"
               disabled={isSyncing}
               onClick={() => void sync()}
-              className="flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 font-semibold text-white disabled:opacity-60"
+              className="flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 font-semibold text-white transition-all hover:brightness-95 hover:shadow-sm active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
             >
               <RefreshCw className={isSyncing ? "animate-spin" : ""} size={18} />
               {isSyncing ? t("syncingInventory") : t("syncInventory")}
@@ -174,7 +174,7 @@ export default function InventoryAdminView() {
                       type="button"
                       disabled={savingId === item.variantId}
                       onClick={() => void save(item)}
-                      className="flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-primary px-3 text-sm font-semibold text-primary disabled:opacity-50"
+                      className="flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-primary px-3 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {savingId === item.variantId ? <LoaderCircle className="animate-spin" size={16} /> : <Save size={16} />}
                       {t("saveChanges")}

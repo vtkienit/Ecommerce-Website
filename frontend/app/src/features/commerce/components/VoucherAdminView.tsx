@@ -186,7 +186,7 @@ export default function VoucherAdminView() {
                 {t("description")}
                 <textarea value={draft.description} onChange={(event) => change("description", event.target.value)} className={`${inputClass} min-h-20 py-2.5`} />
               </label>
-              <button type="submit" disabled={isSaving} className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-md bg-primary font-semibold text-white disabled:opacity-60">
+              <button type="submit" disabled={isSaving} className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-md bg-primary font-semibold text-white transition-all hover:brightness-95 hover:shadow-sm active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60">
                 {isSaving ? <LoaderCircle className="animate-spin" size={18} /> : editingId ? <Save size={18} /> : <Plus size={18} />}
                 {editingId ? t("saveChanges") : t("createVoucher")}
               </button>
@@ -232,7 +232,7 @@ export default function VoucherAdminView() {
                         </div>
                         <div className="flex gap-1">
                           <button type="button" onClick={() => edit(voucher)} className="rounded-md p-2 text-text-secondary hover:bg-bg-secondary hover:text-primary"><Pencil size={17} /></button>
-                          <button type="button" disabled={deletingId === voucher.id} onClick={() => void remove(voucher)} className="rounded-md p-2 text-text-secondary hover:bg-red-500/10 hover:text-red-600 disabled:opacity-50">
+                          <button type="button" disabled={deletingId === voucher.id} onClick={() => void remove(voucher)} className="rounded-md p-2 text-text-secondary hover:bg-red-500/10 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50">
                             {deletingId === voucher.id ? <LoaderCircle className="animate-spin" size={17} /> : <Trash2 size={17} />}
                           </button>
                         </div>

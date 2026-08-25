@@ -229,7 +229,7 @@ export default function OrderAdminView() {
                             type="button"
                             disabled={updatingId === order.id}
                             onClick={() => void changeStatus(order, "CANCELLED")}
-                            className="rounded-md border border-red-500/40 px-3 py-2 text-sm font-semibold text-red-600 disabled:opacity-50 dark:text-red-400"
+                            className="rounded-md border border-red-500/40 px-3 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-400"
                           >
                             {t("cancelOrder")}
                           </button>
@@ -239,7 +239,7 @@ export default function OrderAdminView() {
                             type="button"
                             disabled={updatingId === order.id}
                             onClick={() => void changeStatus(order, target)}
-                            className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                            className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:brightness-95 hover:shadow-sm active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {updatingId === order.id && <LoaderCircle className="animate-spin" size={16} />}
                             {t(actionKeys[target] ?? "saveChanges")}
