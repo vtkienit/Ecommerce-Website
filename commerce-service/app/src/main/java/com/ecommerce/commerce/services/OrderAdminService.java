@@ -2,6 +2,7 @@ package com.ecommerce.commerce.services;
 
 import com.ecommerce.commerce.dtos.OrderResponse;
 import com.ecommerce.commerce.dtos.PageResponse;
+import com.ecommerce.commerce.dtos.UpdateOrderStatusRequest;
 import com.ecommerce.commerce.entities.Order;
 import com.ecommerce.commerce.entities.OrderStatus;
 import com.ecommerce.commerce.exceptions.CommerceException;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.criteria.Predicate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.Locale;
@@ -78,10 +80,11 @@ public class OrderAdminService {
         );
     }
 
-    public OrderResponse updateStatus(Long orderId, OrderStatus nextStatus) {
+    public OrderResponse updateStatus(Long orderId, UpdateOrderStatusRequest request) {
         Order order = orderRepository
                 .findByIdForUpdate(orderId)
                 .orElseThrow(() -> new CommerceException("Order not found", HttpStatus.NOT_FOUND));
+        OrderStatus nextStatus = request.getStatus();
 
         if (!ALLOWED_TRANSITIONS.getOrDefault(order.getStatus(), Set.of()).contains(nextStatus)) {
             throw new CommerceException(
@@ -90,9 +93,25 @@ public class OrderAdminService {
             );
         }
 
+        if (nextStatus == OrderStatus.SHIPPED) {
+            addShippingDetails(order, request);
+        }
         applyLifecycleChange(order, nextStatus);
         order.setStatus(nextStatus);
         return orderService.toResponse(orderRepository.save(order));
+    }
+
+    private void addShippingDetails(Order order, UpdateOrderStatusRequest request) {
+        if (request.getShippingCarrier() == null || request.getShippingCarrier().isBlank()
+                || request.getTrackingCode() == null || request.getTrackingCode().isBlank()) {
+            throw new CommerceException(
+                    "Shipping carrier and tracking code are required",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+        order.setShippingCarrier(request.getShippingCarrier().trim());
+        order.setTrackingCode(request.getTrackingCode().trim());
+        order.setShippedAt(LocalDateTime.now());
     }
 
     private void applyLifecycleChange(Order order, OrderStatus nextStatus) {

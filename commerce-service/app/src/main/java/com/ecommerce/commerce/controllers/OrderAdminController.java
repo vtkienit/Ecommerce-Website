@@ -43,6 +43,6 @@ public class OrderAdminController {
             @PathVariable Long orderId,
             @Valid @RequestBody UpdateOrderStatusRequest request
     ) {
-        return orderAdminService.updateStatus(orderId, request.getStatus());
+        return orderAdminService.updateStatus(orderId, request);
     }
 }

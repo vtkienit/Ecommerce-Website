@@ -490,6 +490,26 @@ class CommerceFlowTests {
     }
 
     @Test
+    void adminMustProvideShippingDetailsWhenHandingOffOrder() throws Exception {
+        String customerToken = token(80L);
+        long orderId = checkout(customerToken, 101L, 1);
+        String adminToken = token(81L, "Admin");
+
+        updateOrderStatus(adminToken, orderId, "CONFIRMED", "CONFIRMED");
+        updateOrderStatus(adminToken, orderId, "PROCESSING", "PROCESSING");
+
+        mockMvc.perform(patch("/api/admin/orders/{id}/status", orderId)
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"SHIPPED"}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message")
+                        .value("Shipping carrier and tracking code are required"));
+    }
+
+    @Test
     void adminDashboardSummarizesOrdersAndLowStock() throws Exception {
         String adminToken = token(76L, "Admin");
         long deliveredOrderId = checkout(token(77L), 101L, 1);
@@ -733,12 +753,25 @@ class CommerceFlowTests {
             String requestedStatus,
             String expectedStatus
     ) throws Exception {
-        mockMvc.perform(patch("/api/admin/orders/{id}/status", orderId)
+        String requestBody = "SHIPPED".equals(requestedStatus)
+                ? """
+                        {"status":"SHIPPED","shippingCarrier":"GHN","trackingCode":"GHN-TEST-001"}
+                        """
+                : "{\"status\":\"" + requestedStatus + "\"}";
+
+        var response = mockMvc.perform(patch("/api/admin/orders/{id}/status", orderId)
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"status\":\"" + requestedStatus + "\"}"))
+                        .content(requestBody))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(expectedStatus));
+
+        if ("SHIPPED".equals(requestedStatus)) {
+            response
+                    .andExpect(jsonPath("$.shippingCarrier").value("GHN"))
+                    .andExpect(jsonPath("$.trackingCode").value("GHN-TEST-001"))
+                    .andExpect(jsonPath("$.shippedAt").isNotEmpty());
+        }
     }
 
     private void deliverOrder(String adminToken, long orderId) throws Exception {

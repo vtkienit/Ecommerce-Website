@@ -257,6 +257,8 @@ public class OrderService {
                 order.getRecipientName(),
                 order.getRecipientPhone(),
                 order.getShippingAddress(),
+                order.getShippingCarrier(),
+                order.getTrackingCode(),
                 order.getSubtotal(),
                 order.getVoucher() == null ? null : order.getVoucher().getCode(),
                 order.getVoucherDiscountAmount(),
@@ -270,6 +272,7 @@ public class OrderService {
                         ? null
                         : returnRequestService.toResponse(order.getReturnRequest()),
                 order.getCreatedAt(),
+                order.getShippedAt(),
                 items
         );
     }

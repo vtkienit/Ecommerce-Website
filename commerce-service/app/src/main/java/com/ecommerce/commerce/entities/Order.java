@@ -47,6 +47,12 @@ public class Order {
     @Column(nullable = false)
     private String shippingAddress;
 
+    @Column(length = 100)
+    private String shippingCarrier;
+
+    @Column(length = 100)
+    private String trackingCode;
+
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal subtotal;
 
@@ -64,6 +70,8 @@ public class Order {
     private LocalDateTime createdAt;
 
     private LocalDateTime deliveredAt;
+
+    private LocalDateTime shippedAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @BatchSize(size = 50)

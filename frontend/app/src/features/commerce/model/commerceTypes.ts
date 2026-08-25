@@ -78,6 +78,8 @@ export type Order = {
   recipientName: string;
   recipientPhone: string;
   shippingAddress: string;
+  shippingCarrier: string | null;
+  trackingCode: string | null;
   subtotal: number;
   voucherCode: string | null;
   discountAmount: number;
@@ -89,6 +91,7 @@ export type Order = {
   returnEligible: boolean;
   returnRequest: ReturnRequest | null;
   createdAt: string;
+  shippedAt: string | null;
   items: OrderItem[];
 };
 

@@ -19,6 +19,8 @@ public class OrderResponse {
     private String recipientName;
     private String recipientPhone;
     private String shippingAddress;
+    private String shippingCarrier;
+    private String trackingCode;
     private BigDecimal subtotal;
     private String voucherCode;
     private BigDecimal discountAmount;
@@ -30,5 +32,6 @@ public class OrderResponse {
     private boolean returnEligible;
     private ReturnRequestResponse returnRequest;
     private LocalDateTime createdAt;
+    private LocalDateTime shippedAt;
     private List<OrderItemResponse> items;
 }

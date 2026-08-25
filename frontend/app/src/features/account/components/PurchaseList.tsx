@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LoaderCircle, PackageCheck, RotateCcw, ShoppingBag } from "lucide-react";
+import { LoaderCircle, PackageCheck, RotateCcw, ShoppingBag, Truck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLanguage, type TranslationKey } from "../../../app/contexts/LanguageContext";
 import { cancelOrder, createReturnRequest, getOrders } from "../../commerce/api/commerceApi";
@@ -168,6 +168,25 @@ export default function PurchaseList({ filter = "all" }: { filter?: PurchaseFilt
                   </div>
                 ))}
               </div>
+
+              {order.shippingCarrier && order.trackingCode && (
+                <section className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border bg-primary/5 px-4 py-3 text-sm">
+                  <span className="flex items-center gap-2 font-semibold text-text">
+                    <Truck size={17} className="text-primary" /> {order.shippingCarrier}
+                  </span>
+                  <span className="text-text-secondary">
+                    {t("trackingCode")}: <strong className="text-text">{order.trackingCode}</strong>
+                  </span>
+                  {order.shippedAt && (
+                    <span className="text-text-secondary">
+                      {t("handedOverAt")}: {new Intl.DateTimeFormat(lang === "vi" ? "vi-VN" : "en-US", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      }).format(new Date(order.shippedAt))}
+                    </span>
+                  )}
+                </section>
+              )}
 
               {order.returnRequest && (
                 <section className="border-t border-border bg-amber-500/5 px-4 py-3 text-sm">

@@ -85,8 +85,14 @@ export const getAdminOrders = (query: PageQuery & { status?: OrderStatus } = {})
 export const getAdminDashboard = () =>
   commerceRequest<AdminDashboard>("/api/admin/dashboard");
 
-export const updateOrderStatus = (orderId: number, status: OrderStatus) =>
-  commerceRequest<Order>(`/api/admin/orders/${orderId}/status`, "PATCH", { status });
+export const updateOrderStatus = (
+  orderId: number,
+  status: OrderStatus,
+  shippingDetails?: { shippingCarrier: string; trackingCode: string },
+) => commerceRequest<Order>(`/api/admin/orders/${orderId}/status`, "PATCH", {
+  status,
+  ...shippingDetails,
+});
 
 export const getAdminReturnRequests = (query: PageQuery & { status?: ReturnRequestStatus } = {}) =>
   commerceRequest<PageResponse<ReturnRequest>>(`/api/admin/returns?${adminParams(query)}`);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { LoaderCircle, PackageOpen, Search, UserRound } from "lucide-react";
+import { LoaderCircle, PackageOpen, Search, Truck, UserRound } from "lucide-react";
 import { useLanguage, type TranslationKey } from "../../../app/contexts/LanguageContext";
 import AdminPagination from "../../../shared/components/AdminPagination";
 import useDebouncedValue from "../../../shared/hooks/useDebouncedValue";
@@ -8,6 +8,7 @@ import { getAdminOrders, updateOrderStatus } from "../api/commerceApi";
 import type { Order, OrderStatus } from "../model/commerceTypes";
 
 type StatusFilter = "ALL" | OrderStatus;
+type ShippingDraft = { shippingCarrier: string; trackingCode: string };
 
 const statuses: StatusFilter[] = [
   "ALL",
@@ -55,6 +56,7 @@ export default function OrderAdminView() {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [shippingDrafts, setShippingDrafts] = useState<Record<number, ShippingDraft>>({});
   const debouncedSearch = useDebouncedValue(search);
 
   useEffect(() => {
@@ -96,15 +98,38 @@ export default function OrderAdminView() {
   const changeStatus = async (order: Order, target: OrderStatus) => {
     if (target === "CANCELLED" && !window.confirm(t("adminCancelOrderConfirm"))) return;
 
+    const shippingDetails = shippingDrafts[order.id];
+    let handoffDetails: ShippingDraft | undefined;
+    if (target === "SHIPPED"
+      && (!shippingDetails?.shippingCarrier.trim() || !shippingDetails.trackingCode.trim())) {
+      setError(t("shippingInfoRequired"));
+      return;
+    }
+    if (target === "SHIPPED" && shippingDetails) {
+      handoffDetails = {
+        shippingCarrier: shippingDetails.shippingCarrier.trim(),
+        trackingCode: shippingDetails.trackingCode.trim(),
+      };
+    }
+
     setUpdatingId(order.id);
     setError("");
     setSuccess("");
     try {
-      const updated = await updateOrderStatus(order.id, target);
+      const updated = await updateOrderStatus(
+        order.id,
+        target,
+        handoffDetails,
+      );
       setOrders((current) => filter !== "ALL"
         ? current.filter((item) => item.id !== order.id)
         : current.map((item) => item.id === order.id ? updated : item));
       setReloadKey((current) => current + 1);
+      setShippingDrafts((current) => {
+        const next = { ...current };
+        delete next[order.id];
+        return next;
+      });
       setSuccess(t("orderStatusUpdated"));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : t("orderAdminError"));
@@ -214,6 +239,59 @@ export default function OrderAdminView() {
                       </section>
                     </div>
 
+                    {order.status === "PROCESSING" && (
+                      <section className="border-t border-border bg-bg-secondary/60 px-4 py-4 sm:px-5">
+                        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-text">
+                          <Truck size={18} className="text-primary" /> {t("shipmentInformation")}
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <label className="text-sm font-medium text-text-secondary">
+                            {t("shippingCarrier")}
+                            <input
+                              list="shipping-carriers"
+                              value={shippingDrafts[order.id]?.shippingCarrier ?? ""}
+                              onChange={(event) => setShippingDrafts((current) => ({
+                                ...current,
+                                [order.id]: {
+                                  shippingCarrier: event.target.value,
+                                  trackingCode: current[order.id]?.trackingCode ?? "",
+                                },
+                              }))}
+                              placeholder={t("shippingCarrierPlaceholder")}
+                              className="mt-1.5 h-11 w-full rounded-md border border-border bg-bg px-3 text-text outline-none transition-colors focus:border-primary"
+                            />
+                          </label>
+                          <label className="text-sm font-medium text-text-secondary">
+                            {t("trackingCode")}
+                            <input
+                              value={shippingDrafts[order.id]?.trackingCode ?? ""}
+                              onChange={(event) => setShippingDrafts((current) => ({
+                                ...current,
+                                [order.id]: {
+                                  shippingCarrier: current[order.id]?.shippingCarrier ?? "",
+                                  trackingCode: event.target.value,
+                                },
+                              }))}
+                              placeholder={t("trackingCodePlaceholder")}
+                              className="mt-1.5 h-11 w-full rounded-md border border-border bg-bg px-3 text-text outline-none transition-colors focus:border-primary"
+                            />
+                          </label>
+                        </div>
+                      </section>
+                    )}
+
+                    {order.shippingCarrier && order.trackingCode && (
+                      <section className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-border bg-bg-secondary/60 px-4 py-3 text-sm sm:px-5">
+                        <span className="flex items-center gap-2 font-semibold text-text">
+                          <Truck size={17} className="text-primary" /> {order.shippingCarrier}
+                        </span>
+                        <span className="text-text-secondary">{t("trackingCode")}: <strong className="text-text">{order.trackingCode}</strong></span>
+                        {order.shippedAt && (
+                          <span className="text-text-secondary">{t("handedOverAt")}: {dateTime.format(new Date(order.shippedAt))}</span>
+                        )}
+                      </section>
+                    )}
+
                     <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 sm:px-5">
                       <div className="text-sm text-text-secondary">
                         <p>{order.paymentMethod === "PAYOS" ? t("onlinePayment") : t("cashOnDelivery")} · {paymentLabel(order, t)}</p>
@@ -253,6 +331,13 @@ export default function OrderAdminView() {
               <AdminPagination page={page} totalPages={totalPages} totalElements={totalElements} onChange={setPage} />
             </div>
           )}
+          <datalist id="shipping-carriers">
+            <option value="GHN" />
+            <option value="GHTK" />
+            <option value="Viettel Post" />
+            <option value="J&T Express" />
+            <option value="Ninja Van" />
+          </datalist>
         </div>
       </main>
     </>
