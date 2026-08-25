@@ -98,6 +98,7 @@ public class OrderAdminService {
         }
         applyLifecycleChange(order, nextStatus);
         order.setStatus(nextStatus);
+        order.addStatusHistory(nextStatus, LocalDateTime.now());
         return orderService.toResponse(orderRepository.save(order));
     }
 

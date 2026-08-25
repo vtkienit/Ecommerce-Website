@@ -52,6 +52,11 @@ export type OrderStatus =
   | "DELIVERED"
   | "CANCELLED";
 
+export type OrderStatusHistory = {
+  status: OrderStatus;
+  changedAt: string;
+};
+
 export type ReturnRequestStatus = "REQUESTED" | "APPROVED" | "REJECTED" | "COMPLETED";
 
 export type ReturnRequest = {
@@ -92,6 +97,7 @@ export type Order = {
   returnRequest: ReturnRequest | null;
   createdAt: string;
   shippedAt: string | null;
+  statusHistory: OrderStatusHistory[];
   items: OrderItem[];
 };
 

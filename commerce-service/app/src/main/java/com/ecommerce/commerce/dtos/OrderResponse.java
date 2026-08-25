@@ -33,5 +33,6 @@ public class OrderResponse {
     private ReturnRequestResponse returnRequest;
     private LocalDateTime createdAt;
     private LocalDateTime shippedAt;
+    private List<OrderStatusHistoryResponse> statusHistory;
     private List<OrderItemResponse> items;
 }

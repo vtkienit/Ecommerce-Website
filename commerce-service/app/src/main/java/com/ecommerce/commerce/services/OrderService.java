@@ -5,6 +5,7 @@ import com.ecommerce.commerce.dtos.CatalogVariantSnapshot;
 import com.ecommerce.commerce.dtos.CheckoutRequest;
 import com.ecommerce.commerce.dtos.OrderItemResponse;
 import com.ecommerce.commerce.dtos.OrderResponse;
+import com.ecommerce.commerce.dtos.OrderStatusHistoryResponse;
 import com.ecommerce.commerce.entities.*;
 import com.ecommerce.commerce.exceptions.CommerceException;
 import com.ecommerce.commerce.repositories.CartRepository;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -133,6 +135,7 @@ public class OrderService {
 
         orderLifecycleService.cancel(order);
         order.setStatus(OrderStatus.CANCELLED);
+        order.addStatusHistory(OrderStatus.CANCELLED, LocalDateTime.now());
         return toResponse(orderRepository.save(order));
     }
 
@@ -154,8 +157,10 @@ public class OrderService {
         order.setSubtotal(BigDecimal.ZERO);
         order.setVoucherDiscountAmount(BigDecimal.ZERO);
         order.setTotalAmount(BigDecimal.ZERO);
+        LocalDateTime createdAt = LocalDateTime.now();
         order.setStatus(OrderStatus.PENDING);
-        order.setCreatedAt(LocalDateTime.now());
+        order.setCreatedAt(createdAt);
+        order.addStatusHistory(OrderStatus.PENDING, createdAt);
         return order;
     }
 
@@ -249,6 +254,15 @@ public class OrderService {
                         item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity()))
                 ))
                 .toList();
+        List<OrderStatusHistoryResponse> statusHistory = order
+                .getStatusHistory()
+                .stream()
+                .sorted(Comparator.comparing(OrderStatusHistory::getChangedAt))
+                .map(history -> new OrderStatusHistoryResponse(
+                        history.getStatus(),
+                        history.getChangedAt()
+                ))
+                .toList();
 
         return new OrderResponse(
                 order.getId(),
@@ -273,6 +287,7 @@ public class OrderService {
                         : returnRequestService.toResponse(order.getReturnRequest()),
                 order.getCreatedAt(),
                 order.getShippedAt(),
+                statusHistory,
                 items
         );
     }

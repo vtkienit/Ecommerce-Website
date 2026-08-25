@@ -3,6 +3,7 @@ import { LoaderCircle, PackageCheck, RotateCcw, ShoppingBag, Truck } from "lucid
 import { Link } from "react-router-dom";
 import { useLanguage, type TranslationKey } from "../../../app/contexts/LanguageContext";
 import { cancelOrder, createReturnRequest, getOrders } from "../../commerce/api/commerceApi";
+import OrderStatusTimeline from "../../commerce/components/OrderStatusTimeline";
 import type {
   Order,
   OrderStatus,
@@ -168,6 +169,8 @@ export default function PurchaseList({ filter = "all" }: { filter?: PurchaseFilt
                   </div>
                 ))}
               </div>
+
+              <OrderStatusTimeline history={order.statusHistory} />
 
               {order.shippingCarrier && order.trackingCode && (
                 <section className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border bg-primary/5 px-4 py-3 text-sm">

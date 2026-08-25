@@ -210,7 +210,10 @@ class CommerceFlowTests {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"))
-                .andExpect(jsonPath("$.paymentStatus").value("CANCELLED"));
+                .andExpect(jsonPath("$.paymentStatus").value("CANCELLED"))
+                .andExpect(jsonPath("$.statusHistory.length()").value(2))
+                .andExpect(jsonPath("$.statusHistory[0].status").value("PENDING"))
+                .andExpect(jsonPath("$.statusHistory[1].status").value("CANCELLED"));
 
         Inventory inventory = inventoryRepository.findByVariantId(101L).orElseThrow();
         assertThat(inventory.getReservedQuantity()).isZero();
@@ -487,6 +490,17 @@ class CommerceFlowTests {
 
         updateOrderStatus(adminToken, orderId, "DELIVERED", "DELIVERED");
         assertThat(paymentRepository.findAll().getFirst().getStatus()).isEqualTo(PaymentStatus.PAID);
+
+        mockMvc.perform(get("/api/admin/orders?status=DELIVERED")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].statusHistory.length()").value(5))
+                .andExpect(jsonPath("$.content[0].statusHistory[0].status").value("PENDING"))
+                .andExpect(jsonPath("$.content[0].statusHistory[1].status").value("CONFIRMED"))
+                .andExpect(jsonPath("$.content[0].statusHistory[2].status").value("PROCESSING"))
+                .andExpect(jsonPath("$.content[0].statusHistory[3].status").value("SHIPPED"))
+                .andExpect(jsonPath("$.content[0].statusHistory[4].status").value("DELIVERED"))
+                .andExpect(jsonPath("$.content[0].statusHistory[4].changedAt").isNotEmpty());
     }
 
     @Test

@@ -6,6 +6,7 @@ import AdminPagination from "../../../shared/components/AdminPagination";
 import useDebouncedValue from "../../../shared/hooks/useDebouncedValue";
 import { getAdminOrders, updateOrderStatus } from "../api/commerceApi";
 import type { Order, OrderStatus } from "../model/commerceTypes";
+import OrderStatusTimeline from "./OrderStatusTimeline";
 
 type StatusFilter = "ALL" | OrderStatus;
 type ShippingDraft = { shippingCarrier: string; trackingCode: string };
@@ -238,6 +239,8 @@ export default function OrderAdminView() {
                         ))}
                       </section>
                     </div>
+
+                    <OrderStatusTimeline history={order.statusHistory} />
 
                     {order.status === "PROCESSING" && (
                       <section className="border-t border-border bg-bg-secondary/60 px-4 py-4 sm:px-5">

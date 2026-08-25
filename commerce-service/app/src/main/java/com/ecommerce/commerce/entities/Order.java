@@ -81,6 +81,18 @@ public class Order {
     @BatchSize(size = 50)
     private List<Payment> payments = new ArrayList<>();
 
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
+    private List<OrderStatusHistory> statusHistory = new ArrayList<>();
+
     @OneToOne(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private ReturnRequest returnRequest;
+
+    public void addStatusHistory(OrderStatus status, LocalDateTime changedAt) {
+        OrderStatusHistory history = new OrderStatusHistory();
+        history.setOrder(this);
+        history.setStatus(status);
+        history.setChangedAt(changedAt);
+        statusHistory.add(history);
+    }
 }
