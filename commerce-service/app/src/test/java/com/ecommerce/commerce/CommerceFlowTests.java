@@ -303,18 +303,53 @@ class CommerceFlowTests {
     }
 
     @Test
-    void checkoutRejectsQuantityAboveAvailableStock() throws Exception {
+    void cartRejectsQuantityAboveAvailableStock() throws Exception {
         String token = token(31L);
-        addToCart(token, 101L, 11);
-
-        mockMvc.perform(post("/api/orders/checkout")
+        mockMvc.perform(post("/api/cart/items")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(checkoutJson()))
+                        .content("{\"variantId\":101,\"quantity\":11}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Cloud Pillow only has 10 item(s) left"));
 
+        assertThat(cartRepository.count()).isZero();
         assertThat(orderRepository.count()).isZero();
+    }
+
+    @Test
+    void cartRejectsUpdateAboveAvailableStockAndKeepsCurrentQuantity() throws Exception {
+        String token = token(32L);
+        addToCart(token, 101L, 2);
+        long itemId = cartRepository.findByUserId(32L).orElseThrow().getItems().getFirst().getId();
+
+        mockMvc.perform(patch("/api/cart/items/{id}", itemId)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"quantity\":11}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Cloud Pillow only has 10 item(s) left"));
+
+        mockMvc.perform(get("/api/cart")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].quantity").value(2));
+    }
+
+    @Test
+    void cartRejectsOutOfStockVariant() throws Exception {
+        Inventory inventory = new Inventory();
+        inventory.setVariantId(101L);
+        inventory.setSku("CLOUD-PILLOW-WHITE");
+        inventory.setOnHandQuantity(3);
+        inventory.setReservedQuantity(3);
+        inventoryRepository.save(inventory);
+
+        mockMvc.perform(post("/api/cart/items")
+                        .header("Authorization", "Bearer " + token(33L))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"variantId\":101,\"quantity\":1}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Cloud Pillow only has 0 item(s) left"));
     }
 
     @Test

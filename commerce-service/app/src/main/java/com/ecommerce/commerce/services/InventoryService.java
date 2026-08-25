@@ -114,6 +114,17 @@ public class InventoryService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public int getAvailableQuantity(Long variantId) {
+        return inventoryRepository
+                .findByVariantId(variantId)
+                .map(inventory -> Math.max(
+                        0,
+                        inventory.getOnHandQuantity() - inventory.getReservedQuantity()
+                ))
+                .orElse(defaultStock);
+    }
+
     private Inventory createEmptyInventory(CatalogVariantSnapshot variant) {
         Inventory inventory = new Inventory();
         inventory.setVariantId(variant.getId());

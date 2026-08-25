@@ -24,13 +24,16 @@ public class CartService {
 
     private final CartRepository cartRepository;
     private final CatalogGateway catalogGateway;
+    private final InventoryService inventoryService;
 
     public CartService(
             CartRepository cartRepository,
-            CatalogGateway catalogGateway
+            CatalogGateway catalogGateway,
+            InventoryService inventoryService
     ) {
         this.cartRepository = cartRepository;
         this.catalogGateway = catalogGateway;
+        this.inventoryService = inventoryService;
     }
 
     @Transactional(readOnly = true)
@@ -43,7 +46,7 @@ public class CartService {
 
     public CartResponse addItem(Long userId, Long variantId, Integer quantity) {
         validateQuantity(quantity);
-        catalogGateway.getVariant(variantId);
+        CatalogVariantSnapshot variant = catalogGateway.getVariant(variantId);
 
         Cart cart = cartRepository.findByUserId(userId).orElseGet(() -> createCart(userId));
         CartItem item = cart
@@ -55,6 +58,7 @@ public class CartService {
 
         int newQuantity = item.getQuantity() + quantity;
         validateQuantity(newQuantity);
+        validateAvailableStock(variant, newQuantity);
         item.setQuantity(newQuantity);
 
         return toResponse(cartRepository.save(cart));
@@ -64,6 +68,8 @@ public class CartService {
         validateQuantity(quantity);
         Cart cart = getRequiredCart(userId);
         CartItem item = getRequiredItem(cart, itemId);
+        CatalogVariantSnapshot variant = catalogGateway.getVariant(item.getVariantId());
+        validateAvailableStock(variant, quantity);
         item.setQuantity(quantity);
         return toResponse(cartRepository.save(cart));
     }
@@ -149,6 +155,16 @@ public class CartService {
     private void validateQuantity(Integer quantity) {
         if (quantity == null || quantity < 1 || quantity > MAX_ITEM_QUANTITY) {
             throw new CommerceException("Quantity must be between 1 and 99", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    private void validateAvailableStock(CatalogVariantSnapshot variant, int requestedQuantity) {
+        int availableQuantity = inventoryService.getAvailableQuantity(variant.getId());
+        if (requestedQuantity > availableQuantity) {
+            throw new CommerceException(
+                    variant.getProductName() + " only has " + availableQuantity + " item(s) left",
+                    HttpStatus.CONFLICT
+            );
         }
     }
 }
