@@ -7,6 +7,7 @@ import com.ecommerce.catalog.repositories.FlashSaleRepository;
 import com.ecommerce.catalog.repositories.ProductCategoryRepository;
 import com.ecommerce.catalog.repositories.ProductRepository;
 import com.ecommerce.catalog.repositories.ProductVariantRepository;
+import com.ecommerce.catalog.utils.SearchTextNormalizer;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
@@ -148,7 +149,7 @@ public class CatalogService {
     }
 
     public List<ProductSuggestionResponse> getProductSuggestions(String search, int limit) {
-        String keyword = search == null ? "" : search.trim().toLowerCase(Locale.ROOT);
+        String keyword = SearchTextNormalizer.normalize(search);
         if (keyword.length() < 2) {
             return List.of();
         }
@@ -263,14 +264,11 @@ public class CatalogService {
             }
 
             if (hasText(criteria.getSearch())) {
-                String search = "%" + criteria.getSearch().trim().toLowerCase(Locale.ROOT) + "%";
+                String search = "%" + SearchTextNormalizer.normalize(criteria.getSearch()) + "%";
                 predicates.add(criteriaBuilder.or(
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), search),
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("brand")), search),
-                        criteriaBuilder.like(
-                                criteriaBuilder.lower(root.get("productCategory").get("name")),
-                                search
-                        )
+                        criteriaBuilder.like(root.get("searchName"), search),
+                        criteriaBuilder.like(root.get("searchBrand"), search),
+                        criteriaBuilder.like(root.get("productCategory").get("searchName"), search)
                 ));
             }
 
@@ -329,13 +327,11 @@ public class CatalogService {
             if (sort.equals("relevance,desc")
                     && hasText(criteria.getSearch())
                     && query.getResultType() != Long.class) {
-                String keyword = criteria.getSearch().trim().toLowerCase(Locale.ROOT);
+                String keyword = SearchTextNormalizer.normalize(criteria.getSearch());
                 String prefix = keyword + "%";
-                var productName = criteriaBuilder.lower(root.<String>get("name"));
-                var brand = criteriaBuilder.lower(root.<String>get("brand"));
-                var categoryName = criteriaBuilder.lower(
-                        root.get("productCategory").<String>get("name")
-                );
+                var productName = root.<String>get("searchName");
+                var brand = root.<String>get("searchBrand");
+                var categoryName = root.get("productCategory").<String>get("searchName");
                 var relevance = criteriaBuilder.<Integer>selectCase()
                         .when(criteriaBuilder.equal(productName, keyword), 0)
                         .when(criteriaBuilder.like(productName, prefix), 1)

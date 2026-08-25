@@ -29,16 +29,16 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             SELECT product
             FROM Product product
             JOIN FETCH product.productCategory category
-            WHERE LOWER(product.name) LIKE :contains
-               OR LOWER(COALESCE(product.brand, '')) LIKE :contains
-               OR LOWER(category.name) LIKE :contains
+            WHERE product.searchName LIKE :contains
+               OR product.searchBrand LIKE :contains
+               OR category.searchName LIKE :contains
             ORDER BY CASE
-                WHEN LOWER(product.name) = :keyword THEN 0
-                WHEN LOWER(product.name) LIKE :prefix THEN 1
-                WHEN LOWER(COALESCE(product.brand, '')) = :keyword THEN 2
-                WHEN LOWER(COALESCE(product.brand, '')) LIKE :prefix THEN 3
-                WHEN LOWER(category.name) = :keyword THEN 4
-                WHEN LOWER(category.name) LIKE :prefix THEN 5
+                WHEN product.searchName = :keyword THEN 0
+                WHEN product.searchName LIKE :prefix THEN 1
+                WHEN product.searchBrand = :keyword THEN 2
+                WHEN product.searchBrand LIKE :prefix THEN 3
+                WHEN category.searchName = :keyword THEN 4
+                WHEN category.searchName LIKE :prefix THEN 5
                 ELSE 6
             END,
             product.name ASC

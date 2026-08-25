@@ -175,6 +175,33 @@ class CatalogFlowTests {
     }
 
     @Test
+    void productSearchIgnoresVietnameseDiacritics() throws Exception {
+        Product vietnameseProduct = createProduct(
+                cloudMattress.getProductCategory(),
+                "Nệm Mây Êm Ái",
+                "nem-may-em-ai",
+                "Sản phẩm hỗ trợ tìm kiếm tiếng Việt",
+                "nem.jpg"
+        );
+        vietnameseProduct.setBrand("Giấc Ngủ Việt");
+        addVariant(vietnameseProduct, "NEM-VIET", "160 x 200", "8", "white", "350000");
+        productRepository.save(vietnameseProduct);
+
+        mockMvc.perform(get("/api/products/search/suggestions")
+                        .param("q", "nem may")
+                        .param("limit", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].slug").value("nem-may-em-ai"));
+
+        mockMvc.perform(get("/api/products")
+                        .param("search", "giac ngu viet")
+                        .param("sort", "relevance,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].slug").value("nem-may-em-ai"));
+    }
+
+    @Test
     void productsCanBeSortedByTheirLowestVariantPrice() throws Exception {
         mockMvc.perform(get("/api/products")
                         .param("category", "mattress")
