@@ -5,11 +5,11 @@ export type PriceRange = {
 };
 
 export const catalogPriceRanges: PriceRange[] = [
-  { value: "under-500k", maxPrice: 500_000 },
-  { value: "500k-1m", minPrice: 500_000, maxPrice: 1_000_000 },
-  { value: "1m-2m", minPrice: 1_000_000, maxPrice: 2_000_000 },
-  { value: "2m-5m", minPrice: 2_000_000, maxPrice: 5_000_000 },
-  { value: "over-5m", minPrice: 5_000_000 },
+  { value: "50k-100k", minPrice: 50_000, maxPrice: 100_000 },
+  { value: "100k-200k", minPrice: 100_000, maxPrice: 200_000 },
+  { value: "200k-300k", minPrice: 200_000, maxPrice: 300_000 },
+  { value: "300k-400k", minPrice: 300_000, maxPrice: 400_000 },
+  { value: "400k-500k", minPrice: 400_000, maxPrice: 500_000 },
 ];
 
 export const catalogSizes = [

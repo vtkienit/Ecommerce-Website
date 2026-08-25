@@ -38,7 +38,7 @@ export default function VariantManager({ product, onChange, onMessage }: Props) 
 
   const save = async () => {
     const price = Number(draft.price);
-    if (!draft.sku.trim() || !Number.isFinite(price) || price <= 0) {
+    if (!draft.sku.trim() || !Number.isFinite(price) || price < 50_000 || price > 500_000) {
       onMessage(t("variantInvalid"), true);
       return;
     }
@@ -115,7 +115,7 @@ export default function VariantManager({ product, onChange, onMessage }: Props) 
         <input className={fieldClass} placeholder={t("size")} value={draft.size} onChange={(event) => setDraft({ ...draft, size: event.target.value })} />
         <input className={fieldClass} placeholder={t("thickness")} value={draft.thickness} onChange={(event) => setDraft({ ...draft, thickness: event.target.value })} />
         <input className={fieldClass} placeholder={t("color")} value={draft.color} onChange={(event) => setDraft({ ...draft, color: event.target.value })} />
-        <input className={fieldClass} type="number" min="1" step="1000" placeholder={t("price")} value={draft.price} onChange={(event) => setDraft({ ...draft, price: event.target.value })} />
+        <input className={fieldClass} type="number" min="50000" max="500000" step="1000" placeholder={t("price")} value={draft.price} onChange={(event) => setDraft({ ...draft, price: event.target.value })} />
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         <button type="button" className={primaryButtonClass} disabled={isSaving} onClick={() => void save()}>

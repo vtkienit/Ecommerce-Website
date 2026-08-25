@@ -1,5 +1,6 @@
 package com.ecommerce.catalog.dtos;
 
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -29,6 +30,7 @@ public class VariantUpsertRequest {
     private String color;
 
     @NotNull(message = "Price is required")
-    @DecimalMin(value = "0.01", message = "Price must be greater than zero")
+    @DecimalMin(value = "50000", message = "Price must be at least 50000")
+    @DecimalMax(value = "500000", message = "Price must not exceed 500000")
     private BigDecimal price;
 }

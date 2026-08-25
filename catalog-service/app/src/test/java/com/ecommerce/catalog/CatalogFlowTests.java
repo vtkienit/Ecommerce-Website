@@ -269,7 +269,7 @@ class CatalogFlowTests {
                                   "sku":" blanket-blue ",
                                   "size":"200 x 220",
                                   "color":"Blue",
-                                  "price":650000
+                                  "price":450000
                                 }
                                 """))
                 .andExpect(status().isCreated())
@@ -311,10 +311,10 @@ class CatalogFlowTests {
                         .header("Authorization", authorization)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"sku":"BLANKET-BLUE","size":"220 x 240","color":"Blue","price":700000}
+                                {"sku":"BLANKET-BLUE","size":"220 x 240","color":"Blue","price":470000}
                                 """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.variants[0].price").value(700000));
+                .andExpect(jsonPath("$.variants[0].price").value(470000));
 
         mockMvc.perform(patch("/api/admin/catalog/images/{id}", imageId)
                         .header("Authorization", authorization)
