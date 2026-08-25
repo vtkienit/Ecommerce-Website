@@ -20,6 +20,17 @@ type CatalogState<T> = {
   error: string;
 };
 
+type ProductCatalogState = CatalogState<PageResponse<ProductSummary>> & {
+  isLoadingMore: boolean;
+  hasMore: boolean;
+  loadMore: () => void;
+};
+
+type ProductPageState = CatalogState<PageResponse<ProductSummary>> & {
+  queryKey: string;
+  isLoadingMore: boolean;
+};
+
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Catalog request failed";
 
@@ -49,32 +60,76 @@ export function useCategories(): CatalogState<Category[]> {
   return state;
 }
 
-export function useProducts(query: ProductQuery): CatalogState<PageResponse<ProductSummary>> {
-  const queryKey = JSON.stringify(query);
-  const [state, setState] = useState<CatalogState<PageResponse<ProductSummary>>>({
+export function useProducts(query: ProductQuery): ProductCatalogState {
+  const { page: initialPage = 0, ...filters } = query;
+  const queryKey = JSON.stringify(filters);
+  const [request, setRequest] = useState({ queryKey, page: initialPage });
+  const [state, setState] = useState<ProductPageState>({
+    queryKey,
     data: null,
     isLoading: true,
+    isLoadingMore: false,
     error: "",
   });
+  const requestedPage = request.queryKey === queryKey ? request.page : initialPage;
 
   useEffect(() => {
     let active = true;
-    const currentQuery = JSON.parse(queryKey) as ProductQuery;
+    const currentQuery = JSON.parse(queryKey) as Omit<ProductQuery, "page">;
 
-    getProducts(currentQuery)
-      .then((data) => {
-        if (active) setState({ data, isLoading: false, error: "" });
+    getProducts({ ...currentQuery, page: requestedPage })
+      .then((page) => {
+        if (!active) return;
+
+        setState((current) => {
+          const previousProducts = requestedPage > initialPage && current.queryKey === queryKey
+            ? current.data?.content ?? []
+            : [];
+
+          return {
+            queryKey,
+            data: { ...page, content: [...previousProducts, ...page.content] },
+            isLoading: false,
+            isLoadingMore: false,
+            error: "",
+          };
+        });
       })
       .catch((error: unknown) => {
-        if (active) setState({ data: null, isLoading: false, error: getErrorMessage(error) });
+        if (!active) return;
+
+        setState((current) => ({
+          queryKey,
+          data: current.queryKey === queryKey ? current.data : null,
+          isLoading: false,
+          isLoadingMore: false,
+          error: getErrorMessage(error),
+        }));
       });
 
     return () => {
       active = false;
     };
-  }, [queryKey]);
+  }, [initialPage, queryKey, requestedPage]);
 
-  return state;
+  const currentState = state.queryKey === queryKey
+    ? state
+    : { data: null, isLoading: true, isLoadingMore: false, error: "" };
+
+  const loadMore = () => {
+    if (!currentState.data || currentState.data.last || currentState.isLoadingMore) return;
+    setState((current) => ({ ...current, isLoadingMore: true, error: "" }));
+    setRequest({ queryKey, page: currentState.data.page + 1 });
+  };
+
+  return {
+    data: currentState.data,
+    isLoading: currentState.isLoading,
+    isLoadingMore: currentState.isLoadingMore,
+    error: currentState.error,
+    hasMore: Boolean(currentState.data && !currentState.data.last),
+    loadMore,
+  };
 }
 
 export function useProduct(slug?: string): CatalogState<ProductDetail> {

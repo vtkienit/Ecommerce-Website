@@ -1,6 +1,8 @@
 export const translations = {
   vi: {
     catalogLoading: "Đang tải sản phẩm...",
+    loadMore: "Xem thêm",
+    loadingMore: "Đang tải thêm...",
     catalogError: "Không thể tải dữ liệu sản phẩm. Hãy kiểm tra Catalog Service.",
     catalogEmpty: "Không tìm thấy sản phẩm phù hợp.",
     imageUnavailable: "Chưa có hình ảnh",
@@ -399,6 +401,8 @@ export const translations = {
   },
   en: {
     catalogLoading: "Loading products...",
+    loadMore: "Load more",
+    loadingMore: "Loading more...",
     catalogError: "Product data could not be loaded. Check the Catalog Service.",
     catalogEmpty: "No matching products were found.",
     imageUnavailable: "Image unavailable",

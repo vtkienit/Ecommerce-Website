@@ -1,6 +1,6 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { Helmet } from "react-helmet-async";
-import { ChevronDown, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, LoaderCircle, SlidersHorizontal } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useLanguage } from "../app/contexts/LanguageContext";
@@ -35,13 +35,13 @@ export default function MattressPage() {
   const [selectedPrices, setSelectedPrices] = useState<string[]>([]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const priceBounds = getPriceBounds(selectedPrices);
-  const { data, isLoading, error } = useProducts({
+  const { data, isLoading, isLoadingMore, error, hasMore, loadMore } = useProducts({
     category: catalogSlug,
     sort,
     sizes: selectedSizes,
     colors: selectedColors,
     ...priceBounds,
-    size: 50,
+    size: 3,
   });
 
   const toggleFilter = (key: string) => {
@@ -142,9 +142,25 @@ export default function MattressPage() {
 
             <CatalogStatus loading={isLoading} error={error} empty={!isLoading && !error && data?.content.length === 0} />
             {data && data.content.length > 0 && (
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-5">
-                {data.content.map((product) => <ProductCard key={product.id} product={product} />)}
-              </div>
+              <>
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-5">
+                  {data.content.map((product) => <ProductCard key={product.id} product={product} />)}
+                </div>
+
+                {hasMore && (
+                  <div className="mt-8 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={loadMore}
+                      disabled={isLoadingMore}
+                      className="inline-flex min-w-40 items-center justify-center gap-2 rounded-md border border-primary px-6 py-2.5 font-semibold text-primary transition-colors hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isLoadingMore && <LoaderCircle size={18} className="animate-spin" />}
+                      {isLoadingMore ? t("loadingMore") : t("loadMore")}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </section>
         </div>

@@ -147,6 +147,25 @@ class CatalogFlowTests {
     }
 
     @Test
+    void productsCanBeLoadedPageByPage() throws Exception {
+        mockMvc.perform(get("/api/products")
+                        .param("page", "0")
+                        .param("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.last").value(false));
+
+        mockMvc.perform(get("/api/products")
+                        .param("page", "1")
+                        .param("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.last").value(true));
+    }
+
+    @Test
     void productDetailContainsVariantsImagesAndRelatedProducts() throws Exception {
         mockMvc.perform(get("/api/products/cloud-mattress"))
                 .andExpect(status().isOk())
