@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -219,6 +220,7 @@ public class CatalogService {
                 flashSale.getDescription(),
                 flashSale.getStartDate(),
                 flashSale.getEndDate(),
+                Math.max(0, Duration.between(now, flashSale.getEndDate()).toSeconds()),
                 products.values()
                         .stream()
                         .map(product -> toSummary(product, discounts))

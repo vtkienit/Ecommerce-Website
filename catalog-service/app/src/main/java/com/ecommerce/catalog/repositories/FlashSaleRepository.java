@@ -24,4 +24,17 @@ public interface FlashSaleRepository extends JpaRepository<FlashSale, Long> {
             ORDER BY flashSale.endDate ASC
             """)
     List<FlashSale> findActiveAt(@Param("now") LocalDateTime now);
+
+    @Query("""
+            SELECT CASE WHEN COUNT(flashSale) > 0 THEN true ELSE false END
+            FROM FlashSale flashSale
+            WHERE flashSale.startDate < :endDate
+              AND flashSale.endDate > :startDate
+              AND (:excludeId IS NULL OR flashSale.id <> :excludeId)
+            """)
+    boolean existsOverlapping(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("excludeId") Long excludeId
+    );
 }

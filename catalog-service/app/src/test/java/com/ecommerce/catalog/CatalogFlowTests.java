@@ -185,8 +185,80 @@ class CatalogFlowTests {
         mockMvc.perform(get("/api/flash-sales/current"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Test Flash Sale"))
+                .andExpect(jsonPath("$.remainingSeconds").isNumber())
                 .andExpect(jsonPath("$.products[0].slug").value("cloud-mattress"))
                 .andExpect(jsonPath("$.products[0].discountPercentage").value(25));
+    }
+
+    @Test
+    void adminCanManageFlashSales() throws Exception {
+        String authorization = "Bearer " + token("Admin");
+        LocalDateTime startDate = LocalDateTime.now().plusDays(1).withNano(0);
+        LocalDateTime endDate = startDate.plusDays(2);
+
+        String responseBody = mockMvc.perform(post("/api/admin/catalog/flash-sales")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name":"Weekend Flash Sale",
+                                  "description":"Selected products",
+                                  "startDate":"%s",
+                                  "endDate":"%s",
+                                  "discountPercentage":20,
+                                  "productIds":[%d]
+                                }
+                                """.formatted(startDate, endDate, cloudMattress.getId())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("Weekend Flash Sale"))
+                .andExpect(jsonPath("$.discountPercentage").value(20))
+                .andExpect(jsonPath("$.productCount").value(1))
+                .andExpect(jsonPath("$.variantCount").value(2))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        long flashSaleId = objectMapper.readTree(responseBody).path("id").asLong();
+
+        mockMvc.perform(get("/api/admin/catalog/flash-sales?page=0&size=6")
+                        .header("Authorization", authorization))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2));
+
+        mockMvc.perform(post("/api/admin/catalog/flash-sales")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name":"Overlapping Flash Sale",
+                                  "startDate":"%s",
+                                  "endDate":"%s",
+                                  "discountPercentage":10,
+                                  "productIds":[%d]
+                                }
+                                """.formatted(startDate.plusHours(1), endDate.plusHours(1), cloudMattress.getId())))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Flash sale period overlaps another campaign"));
+
+        mockMvc.perform(patch("/api/admin/catalog/flash-sales/{id}", flashSaleId)
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name":"Updated Flash Sale",
+                                  "description":"Updated products",
+                                  "startDate":"%s",
+                                  "endDate":"%s",
+                                  "discountPercentage":30,
+                                  "productIds":[%d]
+                                }
+                                """.formatted(startDate, endDate, cloudMattress.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Updated Flash Sale"))
+                .andExpect(jsonPath("$.discountPercentage").value(30));
+
+        mockMvc.perform(delete("/api/admin/catalog/flash-sales/{id}", flashSaleId)
+                        .header("Authorization", authorization))
+                .andExpect(status().isNoContent());
     }
 
     @Test
@@ -209,6 +281,9 @@ class CatalogFlowTests {
     @Test
     void catalogAdministrationRequiresAdminRole() throws Exception {
         mockMvc.perform(get("/api/admin/catalog/products"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(get("/api/admin/catalog/flash-sales"))
                 .andExpect(status().isUnauthorized());
 
         mockMvc.perform(get("/api/admin/catalog/products")

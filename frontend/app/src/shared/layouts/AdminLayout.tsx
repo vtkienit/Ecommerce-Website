@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
+  BadgePercent,
   Boxes,
   ClipboardList,
   Home,
@@ -22,6 +23,7 @@ import ThemeToggle from "./ThemeToggle";
 const navigation = [
   { to: "/admin", label: "adminDashboard", icon: LayoutDashboard },
   { to: "/admin/catalog", label: "catalogManagement", icon: Package },
+  { to: "/admin/flash-sales", label: "flashSaleManagement", icon: BadgePercent },
   { to: "/admin/inventory", label: "inventoryManagement", icon: Boxes },
   { to: "/admin/orders", label: "orderManagement", icon: ClipboardList },
   { to: "/admin/vouchers", label: "voucherManagement", icon: TicketPercent },

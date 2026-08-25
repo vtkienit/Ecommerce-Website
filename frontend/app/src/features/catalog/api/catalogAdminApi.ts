@@ -4,7 +4,9 @@ import type { PageQuery, PageResponse } from "../../../shared/model/pagination";
 import type { Category } from "../model/catalogTypes";
 import type {
   AdminProduct,
+  AdminFlashSale,
   CategoryPayload,
+  FlashSalePayload,
   ImagePayload,
   ProductPayload,
   VariantPayload,
@@ -88,3 +90,17 @@ export const updateImage = (id: number, payload: ImagePayload) =>
 
 export const deleteImage = (id: number) =>
   adminRequest<AdminProduct>(`/api/admin/catalog/images/${id}`, "DELETE");
+
+export const getFlashSales = ({ page = 0, size = 6 }: PageQuery = {}) => {
+  const params = new URLSearchParams({ page: String(page), size: String(size) });
+  return adminRequest<PageResponse<AdminFlashSale>>(`/api/admin/catalog/flash-sales?${params}`);
+};
+
+export const createFlashSale = (payload: FlashSalePayload) =>
+  adminRequest<AdminFlashSale>("/api/admin/catalog/flash-sales", "POST", payload);
+
+export const updateFlashSale = (id: number, payload: FlashSalePayload) =>
+  adminRequest<AdminFlashSale>(`/api/admin/catalog/flash-sales/${id}`, "PATCH", payload);
+
+export const deleteFlashSale = (id: number) =>
+  adminRequest<void>(`/api/admin/catalog/flash-sales/${id}`, "DELETE");

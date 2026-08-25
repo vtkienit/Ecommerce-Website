@@ -3,18 +3,21 @@ package com.ecommerce.catalog.dtos;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
 @AllArgsConstructor
-public class FlashSaleResponse {
+public class AdminFlashSaleResponse {
 
     private Long id;
     private String name;
     private String description;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
-    private long remainingSeconds;
-    private List<ProductSummaryResponse> products;
+    private BigDecimal discountPercentage;
+    private List<Long> productIds;
+    private int productCount;
+    private int variantCount;
 }

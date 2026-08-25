@@ -13,6 +13,7 @@ import PaymentResultPage from "../pages/PaymentResultPage";
 
 const CatalogAdminPage = lazy(() => import("../pages/CatalogAdminPage"));
 const DashboardAdminPage = lazy(() => import("../pages/DashboardAdminPage"));
+const FlashSaleAdminPage = lazy(() => import("../pages/FlashSaleAdminPage"));
 const InventoryAdminPage = lazy(() => import("../pages/InventoryAdminPage"));
 const OrderAdminPage = lazy(() => import("../pages/OrderAdminPage"));
 const VoucherAdminPage = lazy(() => import("../pages/VoucherAdminPage"));
@@ -42,6 +43,7 @@ export default function AppRouter() {
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={adminPage(<DashboardAdminPage />)} />
         <Route path="catalog" element={adminPage(<CatalogAdminPage />)} />
+        <Route path="flash-sales" element={adminPage(<FlashSaleAdminPage />)} />
         <Route path="inventory" element={adminPage(<InventoryAdminPage />)} />
         <Route path="orders" element={adminPage(<OrderAdminPage />)} />
         <Route path="vouchers" element={adminPage(<VoucherAdminPage />)} />

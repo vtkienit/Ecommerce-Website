@@ -85,7 +85,10 @@ export default function HomePage() {
                 <div className="mt-3 flex items-center gap-2 md:hidden">
                   <Timer size={16} className="text-primary" strokeWidth={2.5} />
                   <span className="text-base text-text-secondary">{t("endsIn")}</span>
-                  <Countdown endDate={flashSale.data.endDate} />
+                  <Countdown
+                    key={`mobile-${flashSale.data.id}-${flashSale.data.remainingSeconds}`}
+                    initialSeconds={flashSale.data.remainingSeconds}
+                  />
                 </div>
               )}
             </div>
@@ -94,7 +97,10 @@ export default function HomePage() {
               <div className="hidden items-center gap-3 rounded-full border border-border bg-bg-secondary px-4 py-2 text-sm md:flex">
                 <Timer size={16} className="text-primary" strokeWidth={2.5} />
                 <span className="text-text-secondary">{t("endsIn")}</span>
-                <Countdown endDate={flashSale.data.endDate} />
+                <Countdown
+                  key={`desktop-${flashSale.data.id}-${flashSale.data.remainingSeconds}`}
+                  initialSeconds={flashSale.data.remainingSeconds}
+                />
               </div>
             )}
           </div>
@@ -212,22 +218,24 @@ function CategoryCard({ category }: { category: Category }) {
   );
 }
 
-function Countdown({ endDate }: { endDate: string }) {
-  const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(endDate));
+function Countdown({ initialSeconds }: { initialSeconds: number }) {
+  const [remainingSeconds, setRemainingSeconds] = useState(initialSeconds);
 
   useEffect(() => {
-    const interval = window.setInterval(() => setTimeLeft(getTimeLeft(endDate)), 1_000);
+    const deadline = Date.now() + initialSeconds * 1_000;
+    const interval = window.setInterval(() => {
+      setRemainingSeconds(Math.max(0, Math.ceil((deadline - Date.now()) / 1_000)));
+    }, 1_000);
     return () => window.clearInterval(interval);
-  }, [endDate]);
+  }, [initialSeconds]);
 
-  return <span className="font-mono text-base font-semibold text-text">{timeLeft}</span>;
+  return <span className="font-mono text-base font-semibold text-text">{formatTimeLeft(remainingSeconds)}</span>;
 }
 
-function getTimeLeft(endDate: string) {
-  const remaining = Math.max(0, new Date(endDate).getTime() - Date.now());
-  const hours = Math.floor(remaining / 3_600_000);
-  const minutes = Math.floor((remaining % 3_600_000) / 60_000);
-  const seconds = Math.floor((remaining % 60_000) / 1_000);
+function formatTimeLeft(remainingSeconds: number) {
+  const hours = Math.floor(remainingSeconds / 3_600);
+  const minutes = Math.floor((remainingSeconds % 3_600) / 60);
+  const seconds = remainingSeconds % 60;
   return [hours, minutes, seconds].map((value) => String(value).padStart(2, "0")).join(" : ");
 }
 

@@ -59,6 +59,7 @@ export type FlashSale = {
   description: string | null;
   startDate: string;
   endDate: string;
+  remainingSeconds: number;
   products: ProductSummary[];
 };
 

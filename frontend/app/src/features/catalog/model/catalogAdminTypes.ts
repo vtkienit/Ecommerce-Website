@@ -50,3 +50,24 @@ export type ImagePayload = {
   imageUrl: string;
   primary: boolean;
 };
+
+export type AdminFlashSale = {
+  id: number;
+  name: string;
+  description: string | null;
+  startDate: string;
+  endDate: string;
+  discountPercentage: number;
+  productIds: number[];
+  productCount: number;
+  variantCount: number;
+};
+
+export type FlashSalePayload = {
+  name: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  discountPercentage: number;
+  productIds: number[];
+};
