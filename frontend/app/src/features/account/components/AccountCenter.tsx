@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { LoaderCircle } from "lucide-react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
 import { ApiError } from "../../../shared/api/httpClient";
 import MainLayout from "../../../shared/layouts/MainLayout";
@@ -29,6 +29,7 @@ export default function AccountCenter({
   purchaseFilter = "all",
 }: AccountCenterProps) {
   const { t } = useLanguage();
+  const location = useLocation();
   const storedUser = getStoredUser();
   const [user, setUser] = useState<AuthUser | null>(storedUser);
   const [isLoading, setIsLoading] = useState(Boolean(storedUser));
@@ -36,7 +37,8 @@ export default function AccountCenter({
   useEffect(() => {
     let active = true;
 
-    getCurrentProfile()
+    Promise.resolve()
+      .then(getCurrentProfile)
       .then((currentUser) => {
         if (!active) return;
         setUser(currentUser);
@@ -44,7 +46,7 @@ export default function AccountCenter({
       })
       .catch((error: unknown) => {
         if (!active) return;
-        if (error instanceof ApiError && error.status === 401) {
+        if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
           clearAuthSession();
           setUser(null);
         }
@@ -59,7 +61,8 @@ export default function AccountCenter({
   }, []);
 
   if (!storedUser && !user) {
-    return <Navigate to="/login" replace />;
+    const returnTo = encodeURIComponent(`${location.pathname}${location.search}`);
+    return <Navigate to={`/login?returnTo=${returnTo}`} replace />;
   }
 
   return (

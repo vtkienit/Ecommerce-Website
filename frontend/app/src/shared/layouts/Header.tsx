@@ -45,6 +45,9 @@ const Header = () => {
   const [menuItemOpen, setMenuItemOpen] = useState<Record<number, boolean>>({});
   const location = useLocation();
   const isAccessoriesActive = accessoryPaths.some((path) => location.pathname.startsWith(path));
+  const customerOrdersPath = authUser
+    ? "/purchases"
+    : "/login?returnTo=/purchases";
 
   useEffect(() => {
     const syncAuthUser = () => setAuthUser(getStoredUser());
@@ -117,7 +120,7 @@ const Header = () => {
             <ThemeToggle />
 
             <Link
-              to="/purchases"
+              to={customerOrdersPath}
               className="text-base font-medium tracking-tight text-text-secondary transition-colors hover:text-primary"
             >
               {t("manageOrder")}
@@ -411,7 +414,7 @@ const Header = () => {
                 </Link>
               </li>
               <li className={mobileItem}>
-                <Link className={mobileLink} to="/purchases" onClick={closeMenu}>
+                <Link className={mobileLink} to={customerOrdersPath} onClick={closeMenu}>
                   {t("manageOrder")}
                 </Link>
               </li>
