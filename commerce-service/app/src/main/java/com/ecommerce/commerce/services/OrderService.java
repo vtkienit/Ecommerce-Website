@@ -8,11 +8,14 @@ import com.ecommerce.commerce.dtos.OrderResponse;
 import com.ecommerce.commerce.dtos.OrderStatusHistoryResponse;
 import com.ecommerce.commerce.entities.*;
 import com.ecommerce.commerce.exceptions.CommerceException;
+import com.ecommerce.commerce.notifications.OrderNotification;
+import com.ecommerce.commerce.notifications.OrderNotificationType;
 import com.ecommerce.commerce.repositories.CartRepository;
 import com.ecommerce.commerce.repositories.InventoryRepository;
 import com.ecommerce.commerce.repositories.OrderRepository;
 import com.ecommerce.commerce.repositories.StockReservationRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +40,7 @@ public class OrderService {
     private final PaymentService paymentService;
     private final VoucherService voucherService;
     private final ReturnRequestService returnRequestService;
+    private final ApplicationEventPublisher eventPublisher;
     private final int defaultStock;
 
     public OrderService(
@@ -49,6 +53,7 @@ public class OrderService {
             PaymentService paymentService,
             VoucherService voucherService,
             ReturnRequestService returnRequestService,
+            ApplicationEventPublisher eventPublisher,
             @Value("${commerce.inventory.default-stock:10}") int defaultStock
     ) {
         this.cartRepository = cartRepository;
@@ -60,6 +65,7 @@ public class OrderService {
         this.paymentService = paymentService;
         this.voucherService = voucherService;
         this.returnRequestService = returnRequestService;
+        this.eventPublisher = eventPublisher;
         this.defaultStock = defaultStock;
     }
 
@@ -105,6 +111,14 @@ public class OrderService {
 
         cart.getItems().clear();
         cartRepository.save(cart);
+        eventPublisher.publishEvent(new OrderNotification(
+                OrderNotificationType.NEW_ORDER,
+                savedOrder.getId(),
+                savedOrder.getOrderNumber(),
+                savedOrder.getUserId(),
+                savedOrder.getRecipientName(),
+                savedOrder.getCreatedAt()
+        ));
         return toResponse(savedOrder);
     }
 

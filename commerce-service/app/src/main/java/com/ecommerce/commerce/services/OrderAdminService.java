@@ -6,12 +6,15 @@ import com.ecommerce.commerce.dtos.UpdateOrderStatusRequest;
 import com.ecommerce.commerce.entities.Order;
 import com.ecommerce.commerce.entities.OrderStatus;
 import com.ecommerce.commerce.exceptions.CommerceException;
+import com.ecommerce.commerce.notifications.OrderNotification;
+import com.ecommerce.commerce.notifications.OrderNotificationType;
 import com.ecommerce.commerce.repositories.OrderRepository;
-import org.springframework.http.HttpStatus;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,15 +35,18 @@ public class OrderAdminService {
     private final OrderRepository orderRepository;
     private final OrderLifecycleService lifecycleService;
     private final OrderService orderService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public OrderAdminService(
             OrderRepository orderRepository,
             OrderLifecycleService lifecycleService,
-            OrderService orderService
+            OrderService orderService,
+            ApplicationEventPublisher eventPublisher
     ) {
         this.orderRepository = orderRepository;
         this.lifecycleService = lifecycleService;
         this.orderService = orderService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -98,8 +104,20 @@ public class OrderAdminService {
         }
         applyLifecycleChange(order, nextStatus);
         order.setStatus(nextStatus);
-        order.addStatusHistory(nextStatus, LocalDateTime.now());
-        return orderService.toResponse(orderRepository.save(order));
+        LocalDateTime changedAt = LocalDateTime.now();
+        order.addStatusHistory(nextStatus, changedAt);
+        Order savedOrder = orderRepository.save(order);
+        if (nextStatus == OrderStatus.CONFIRMED) {
+            eventPublisher.publishEvent(new OrderNotification(
+                    OrderNotificationType.ORDER_CONFIRMED,
+                    savedOrder.getId(),
+                    savedOrder.getOrderNumber(),
+                    savedOrder.getUserId(),
+                    savedOrder.getRecipientName(),
+                    changedAt
+            ));
+        }
+        return orderService.toResponse(savedOrder);
     }
 
     private void addShippingDetails(Order order, UpdateOrderStatusRequest request) {
