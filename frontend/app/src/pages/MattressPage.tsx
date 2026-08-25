@@ -14,13 +14,24 @@ import { getPriceBounds } from "../features/catalog/model/catalogFilters";
 import type { ProductQuery } from "../features/catalog/model/catalogTypes";
 import MainLayout from "../shared/layouts/MainLayout";
 
+const categoryTranslationKeys = {
+  mattress: "mattress",
+  "bedding-sets": "beddingSets",
+  blankets: "blankets",
+  "bed-sheets": "bedSheets",
+  pillows: "pillows",
+} as const;
+
 export default function MattressPage() {
   const { t } = useLanguage();
   const { categorySlug } = useParams<{ categorySlug: string }>();
   const catalogSlug = categorySlug || "mattress";
   const categories = useCategories();
-  const categoryName = categories.data?.find((category) => category.slug === catalogSlug)?.name
-    || (catalogSlug === "mattress" ? t("mattress") : catalogSlug.replaceAll("-", " "));
+  const translationKey = categoryTranslationKeys[catalogSlug as keyof typeof categoryTranslationKeys];
+  const categoryName = translationKey
+    ? t(translationKey)
+    : categories.data?.find((category) => category.slug === catalogSlug)?.name
+      || catalogSlug.replaceAll("-", " ");
   const sortOptions: { value: NonNullable<ProductQuery["sort"]>; label: string }[] = [
     { value: "newest,desc", label: t("default") },
     { value: "price,asc", label: t("priceAsc") },

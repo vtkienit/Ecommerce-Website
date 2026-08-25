@@ -31,6 +31,7 @@ const mobileItem = "rounded p-2 transition-colors hover:bg-bg-secondary";
 const mobileLink = "block w-full text-base font-medium text-text no-underline";
 const mobileAccordion = "flex w-full items-center justify-between text-left text-base font-medium text-text";
 const mobileSecondaryItem = "ml-2.5";
+const accessoryPaths = ["/catalog/blankets", "/catalog/bed-sheets", "/catalog/pillows"];
 
 const Header = () => {
   const { lang, setLang, t } = useLanguage();
@@ -43,7 +44,7 @@ const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuItemOpen, setMenuItemOpen] = useState<Record<number, boolean>>({});
   const location = useLocation();
-  const isAccessoriesActive = location.pathname.startsWith("/accessories");
+  const isAccessoriesActive = accessoryPaths.some((path) => location.pathname.startsWith(path));
 
   useEffect(() => {
     const syncAuthUser = () => setAuthUser(getStoredUser());
@@ -146,7 +147,7 @@ const Header = () => {
                 </NavLink>
               </li>
               <li className="flex items-center">
-                <NavLink to="/bedding" className={navLinkClass}>
+                <NavLink to="/catalog/bedding-sets" className={navLinkClass}>
                   {t("beddingSets")}
                 </NavLink>
               </li>
@@ -173,7 +174,7 @@ const Header = () => {
                     <li>
                       <Link
                         className="block px-16 py-3 text-center font-medium text-text-secondary hover:bg-bg-secondary hover:text-primary"
-                        to="/accessories/blanket"
+                        to="/catalog/blankets"
                       >
                         {t("blankets")}
                       </Link>
@@ -181,7 +182,7 @@ const Header = () => {
                     <li>
                       <Link
                         className="block whitespace-nowrap px-16 py-3 text-center font-medium text-text-secondary hover:bg-bg-secondary hover:text-primary"
-                        to="/accessories/bed-sheet"
+                        to="/catalog/bed-sheets"
                       >
                         {t("bedSheets")}
                       </Link>
@@ -189,7 +190,7 @@ const Header = () => {
                     <li>
                       <Link
                         className="block px-16 py-3 text-center font-medium text-text-secondary hover:bg-bg-secondary hover:text-primary"
-                        to="/accessories/pillow"
+                        to="/catalog/pillows"
                       >
                         {t("pillows")}
                       </Link>
@@ -362,7 +363,7 @@ const Header = () => {
                 </Link>
               </li>
               <li className={mobileItem}>
-                <Link className={mobileLink} to="/bedding" onClick={closeMenu}>
+                <Link className={mobileLink} to="/catalog/bedding-sets" onClick={closeMenu}>
                   {t("beddingSets")}
                 </Link>
               </li>
@@ -388,17 +389,17 @@ const Header = () => {
               {menuItemOpen[1] && (
                 <>
                   <li className={clsx(mobileItem, mobileSecondaryItem)}>
-                    <Link className={mobileLink} to="/accessories/blanket" onClick={closeMenu}>
+                    <Link className={mobileLink} to="/catalog/blankets" onClick={closeMenu}>
                       {t("blankets")}
                     </Link>
                   </li>
                   <li className={clsx(mobileItem, mobileSecondaryItem)}>
-                    <Link className={mobileLink} to="/accessories/bed-sheet" onClick={closeMenu}>
+                    <Link className={mobileLink} to="/catalog/bed-sheets" onClick={closeMenu}>
                       {t("bedSheets")}
                     </Link>
                   </li>
                   <li className={clsx(mobileItem, mobileSecondaryItem)}>
-                    <Link className={mobileLink} to="/accessories/pillow" onClick={closeMenu}>
+                    <Link className={mobileLink} to="/catalog/pillows" onClick={closeMenu}>
                       {t("pillows")}
                     </Link>
                   </li>

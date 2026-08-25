@@ -29,6 +29,11 @@ export default function AppRouter() {
       <Route path="/" element={<HomePage />} />
       <Route path="/mattress" element={<MattressPage />} />
       <Route path="/catalog/:categorySlug" element={<MattressPage />} />
+      <Route path="/bedding" element={<Navigate to="/catalog/bedding-sets" replace />} />
+      <Route path="/accessories" element={<Navigate to="/catalog/blankets" replace />} />
+      <Route path="/accessories/blanket" element={<Navigate to="/catalog/blankets" replace />} />
+      <Route path="/accessories/bed-sheet" element={<Navigate to="/catalog/bed-sheets" replace />} />
+      <Route path="/accessories/pillow" element={<Navigate to="/catalog/pillows" replace />} />
       <Route path="/products/:slug" element={<ProductDetailPage />} />
       <Route path="/cart" element={<CartPage />} />
       <Route path="/payment/success" element={<PaymentResultPage mode="success" />} />
