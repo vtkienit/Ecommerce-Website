@@ -1,6 +1,8 @@
 package com.ecommerce.catalog.services;
 
 import com.ecommerce.catalog.exceptions.CatalogException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -21,6 +23,7 @@ import java.util.UUID;
 @Service
 public class SupabaseStorageService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(SupabaseStorageService.class);
     private static final Set<String> ALLOWED_TYPES = Set.of(
             MediaType.IMAGE_JPEG_VALUE,
             MediaType.IMAGE_PNG_VALUE,
@@ -55,9 +58,17 @@ public class SupabaseStorageService {
         this.secretKey = secretKey.trim();
         this.bucket = bucket.trim();
         this.maxFileSize = maxFileSize;
-        this.restClient = restClientBuilder
-                .baseUrl(this.supabaseUrl + "/storage/v1")
-                .build();
+        restClientBuilder.baseUrl(this.supabaseUrl + "/storage/v1");
+        if (!this.secretKey.isBlank()) {
+            restClientBuilder.defaultHeader("apikey", this.secretKey);
+            if (!this.secretKey.startsWith("sb_")) {
+                restClientBuilder.defaultHeader(
+                        HttpHeaders.AUTHORIZATION,
+                        "Bearer " + this.secretKey
+                );
+            }
+        }
+        this.restClient = restClientBuilder.build();
     }
 
     public String uploadProductImage(Long productId, MultipartFile file) {
@@ -70,8 +81,6 @@ public class SupabaseStorageService {
             restClient
                     .post()
                     .uri(objectUri(path))
-                    .header("apikey", secretKey)
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + secretKey)
                     .header("x-upsert", "false")
                     .header(HttpHeaders.CACHE_CONTROL, "3600")
                     .contentType(MediaType.parseMediaType(file.getContentType()))
@@ -97,8 +106,6 @@ public class SupabaseStorageService {
             restClient
                     .delete()
                     .uri(objectUri(path))
-                    .header("apikey", secretKey)
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + secretKey)
                     .retrieve()
                     .toBodilessEntity();
         } catch (RestClientResponseException exception) {
@@ -127,12 +134,10 @@ public class SupabaseStorageService {
             restClient
                     .get()
                     .uri("/bucket/{bucket}", bucket)
-                    .header("apikey", secretKey)
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + secretKey)
                     .retrieve()
                     .toBodilessEntity();
         } catch (RestClientResponseException exception) {
-            if (exception.getStatusCode().value() != HttpStatus.NOT_FOUND.value()) {
+            if (!isMissingBucket(exception)) {
                 throw storageError("Could not access the image bucket", exception);
             }
             createPublicBucket();
@@ -146,8 +151,6 @@ public class SupabaseStorageService {
             restClient
                     .post()
                     .uri("/bucket")
-                    .header("apikey", secretKey)
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + secretKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(Map.of(
                             "id", bucket,
@@ -211,10 +214,16 @@ public class SupabaseStorageService {
     }
 
     private CatalogException storageError(String message, RestClientResponseException exception) {
+        LOGGER.warn("{} (Supabase status: {})", message, exception.getStatusCode().value());
         HttpStatus status = exception.getStatusCode().is4xxClientError()
                 ? HttpStatus.BAD_GATEWAY
                 : HttpStatus.SERVICE_UNAVAILABLE;
         return new CatalogException(message, status);
+    }
+
+    private boolean isMissingBucket(RestClientResponseException exception) {
+        return exception.getStatusCode().value() == HttpStatus.NOT_FOUND.value()
+                || exception.getResponseBodyAsString().contains("\"code\":\"NoSuchBucket\"");
     }
 
     private static String stripTrailingSlash(String value) {

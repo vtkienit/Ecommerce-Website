@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.client.ExpectedCount.once;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.headerDoesNotExist;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
@@ -41,9 +42,14 @@ class SupabaseStorageServiceTests {
         server.expect(once(), requestTo(SUPABASE_URL + "/storage/v1/bucket/product-images"))
                 .andExpect(method(HttpMethod.GET))
                 .andExpect(header("apikey", SECRET_KEY))
-                .andRespond(withStatus(HttpStatus.NOT_FOUND));
+                .andExpect(headerDoesNotExist("Authorization"))
+                .andRespond(withStatus(HttpStatus.BAD_REQUEST)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body("{\"statusCode\":\"404\",\"code\":\"NoSuchBucket\"}"));
         server.expect(once(), requestTo(SUPABASE_URL + "/storage/v1/bucket"))
                 .andExpect(method(HttpMethod.POST))
+                .andExpect(header("apikey", SECRET_KEY))
+                .andExpect(headerDoesNotExist("Authorization"))
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
         server.expect(once(), request -> assertTrue(
                         request.getURI().toString().startsWith(
@@ -52,7 +58,7 @@ class SupabaseStorageServiceTests {
                 ))
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(header("apikey", SECRET_KEY))
-                .andExpect(header("Authorization", "Bearer " + SECRET_KEY))
+                .andExpect(headerDoesNotExist("Authorization"))
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
         String imageUrl = storageService.uploadProductImage(
