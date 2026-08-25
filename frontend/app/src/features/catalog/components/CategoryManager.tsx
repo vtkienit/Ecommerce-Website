@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { LoaderCircle, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
+import AdminPagination from "../../../shared/components/AdminPagination";
 import type { Category } from "../model/catalogTypes";
 import { createCategory, deleteCategory, updateCategory } from "../api/catalogAdminApi";
 import { dangerButtonClass, fieldClass, primaryButtonClass, secondaryButtonClass } from "./adminCatalogStyles";
@@ -18,6 +19,13 @@ export default function CategoryManager({ categories, onChange, onMessage }: Pro
   const [slug, setSlug] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [page, setPage] = useState(0);
+  const pageSize = 8;
+  const totalPages = Math.ceil(categories.length / pageSize);
+  const visibleCategories = useMemo(
+    () => categories.slice(page * pageSize, (page + 1) * pageSize),
+    [categories, page],
+  );
 
   const reset = () => {
     setEditingId(null);
@@ -111,7 +119,7 @@ export default function CategoryManager({ categories, onChange, onMessage }: Pro
           <p className="mt-1 text-sm text-text-secondary">{categories.length} {t("categoriesCount")}</p>
         </div>
         <div className="divide-y divide-border">
-          {categories.map((category) => (
+          {visibleCategories.map((category) => (
             <article key={category.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
               <div>
                 <p className="font-semibold text-text">{category.name}</p>
@@ -133,6 +141,9 @@ export default function CategoryManager({ categories, onChange, onMessage }: Pro
               </div>
             </article>
           ))}
+        </div>
+        <div className="px-5 pb-5">
+          <AdminPagination page={page} totalPages={totalPages} totalElements={categories.length} onChange={setPage} />
         </div>
       </section>
     </div>

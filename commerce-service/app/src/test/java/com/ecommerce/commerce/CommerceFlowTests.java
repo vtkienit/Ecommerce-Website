@@ -232,7 +232,10 @@ class CommerceFlowTests {
         mockMvc.perform(get("/api/admin/vouchers")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(voucherId));
+                .andExpect(jsonPath("$.content[0].id").value(voucherId))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.last").value(true));
 
         mockMvc.perform(delete("/api/admin/vouchers/{id}", voucherId)
                         .header("Authorization", "Bearer " + adminToken))
@@ -338,12 +341,13 @@ class CommerceFlowTests {
         mockMvc.perform(get("/api/admin/inventory")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].onHandQuantity").value(0));
+                .andExpect(jsonPath("$.content[0].onHandQuantity").value(0))
+                .andExpect(jsonPath("$.size").value(10));
 
         mockMvc.perform(post("/api/admin/inventory/sync")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].onHandQuantity").value(10));
+                .andExpect(jsonPath("$.content[0].onHandQuantity").value(10));
 
         mockMvc.perform(patch("/api/admin/inventory/101")
                         .header("Authorization", "Bearer " + adminToken)
@@ -357,7 +361,7 @@ class CommerceFlowTests {
         mockMvc.perform(post("/api/admin/inventory/sync")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].onHandQuantity").value(7));
+                .andExpect(jsonPath("$.content[0].onHandQuantity").value(7));
     }
 
     @Test
@@ -411,8 +415,9 @@ class CommerceFlowTests {
         mockMvc.perform(get("/api/admin/orders?status=PENDING")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(orderId))
-                .andExpect(jsonPath("$[0].userId").value(74));
+                .andExpect(jsonPath("$.content[0].id").value(orderId))
+                .andExpect(jsonPath("$.content[0].userId").value(74))
+                .andExpect(jsonPath("$.totalElements").value(1));
 
         updateOrderStatus(adminToken, orderId, "CONFIRMED", "CONFIRMED");
         assertThat(reservationRepository.findByOrderId(orderId).getFirst().getStatus())
@@ -568,7 +573,8 @@ class CommerceFlowTests {
         mockMvc.perform(get("/api/admin/returns?status=REQUESTED")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(requestId));
+                .andExpect(jsonPath("$.content[0].id").value(requestId))
+                .andExpect(jsonPath("$.first").value(true));
 
         updateReturnStatus(adminToken, requestId, "APPROVED", "Return accepted", "APPROVED");
 

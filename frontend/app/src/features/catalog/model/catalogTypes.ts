@@ -62,15 +62,7 @@ export type FlashSale = {
   products: ProductSummary[];
 };
 
-export type PageResponse<T> = {
-  content: T[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
-  first: boolean;
-  last: boolean;
-};
+export type { PageResponse } from "../../../shared/model/pagination";
 
 export type ProductQuery = {
   category?: string;

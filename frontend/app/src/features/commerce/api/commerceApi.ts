@@ -1,5 +1,6 @@
 import { ApiError, apiRequest } from "../../../shared/api/httpClient";
 import { getAuthToken } from "../../auth/model/authSession";
+import type { PageQuery, PageResponse } from "../../../shared/model/pagination";
 import type {
   Cart,
   CheckoutRequest,
@@ -65,14 +66,14 @@ export const createReturnRequest = (orderId: number, reason: string) =>
 export const syncOrderPayment = (orderId: number) =>
   commerceRequest<Order>(`/api/orders/${orderId}/payment/sync`, "POST");
 
-export const getAdminOrders = (status?: OrderStatus) =>
-  commerceRequest<Order[]>(`/api/admin/orders${status ? `?status=${status}` : ""}`);
+export const getAdminOrders = (query: PageQuery & { status?: OrderStatus } = {}) =>
+  commerceRequest<PageResponse<Order>>(`/api/admin/orders?${adminParams(query)}`);
 
 export const updateOrderStatus = (orderId: number, status: OrderStatus) =>
   commerceRequest<Order>(`/api/admin/orders/${orderId}/status`, "PATCH", { status });
 
-export const getAdminReturnRequests = (status?: ReturnRequestStatus) =>
-  commerceRequest<ReturnRequest[]>(`/api/admin/returns${status ? `?status=${status}` : ""}`);
+export const getAdminReturnRequests = (query: PageQuery & { status?: ReturnRequestStatus } = {}) =>
+  commerceRequest<PageResponse<ReturnRequest>>(`/api/admin/returns?${adminParams(query)}`);
 
 export const updateReturnRequestStatus = (
   requestId: number,
@@ -83,17 +84,17 @@ export const updateReturnRequestStatus = (
   adminNote,
 });
 
-export const getInventory = () =>
-  commerceRequest<InventoryItem[]>("/api/admin/inventory");
+export const getInventory = (query: PageQuery = {}) =>
+  commerceRequest<PageResponse<InventoryItem>>(`/api/admin/inventory?${adminParams(query)}`);
 
-export const syncInventory = () =>
-  commerceRequest<InventoryItem[]>("/api/admin/inventory/sync", "POST");
+export const syncInventory = (query: PageQuery = {}) =>
+  commerceRequest<PageResponse<InventoryItem>>(`/api/admin/inventory/sync?${adminParams(query)}`, "POST");
 
 export const updateInventory = (variantId: number, onHandQuantity: number) =>
   commerceRequest<InventoryItem>(`/api/admin/inventory/${variantId}`, "PATCH", { onHandQuantity });
 
-export const getVouchers = () =>
-  commerceRequest<Voucher[]>("/api/admin/vouchers");
+export const getVouchers = (query: PageQuery = {}) =>
+  commerceRequest<PageResponse<Voucher>>(`/api/admin/vouchers?${adminParams(query)}`);
 
 export const createVoucher = (request: VoucherPayload) =>
   commerceRequest<Voucher>("/api/admin/vouchers", "POST", request);
@@ -103,3 +104,13 @@ export const updateVoucher = (id: number, request: VoucherPayload) =>
 
 export const deleteVoucher = (id: number) =>
   commerceRequest<void>(`/api/admin/vouchers/${id}`, "DELETE");
+
+function adminParams(query: PageQuery & { status?: string }) {
+  const params = new URLSearchParams({
+    page: String(query.page ?? 0),
+    size: String(query.size ?? 8),
+  });
+  if (query.search?.trim()) params.set("search", query.search.trim());
+  if (query.status) params.set("status", query.status);
+  return params.toString();
+}

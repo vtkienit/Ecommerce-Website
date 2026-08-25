@@ -1,16 +1,23 @@
 package com.ecommerce.commerce.services;
 
 import com.ecommerce.commerce.dtos.OrderResponse;
+import com.ecommerce.commerce.dtos.PageResponse;
 import com.ecommerce.commerce.entities.Order;
 import com.ecommerce.commerce.entities.OrderStatus;
 import com.ecommerce.commerce.exceptions.CommerceException;
 import com.ecommerce.commerce.repositories.OrderRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,11 +42,40 @@ public class OrderAdminService {
     }
 
     @Transactional(readOnly = true)
-    public List<OrderResponse> getOrders(OrderStatus status) {
-        List<Order> orders = status == null
-                ? orderRepository.findAllByOrderByCreatedAtDesc()
-                : orderRepository.findByStatusOrderByCreatedAtDesc(status);
-        return orders.stream().map(orderService::toResponse).toList();
+    public PageResponse<OrderResponse> getOrders(
+            OrderStatus status,
+            String search,
+            int page,
+            int size
+    ) {
+        Specification<Order> specification = (root, query, builder) -> {
+            ArrayList<Predicate> predicates = new ArrayList<>();
+            if (status != null) {
+                predicates.add(builder.equal(root.get("status"), status));
+            }
+            if (search != null && !search.isBlank()) {
+                String keyword = "%" + search.trim().toLowerCase(Locale.ROOT) + "%";
+                predicates.add(builder.or(
+                        builder.like(builder.lower(root.get("orderNumber")), keyword),
+                        builder.like(builder.lower(root.get("recipientName")), keyword),
+                        builder.like(builder.lower(root.get("recipientPhone")), keyword)
+                ));
+            }
+            return builder.and(predicates.toArray(Predicate[]::new));
+        };
+        Page<Order> orders = orderRepository.findAll(
+                specification,
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
+        return new PageResponse<>(
+                orders.getContent().stream().map(orderService::toResponse).toList(),
+                orders.getNumber(),
+                orders.getSize(),
+                orders.getTotalElements(),
+                orders.getTotalPages(),
+                orders.isFirst(),
+                orders.isLast()
+        );
     }
 
     public OrderResponse updateStatus(Long orderId, OrderStatus nextStatus) {

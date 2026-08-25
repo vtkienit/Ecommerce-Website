@@ -1,17 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
-  Boxes,
   ChevronDown,
-  ClipboardList,
+  LayoutDashboard,
   LogIn,
   LogOut,
   Menu,
-  Package,
   Search,
   ShoppingCart,
-  TicketPercent,
-  Undo2,
   UserRound,
   UserRoundPlus,
   X,
@@ -305,53 +301,15 @@ const Header = () => {
                   {authUser ? (
                     <>
                       {authUser.role.toLowerCase() === "admin" && (
-                        <>
-                          <Link
-                            to="/admin/catalog"
-                            role="menuitem"
-                            className="flex items-center gap-3 rounded-md px-3 py-2.5 font-medium text-text-secondary transition-colors hover:bg-bg-secondary hover:text-primary"
-                            onClick={closeAccountMenu}
-                          >
-                            <Package size={18} aria-hidden="true" />
-                            {t("catalogManagement")}
-                          </Link>
-                          <Link
-                            to="/admin/inventory"
-                            role="menuitem"
-                            className="flex items-center gap-3 rounded-md px-3 py-2.5 font-medium text-text-secondary transition-colors hover:bg-bg-secondary hover:text-primary"
-                            onClick={closeAccountMenu}
-                          >
-                            <Boxes size={18} aria-hidden="true" />
-                            {t("inventoryManagement")}
-                          </Link>
-                          <Link
-                            to="/admin/orders"
-                            role="menuitem"
-                            className="flex items-center gap-3 rounded-md px-3 py-2.5 font-medium text-text-secondary transition-colors hover:bg-bg-secondary hover:text-primary"
-                            onClick={closeAccountMenu}
-                          >
-                            <ClipboardList size={18} aria-hidden="true" />
-                            {t("orderManagement")}
-                          </Link>
-                          <Link
-                            to="/admin/vouchers"
-                            role="menuitem"
-                            className="flex items-center gap-3 rounded-md px-3 py-2.5 font-medium text-text-secondary transition-colors hover:bg-bg-secondary hover:text-primary"
-                            onClick={closeAccountMenu}
-                          >
-                            <TicketPercent size={18} aria-hidden="true" />
-                            {t("voucherManagement")}
-                          </Link>
-                          <Link
-                            to="/admin/returns"
-                            role="menuitem"
-                            className="flex items-center gap-3 rounded-md px-3 py-2.5 font-medium text-text-secondary transition-colors hover:bg-bg-secondary hover:text-primary"
-                            onClick={closeAccountMenu}
-                          >
-                            <Undo2 size={18} aria-hidden="true" />
-                            {t("returnManagement")}
-                          </Link>
-                        </>
+                        <Link
+                          to="/admin"
+                          role="menuitem"
+                          className="flex items-center gap-3 rounded-md px-3 py-2.5 font-medium text-text-secondary transition-colors hover:bg-bg-secondary hover:text-primary"
+                          onClick={closeAccountMenu}
+                        >
+                          <LayoutDashboard size={18} aria-hidden="true" />
+                          {t("adminDashboard")}
+                        </Link>
                       )}
                       <Link
                         to="/profile"

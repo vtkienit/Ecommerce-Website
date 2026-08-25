@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Navigate } from "react-router-dom";
 import { LoaderCircle, PackageOpen, Search, UserRound } from "lucide-react";
 import { useLanguage, type TranslationKey } from "../../../app/contexts/LanguageContext";
-import MainLayout from "../../../shared/layouts/MainLayout";
-import { getStoredUser } from "../../auth/model/authSession";
+import AdminPagination from "../../../shared/components/AdminPagination";
+import useDebouncedValue from "../../../shared/hooks/useDebouncedValue";
 import { getAdminOrders, updateOrderStatus } from "../api/commerceApi";
 import type { Order, OrderStatus } from "../model/commerceTypes";
 
@@ -45,22 +44,32 @@ const actionKeys: Partial<Record<OrderStatus, TranslationKey>> = {
 
 export default function OrderAdminView() {
   const { lang, t } = useLanguage();
-  const user = getStoredUser();
   const [orders, setOrders] = useState<Order[]>([]);
   const [filter, setFilter] = useState<StatusFilter>("ALL");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [reloadKey, setReloadKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
 
   useEffect(() => {
-    if (user?.role.toLowerCase() !== "admin") return;
-
     let active = true;
-    getAdminOrders(filter === "ALL" ? undefined : filter)
+    getAdminOrders({
+      status: filter === "ALL" ? undefined : filter,
+      search: debouncedSearch,
+      page,
+      size: 8,
+    })
       .then((data) => {
-        if (active) setOrders(data);
+        if (!active) return;
+        setOrders(data.content);
+        setTotalElements(data.totalElements);
+        setTotalPages(data.totalPages);
       })
       .catch((requestError: unknown) => {
         if (active) setError(requestError instanceof Error ? requestError.message : t("orderAdminError"));
@@ -72,24 +81,7 @@ export default function OrderAdminView() {
     return () => {
       active = false;
     };
-  }, [filter, t, user?.role]);
-
-  const filteredOrders = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
-    if (!keyword) return orders;
-    return orders.filter((order) =>
-      [order.orderNumber, order.recipientName, order.recipientPhone, String(order.userId)]
-        .some((value) => value.toLowerCase().includes(keyword)),
-    );
-  }, [orders, search]);
-
-  if (!user) {
-    return <Navigate to="/login?returnTo=/admin/orders" replace />;
-  }
-
-  if (user.role.toLowerCase() !== "admin") {
-    return <Navigate to="/" replace />;
-  }
+  }, [debouncedSearch, filter, page, reloadKey, t]);
 
   const currency = new Intl.NumberFormat(lang === "vi" ? "vi-VN" : "en-US", {
     style: "currency",
@@ -112,6 +104,7 @@ export default function OrderAdminView() {
       setOrders((current) => filter !== "ALL"
         ? current.filter((item) => item.id !== order.id)
         : current.map((item) => item.id === order.id ? updated : item));
+      setReloadKey((current) => current + 1);
       setSuccess(t("orderStatusUpdated"));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : t("orderAdminError"));
@@ -121,9 +114,9 @@ export default function OrderAdminView() {
   };
 
   return (
-    <MainLayout>
+    <>
       <Helmet><title>{t("orderManagement")} | QuyDung</title></Helmet>
-      <main className="min-h-[65vh] bg-bg-subtle px-3 py-8 lg:px-8 lg:py-12">
+      <main className="min-h-[calc(100vh-4rem)] px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
         <div className="mx-auto max-w-7xl">
           <header>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Admin</p>
@@ -136,17 +129,21 @@ export default function OrderAdminView() {
               <Search size={19} className="text-text-tertiary" />
               <input
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setPage(0);
+                }}
                 placeholder={t("searchOrders")}
                 className="h-12 min-w-0 flex-1 bg-transparent text-text outline-none"
               />
-              <span className="text-sm text-text-tertiary">{filteredOrders.length}</span>
+              <span className="text-sm text-text-tertiary">{totalElements}</span>
             </label>
             <select
               value={filter}
               onChange={(event) => {
                 setIsLoading(true);
                 setError("");
+                setPage(0);
                 setFilter(event.target.value as StatusFilter);
               }}
               className="h-12 rounded-lg border border-border bg-bg px-4 font-medium text-text outline-none focus:border-primary"
@@ -167,14 +164,14 @@ export default function OrderAdminView() {
             <div className="flex min-h-72 items-center justify-center gap-2 text-text-secondary">
               <LoaderCircle className="animate-spin text-primary" size={21} /> {t("orderAdminLoading")}
             </div>
-          ) : filteredOrders.length === 0 ? (
+          ) : orders.length === 0 ? (
             <div className="mt-6 flex min-h-72 flex-col items-center justify-center rounded-xl border border-border bg-bg text-center">
               <PackageOpen size={38} className="text-text-tertiary" />
               <p className="mt-3 text-text-secondary">{t("orderAdminEmpty")}</p>
             </div>
           ) : (
             <div className="mt-6 space-y-4">
-              {filteredOrders.map((order) => {
+              {orders.map((order) => {
                 const awaitingOnlinePayment = order.paymentMethod === "PAYOS" && order.paymentStatus !== "PAID";
                 const target = awaitingOnlinePayment ? undefined : nextStatus[order.status];
                 const canCancel = ["PENDING", "CONFIRMED", "PROCESSING"].includes(order.status)
@@ -253,11 +250,12 @@ export default function OrderAdminView() {
                   </article>
                 );
               })}
+              <AdminPagination page={page} totalPages={totalPages} totalElements={totalElements} onChange={setPage} />
             </div>
           )}
         </div>
       </main>
-    </MainLayout>
+    </>
   );
 }
 

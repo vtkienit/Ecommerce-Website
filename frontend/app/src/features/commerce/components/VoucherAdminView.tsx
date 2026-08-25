@@ -1,10 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Helmet } from "react-helmet-async";
-import { Navigate } from "react-router-dom";
-import { CalendarClock, LoaderCircle, Pencil, Plus, Save, TicketPercent, Trash2, X } from "lucide-react";
+import { CalendarClock, LoaderCircle, Pencil, Plus, Save, Search, TicketPercent, Trash2, X } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
-import MainLayout from "../../../shared/layouts/MainLayout";
-import { getStoredUser } from "../../auth/model/authSession";
+import AdminPagination from "../../../shared/components/AdminPagination";
+import useDebouncedValue from "../../../shared/hooks/useDebouncedValue";
 import { createVoucher, deleteVoucher, getVouchers, updateVoucher } from "../api/commerceApi";
 import type { DiscountType, Voucher, VoucherPayload } from "../model/commerceTypes";
 
@@ -22,15 +21,20 @@ type VoucherDraft = {
 
 export default function VoucherAdminView() {
   const { lang, t } = useLanguage();
-  const user = getStoredUser();
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [draft, setDraft] = useState<VoucherDraft>(() => emptyDraft());
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [reloadKey, setReloadKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const currency = new Intl.NumberFormat(lang === "vi" ? "vi-VN" : "en-US", {
     style: "currency",
     currency: "VND",
@@ -42,11 +46,13 @@ export default function VoucherAdminView() {
   });
 
   useEffect(() => {
-    if (user?.role.toLowerCase() !== "admin") return;
     let active = true;
-    getVouchers()
+    getVouchers({ page, size: 6, search: debouncedSearch })
       .then((data) => {
-        if (active) setVouchers(data);
+        if (!active) return;
+        setVouchers(data.content);
+        setTotalElements(data.totalElements);
+        setTotalPages(data.totalPages);
       })
       .catch((requestError: unknown) => {
         if (active) setError(requestError instanceof Error ? requestError.message : t("voucherAdminError"));
@@ -57,10 +63,7 @@ export default function VoucherAdminView() {
     return () => {
       active = false;
     };
-  }, [t, user?.role]);
-
-  if (!user) return <Navigate to="/login?returnTo=/admin/vouchers" replace />;
-  if (user.role.toLowerCase() !== "admin") return <Navigate to="/" replace />;
+  }, [debouncedSearch, page, reloadKey, t]);
 
   const change = (field: keyof VoucherDraft, value: string) => {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -109,6 +112,8 @@ export default function VoucherAdminView() {
         ? current.map((voucher) => voucher.id === saved.id ? saved : voucher)
         : [saved, ...current]);
       setSuccess(editingId ? t("voucherUpdated") : t("voucherCreated"));
+      if (!editingId) setPage(0);
+      setReloadKey((current) => current + 1);
       setEditingId(null);
       setDraft(emptyDraft());
     } catch (requestError) {
@@ -126,6 +131,8 @@ export default function VoucherAdminView() {
     try {
       await deleteVoucher(voucher.id);
       setVouchers((current) => current.filter((entry) => entry.id !== voucher.id));
+      if (vouchers.length === 1 && page > 0) setPage((current) => current - 1);
+      else setReloadKey((current) => current + 1);
       if (editingId === voucher.id) reset();
       setSuccess(t("voucherDeleted"));
     } catch (requestError) {
@@ -136,9 +143,9 @@ export default function VoucherAdminView() {
   };
 
   return (
-    <MainLayout>
+    <>
       <Helmet><title>{t("voucherManagement")} | QuyDung</title></Helmet>
-      <main className="min-h-[65vh] bg-bg-subtle px-3 py-8 lg:px-8 lg:py-12">
+      <main className="min-h-[calc(100vh-4rem)] px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
         <div className="mx-auto max-w-7xl">
           <header>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Admin</p>
@@ -186,6 +193,19 @@ export default function VoucherAdminView() {
             </form>
 
             <section>
+              <label className="mb-4 flex items-center gap-3 rounded-lg border border-border bg-bg px-4 shadow-sm">
+                <Search size={18} className="text-text-tertiary" />
+                <input
+                  value={search}
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    setPage(0);
+                  }}
+                  placeholder={t("voucherCode")}
+                  className="h-12 min-w-0 flex-1 bg-transparent text-text outline-none"
+                />
+                <span className="text-sm text-text-tertiary">{totalElements}</span>
+              </label>
               {isLoading ? (
                 <div className="flex min-h-72 items-center justify-center gap-2 text-text-secondary">
                   <LoaderCircle className="animate-spin text-primary" size={21} /> {t("voucherLoading")}
@@ -196,8 +216,9 @@ export default function VoucherAdminView() {
                   <p className="mt-3 text-text-secondary">{t("voucherEmpty")}</p>
                 </div>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {vouchers.map((voucher) => (
+                <>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {vouchers.map((voucher) => (
                     <article key={voucher.id} className="rounded-xl border border-border bg-bg p-5 shadow-sm">
                       <div className="flex items-start justify-between gap-3">
                         <div>
@@ -228,14 +249,16 @@ export default function VoucherAdminView() {
                         <span>{dateTime.format(new Date(voucher.startDate))}<br />{dateTime.format(new Date(voucher.endDate))}</span>
                       </div>
                     </article>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                  <AdminPagination page={page} totalPages={totalPages} totalElements={totalElements} onChange={setPage} />
+                </>
               )}
             </section>
           </div>
         </div>
       </main>
-    </MainLayout>
+    </>
   );
 }
 

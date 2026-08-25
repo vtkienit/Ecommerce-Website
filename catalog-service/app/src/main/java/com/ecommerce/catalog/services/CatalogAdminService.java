@@ -5,6 +5,7 @@ import com.ecommerce.catalog.dtos.AdminVariantResponse;
 import com.ecommerce.catalog.dtos.CategoryResponse;
 import com.ecommerce.catalog.dtos.CategoryUpsertRequest;
 import com.ecommerce.catalog.dtos.ImageUpsertRequest;
+import com.ecommerce.catalog.dtos.PageResponse;
 import com.ecommerce.catalog.dtos.ProductImageResponse;
 import com.ecommerce.catalog.dtos.ProductUpsertRequest;
 import com.ecommerce.catalog.dtos.VariantUpsertRequest;
@@ -19,6 +20,10 @@ import com.ecommerce.catalog.repositories.ProductImageRepository;
 import com.ecommerce.catalog.repositories.ProductRepository;
 import com.ecommerce.catalog.repositories.ProductVariantRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -97,12 +102,31 @@ public class CatalogAdminService {
     }
 
     @Transactional(readOnly = true)
-    public List<AdminProductResponse> getProducts() {
-        return productRepository
-                .findAllByOrderByIdDesc()
-                .stream()
-                .map(this::toProductResponse)
-                .toList();
+    public PageResponse<AdminProductResponse> getProducts(int page, int size, String search) {
+        Specification<Product> specification = (root, query, builder) -> {
+            if (search == null || search.isBlank()) return builder.conjunction();
+
+            String keyword = "%" + search.trim().toLowerCase(Locale.ROOT) + "%";
+            return builder.or(
+                    builder.like(builder.lower(root.get("name")), keyword),
+                    builder.like(builder.lower(root.get("slug")), keyword),
+                    builder.like(builder.lower(root.get("brand")), keyword),
+                    builder.like(builder.lower(root.get("productCategory").get("name")), keyword)
+            );
+        };
+        Page<Product> products = productRepository.findAll(
+                specification,
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"))
+        );
+        return new PageResponse<>(
+                products.getContent().stream().map(this::toProductResponse).toList(),
+                products.getNumber(),
+                products.getSize(),
+                products.getTotalElements(),
+                products.getTotalPages(),
+                products.isFirst(),
+                products.isLast()
+        );
     }
 
     public AdminProductResponse createProduct(ProductUpsertRequest request) {

@@ -214,6 +214,16 @@ class CatalogFlowTests {
         mockMvc.perform(get("/api/admin/catalog/products")
                         .header("Authorization", "Bearer " + token("Customer")))
                 .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/admin/catalog/products?page=0&size=1&search=cloud")
+                        .header("Authorization", "Bearer " + token("Admin")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(1))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.last").value(true));
     }
 
     @Test

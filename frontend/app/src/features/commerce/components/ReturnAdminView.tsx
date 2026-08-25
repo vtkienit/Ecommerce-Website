@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Navigate } from "react-router-dom";
 import { LoaderCircle, PackageOpen, RotateCcw, Search } from "lucide-react";
 import { useLanguage, type TranslationKey } from "../../../app/contexts/LanguageContext";
-import MainLayout from "../../../shared/layouts/MainLayout";
-import { getStoredUser } from "../../auth/model/authSession";
+import AdminPagination from "../../../shared/components/AdminPagination";
+import useDebouncedValue from "../../../shared/hooks/useDebouncedValue";
 import { getAdminReturnRequests, updateReturnRequestStatus } from "../api/commerceApi";
 import type { ReturnRequest, ReturnRequestStatus } from "../model/commerceTypes";
 
@@ -21,23 +20,33 @@ const statusKeys: Record<ReturnRequestStatus, TranslationKey> = {
 
 export default function ReturnAdminView() {
   const { lang, t } = useLanguage();
-  const user = getStoredUser();
   const [requests, setRequests] = useState<ReturnRequest[]>([]);
   const [filter, setFilter] = useState<StatusFilter>("ALL");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [reloadKey, setReloadKey] = useState(0);
   const [notes, setNotes] = useState<Record<number, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
 
   useEffect(() => {
-    if (user?.role.toLowerCase() !== "admin") return;
-
     let active = true;
-    getAdminReturnRequests(filter === "ALL" ? undefined : filter)
+    getAdminReturnRequests({
+      status: filter === "ALL" ? undefined : filter,
+      search: debouncedSearch,
+      page,
+      size: 6,
+    })
       .then((data) => {
-        if (active) setRequests(data);
+        if (!active) return;
+        setRequests(data.content);
+        setTotalElements(data.totalElements);
+        setTotalPages(data.totalPages);
       })
       .catch((requestError: unknown) => {
         if (active) setError(requestError instanceof Error ? requestError.message : t("returnAdminError"));
@@ -49,19 +58,7 @@ export default function ReturnAdminView() {
     return () => {
       active = false;
     };
-  }, [filter, t, user?.role]);
-
-  const visibleRequests = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
-    if (!keyword) return requests;
-    return requests.filter((request) =>
-      [request.orderNumber, String(request.userId), request.reason]
-        .some((value) => value.toLowerCase().includes(keyword)),
-    );
-  }, [requests, search]);
-
-  if (!user) return <Navigate to="/login?returnTo=/admin/returns" replace />;
-  if (user.role.toLowerCase() !== "admin") return <Navigate to="/" replace />;
+  }, [debouncedSearch, filter, page, reloadKey, t]);
 
   const currency = new Intl.NumberFormat(lang === "vi" ? "vi-VN" : "en-US", {
     style: "currency",
@@ -89,6 +86,7 @@ export default function ReturnAdminView() {
       setRequests((current) => filter === "ALL"
         ? current.map((item) => item.id === request.id ? updated : item)
         : current.filter((item) => item.id !== request.id));
+      setReloadKey((current) => current + 1);
       setNotes((current) => ({ ...current, [request.id]: "" }));
       setSuccess(t("returnStatusUpdated"));
     } catch (requestError) {
@@ -99,9 +97,9 @@ export default function ReturnAdminView() {
   };
 
   return (
-    <MainLayout>
+    <>
       <Helmet><title>{t("returnManagement")} | QuyDung</title></Helmet>
-      <main className="min-h-[65vh] bg-bg-subtle px-3 py-8 lg:px-8 lg:py-12">
+      <main className="min-h-[calc(100vh-4rem)] px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
         <div className="mx-auto max-w-7xl">
           <header>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Admin</p>
@@ -114,17 +112,21 @@ export default function ReturnAdminView() {
               <Search size={19} className="text-text-tertiary" />
               <input
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setPage(0);
+                }}
                 placeholder={t("searchReturnRequests")}
                 className="h-12 min-w-0 flex-1 bg-transparent text-text outline-none"
               />
-              <span className="text-sm text-text-tertiary">{visibleRequests.length}</span>
+              <span className="text-sm text-text-tertiary">{totalElements}</span>
             </label>
             <select
               value={filter}
               onChange={(event) => {
                 setIsLoading(true);
                 setError("");
+                setPage(0);
                 setFilter(event.target.value as StatusFilter);
               }}
               aria-label={t("filterReturnStatus")}
@@ -145,14 +147,14 @@ export default function ReturnAdminView() {
             <div className="flex min-h-72 items-center justify-center gap-2 text-text-secondary">
               <LoaderCircle className="animate-spin text-primary" size={21} /> {t("returnAdminLoading")}
             </div>
-          ) : visibleRequests.length === 0 ? (
+          ) : requests.length === 0 ? (
             <div className="mt-6 flex min-h-72 flex-col items-center justify-center rounded-xl border border-border bg-bg text-center">
               <PackageOpen size={38} className="text-text-tertiary" />
               <p className="mt-3 text-text-secondary">{t("returnAdminEmpty")}</p>
             </div>
           ) : (
             <div className="mt-6 space-y-4">
-              {visibleRequests.map((request) => (
+              {requests.map((request) => (
                 <article key={request.id} className="overflow-hidden rounded-xl border border-border bg-bg shadow-sm">
                   <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border bg-bg-secondary px-4 py-4 sm:px-5">
                     <div>
@@ -252,11 +254,12 @@ export default function ReturnAdminView() {
                   )}
                 </article>
               ))}
+              <AdminPagination page={page} totalPages={totalPages} totalElements={totalElements} onChange={setPage} />
             </div>
           )}
         </div>
       </main>
-    </MainLayout>
+    </>
   );
 }
 

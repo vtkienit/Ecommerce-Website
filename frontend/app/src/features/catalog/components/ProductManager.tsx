@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { LoaderCircle, PackagePlus, Pencil, Save, Search, Trash2, X } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
+import AdminPagination from "../../../shared/components/AdminPagination";
 import { createProduct, deleteProduct, updateProduct } from "../api/catalogAdminApi";
 import type { AdminProduct } from "../model/catalogAdminTypes";
 import type { Category } from "../model/catalogTypes";
@@ -11,7 +12,14 @@ import { dangerButtonClass, fieldClass, primaryButtonClass, secondaryButtonClass
 type Props = {
   categories: Category[];
   products: AdminProduct[];
+  page: number;
+  search: string;
+  totalElements: number;
+  totalPages: number;
   onChange: (products: AdminProduct[]) => void;
+  onCountChange: (change: number) => void;
+  onPageChange: (page: number) => void;
+  onSearchChange: (search: string) => void;
   onMessage: (message: string, error?: boolean) => void;
 };
 
@@ -31,26 +39,27 @@ const emptyDraft = (categoryId?: number): ProductDraft => ({
   description: "",
 });
 
-export default function ProductManager({ categories, products, onChange, onMessage }: Props) {
+export default function ProductManager({
+  categories,
+  products,
+  page,
+  search,
+  totalElements,
+  totalPages,
+  onChange,
+  onCountChange,
+  onPageChange,
+  onSearchChange,
+  onMessage,
+}: Props) {
   const { t } = useLanguage();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState<ProductDraft>(() => emptyDraft(categories[0]?.id));
-  const [search, setSearch] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const selectedProduct = products.find((product) => product.id === selectedId) ?? null;
-  const filteredProducts = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
-    if (!keyword) return products;
-    return products.filter((product) =>
-      [product.name, product.slug, product.brand, product.categoryName]
-        .filter(Boolean)
-        .some((value) => value?.toLowerCase().includes(keyword)),
-    );
-  }, [products, search]);
-
   const select = (product: AdminProduct) => {
     setSelectedId(product.id);
     setCreating(false);
@@ -95,6 +104,7 @@ export default function ProductManager({ categories, products, onChange, onMessa
       onChange(selectedProduct
         ? products.map((product) => product.id === saved.id ? saved : product)
         : [saved, ...products]);
+      if (!selectedProduct) onCountChange(1);
       setSelectedId(saved.id);
       setCreating(false);
       setDraft({
@@ -119,6 +129,7 @@ export default function ProductManager({ categories, products, onChange, onMessa
     try {
       await deleteProduct(selectedProduct.id);
       onChange(products.filter((product) => product.id !== selectedProduct.id));
+      onCountChange(-1);
       onMessage(t("productDeleted"));
       closeEditor();
     } catch (error) {
@@ -140,13 +151,13 @@ export default function ProductManager({ categories, products, onChange, onMessa
             <input
               className="h-10 min-w-0 flex-1 bg-transparent text-sm text-text outline-none"
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => onSearchChange(event.target.value)}
               placeholder={t("searchProducts")}
             />
           </div>
         </div>
         <div className="max-h-[65vh] divide-y divide-border overflow-y-auto">
-          {filteredProducts.map((product) => (
+          {products.map((product) => (
             <button
               key={product.id}
               type="button"
@@ -162,6 +173,9 @@ export default function ProductManager({ categories, products, onChange, onMessa
               </div>
             </button>
           ))}
+        </div>
+        <div className="p-3 pt-0">
+          <AdminPagination page={page} totalPages={totalPages} totalElements={totalElements} onChange={onPageChange} />
         </div>
       </aside>
 

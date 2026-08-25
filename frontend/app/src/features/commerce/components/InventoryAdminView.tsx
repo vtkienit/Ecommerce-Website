@@ -1,34 +1,36 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Navigate } from "react-router-dom";
 import { LoaderCircle, PackageSearch, RefreshCw, Save, Search } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
-import MainLayout from "../../../shared/layouts/MainLayout";
-import { getStoredUser } from "../../auth/model/authSession";
+import AdminPagination from "../../../shared/components/AdminPagination";
+import useDebouncedValue from "../../../shared/hooks/useDebouncedValue";
 import { getInventory, syncInventory, updateInventory } from "../api/commerceApi";
 import type { InventoryItem } from "../model/commerceTypes";
 
 export default function InventoryAdminView() {
   const { t } = useLanguage();
-  const user = getStoredUser();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [drafts, setDrafts] = useState<Record<number, string>>({});
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [savingId, setSavingId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
 
   useEffect(() => {
-    if (user?.role.toLowerCase() !== "admin") return;
-
     let active = true;
-    getInventory()
+    getInventory({ page, size: 10, search: debouncedSearch })
       .then((data) => {
         if (!active) return;
-        setInventory(data);
-        setDrafts(toDrafts(data));
+        setInventory(data.content);
+        setDrafts(toDrafts(data.content));
+        setTotalElements(data.totalElements);
+        setTotalPages(data.totalPages);
       })
       .catch((requestError: unknown) => {
         if (active) setError(requestError instanceof Error ? requestError.message : t("inventoryLoadError"));
@@ -40,34 +42,18 @@ export default function InventoryAdminView() {
     return () => {
       active = false;
     };
-  }, [t, user?.role]);
-
-  const filteredInventory = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
-    if (!keyword) return inventory;
-    return inventory.filter((item) =>
-      [item.productName, item.sku, item.size, item.color]
-        .filter(Boolean)
-        .some((value) => value?.toLowerCase().includes(keyword)),
-    );
-  }, [inventory, search]);
-
-  if (!user) {
-    return <Navigate to="/login?returnTo=/admin/inventory" replace />;
-  }
-
-  if (user.role.toLowerCase() !== "admin") {
-    return <Navigate to="/" replace />;
-  }
+  }, [debouncedSearch, page, t]);
 
   const sync = async () => {
     setIsSyncing(true);
     setError("");
     setSuccess("");
     try {
-      const data = await syncInventory();
-      setInventory(data);
-      setDrafts(toDrafts(data));
+      const data = await syncInventory({ page, size: 10, search: debouncedSearch });
+      setInventory(data.content);
+      setDrafts(toDrafts(data.content));
+      setTotalElements(data.totalElements);
+      setTotalPages(data.totalPages);
       setSuccess(t("inventorySynced"));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : t("inventoryLoadError"));
@@ -99,9 +85,9 @@ export default function InventoryAdminView() {
   };
 
   return (
-    <MainLayout>
+    <>
       <Helmet><title>{t("inventoryManagement")} | QuyDung</title></Helmet>
-      <main className="min-h-[65vh] bg-bg-subtle px-3 py-8 lg:px-8 lg:py-12">
+      <main className="min-h-[calc(100vh-4rem)] px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
         <div className="mx-auto max-w-7xl">
           <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -124,11 +110,14 @@ export default function InventoryAdminView() {
             <Search size={19} className="text-text-tertiary" />
             <input
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(0);
+              }}
               placeholder={t("searchInventory")}
               className="h-12 min-w-0 flex-1 bg-transparent text-text outline-none"
             />
-            <span className="text-sm text-text-tertiary">{filteredInventory.length}</span>
+            <span className="text-sm text-text-tertiary">{totalElements}</span>
           </div>
 
           {error && <p className="mt-4 rounded-md bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">{error}</p>}
@@ -138,7 +127,7 @@ export default function InventoryAdminView() {
             <div className="flex min-h-72 items-center justify-center gap-2 text-text-secondary">
               <LoaderCircle className="animate-spin text-primary" size={21} /> {t("inventoryLoading")}
             </div>
-          ) : filteredInventory.length === 0 ? (
+          ) : inventory.length === 0 ? (
             <div className="mt-6 flex min-h-72 flex-col items-center justify-center rounded-xl border border-border bg-bg text-center">
               <PackageSearch size={36} className="text-text-tertiary" />
               <p className="mt-3 text-text-secondary">{t("inventoryEmpty")}</p>
@@ -153,7 +142,7 @@ export default function InventoryAdminView() {
                 <span />
               </div>
               <div className="divide-y divide-border">
-                {filteredInventory.map((item) => (
+                {inventory.map((item) => (
                   <article key={item.variantId} className="grid gap-4 p-4 lg:grid-cols-[minmax(260px,1fr)_110px_110px_150px_90px] lg:items-center lg:px-5">
                     <div className="flex min-w-0 items-center gap-3">
                       <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md bg-bg-secondary">
@@ -193,11 +182,14 @@ export default function InventoryAdminView() {
                   </article>
                 ))}
               </div>
+              <div className="px-4 pb-4 sm:px-5">
+                <AdminPagination page={page} totalPages={totalPages} totalElements={totalElements} onChange={setPage} />
+              </div>
             </div>
           )}
         </div>
       </main>
-    </MainLayout>
+    </>
   );
 }
 

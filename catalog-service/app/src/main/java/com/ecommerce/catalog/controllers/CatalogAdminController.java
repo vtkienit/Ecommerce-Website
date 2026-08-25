@@ -4,10 +4,13 @@ import com.ecommerce.catalog.dtos.AdminProductResponse;
 import com.ecommerce.catalog.dtos.CategoryResponse;
 import com.ecommerce.catalog.dtos.CategoryUpsertRequest;
 import com.ecommerce.catalog.dtos.ImageUpsertRequest;
+import com.ecommerce.catalog.dtos.PageResponse;
 import com.ecommerce.catalog.dtos.ProductUpsertRequest;
 import com.ecommerce.catalog.dtos.VariantUpsertRequest;
 import com.ecommerce.catalog.services.CatalogAdminService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,14 +21,17 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/catalog")
+@Validated
 public class CatalogAdminController {
 
     private final CatalogAdminService catalogAdminService;
@@ -60,8 +66,12 @@ public class CatalogAdminController {
     }
 
     @GetMapping("/products")
-    public List<AdminProductResponse> getProducts() {
-        return catalogAdminService.getProducts();
+    public PageResponse<AdminProductResponse> getProducts(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "8") @Min(1) @Max(50) int size,
+            @RequestParam(defaultValue = "") String search
+    ) {
+        return catalogAdminService.getProducts(page, size, search);
     }
 
     @PostMapping("/products")

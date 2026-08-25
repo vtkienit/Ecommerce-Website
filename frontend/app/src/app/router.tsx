@@ -1,5 +1,6 @@
 import { lazy, Suspense, type ReactNode } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
+import AdminLayout from "../shared/layouts/AdminLayout";
 import AccountPage from "../pages/AccountPage";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 import HomePage from "../pages/HomePage";
@@ -32,11 +33,14 @@ export default function AppRouter() {
       <Route path="/cart" element={<CartPage />} />
       <Route path="/payment/success" element={<PaymentResultPage mode="success" />} />
       <Route path="/payment/cancel" element={<PaymentResultPage mode="cancel" />} />
-      <Route path="/admin/inventory" element={adminPage(<InventoryAdminPage />)} />
-      <Route path="/admin/catalog" element={adminPage(<CatalogAdminPage />)} />
-      <Route path="/admin/orders" element={adminPage(<OrderAdminPage />)} />
-      <Route path="/admin/vouchers" element={adminPage(<VoucherAdminPage />)} />
-      <Route path="/admin/returns" element={adminPage(<ReturnAdminPage />)} />
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<Navigate to="catalog" replace />} />
+        <Route path="catalog" element={adminPage(<CatalogAdminPage />)} />
+        <Route path="inventory" element={adminPage(<InventoryAdminPage />)} />
+        <Route path="orders" element={adminPage(<OrderAdminPage />)} />
+        <Route path="vouchers" element={adminPage(<VoucherAdminPage />)} />
+        <Route path="returns" element={adminPage(<ReturnAdminPage />)} />
+      </Route>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />

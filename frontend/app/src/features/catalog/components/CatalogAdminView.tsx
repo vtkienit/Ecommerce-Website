@@ -1,10 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Helmet } from "react-helmet-async";
-import { Navigate } from "react-router-dom";
 import { Boxes, LoaderCircle, Package, Tags } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
-import MainLayout from "../../../shared/layouts/MainLayout";
-import { getStoredUser } from "../../auth/model/authSession";
+import useDebouncedValue from "../../../shared/hooks/useDebouncedValue";
 import { getAdminCategories, getAdminProducts } from "../api/catalogAdminApi";
 import type { AdminProduct } from "../model/catalogAdminTypes";
 import type { Category } from "../model/catalogTypes";
@@ -15,38 +13,58 @@ type Tab = "products" | "categories";
 
 export default function CatalogAdminView() {
   const { t } = useLanguage();
-  const user = getStoredUser();
   const [tab, setTab] = useState<Tab>("products");
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<AdminProduct[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [productPage, setProductPage] = useState(0);
+  const [productSearch, setProductSearch] = useState("");
+  const [productTotal, setProductTotal] = useState(0);
+  const [productTotalPages, setProductTotalPages] = useState(0);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [productsLoading, setProductsLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-    if (user?.role.toLowerCase() !== "admin") return;
+  const debouncedSearch = useDebouncedValue(productSearch);
 
+  useEffect(() => {
     let active = true;
-    Promise.all([getAdminCategories(), getAdminProducts()])
-      .then(([categoryData, productData]) => {
-        if (!active) return;
-        setCategories(categoryData);
-        setProducts(productData);
+    getAdminCategories()
+      .then((data) => {
+        if (active) setCategories(data);
       })
       .catch((requestError: unknown) => {
         if (active) setError(requestError instanceof Error ? requestError.message : t("catalogAdminError"));
       })
       .finally(() => {
-        if (active) setIsLoading(false);
+        if (active) setCategoriesLoading(false);
       });
 
     return () => {
       active = false;
     };
-  }, [t, user?.role]);
+  }, [t]);
 
-  if (!user) return <Navigate to="/login?returnTo=/admin/catalog" replace />;
-  if (user.role.toLowerCase() !== "admin") return <Navigate to="/" replace />;
+  useEffect(() => {
+    let active = true;
+    getAdminProducts({ page: productPage, size: 8, search: debouncedSearch })
+      .then((data) => {
+        if (!active) return;
+        setProducts(data.content);
+        setProductTotal(data.totalElements);
+        setProductTotalPages(data.totalPages);
+      })
+      .catch((requestError: unknown) => {
+        if (active) setError(requestError instanceof Error ? requestError.message : t("catalogAdminError"));
+      })
+      .finally(() => {
+        if (active) setProductsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [debouncedSearch, productPage, t]);
 
   const showMessage = (message: string, isError = false) => {
     setError(isError ? message : "");
@@ -63,16 +81,12 @@ export default function CatalogAdminView() {
 
   const updateProducts = (next: AdminProduct[]) => {
     setProducts(next);
-    setCategories((current) => current.map((category) => ({
-      ...category,
-      productCount: next.filter((product) => product.categoryId === category.id).length,
-    })));
   };
 
   return (
-    <MainLayout>
+    <>
       <Helmet><title>{t("catalogManagement")} | QuyDung</title></Helmet>
-      <main className="min-h-[65vh] bg-bg-subtle px-3 py-8 lg:px-8 lg:py-12">
+      <main className="min-h-[calc(100vh-4rem)] px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
         <div className="mx-auto max-w-7xl">
           <header>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Admin</p>
@@ -94,7 +108,7 @@ export default function CatalogAdminView() {
           {error && <p className="mt-5 rounded-md bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">{error}</p>}
           {success && <p className="mt-5 rounded-md bg-green-500/10 p-3 text-sm text-green-700 dark:text-green-300">{success}</p>}
 
-          {isLoading ? (
+          {categoriesLoading || productsLoading ? (
             <div className="flex min-h-80 items-center justify-center gap-2 text-text-secondary">
               <LoaderCircle className="animate-spin text-primary" size={21} /> {t("catalogAdminLoading")}
             </div>
@@ -104,7 +118,17 @@ export default function CatalogAdminView() {
                 <ProductManager
                   categories={categories}
                   products={products}
+                  page={productPage}
+                  search={productSearch}
+                  totalElements={productTotal}
+                  totalPages={productTotalPages}
                   onChange={updateProducts}
+                  onCountChange={(change) => setProductTotal((current) => Math.max(0, current + change))}
+                  onPageChange={setProductPage}
+                  onSearchChange={(value) => {
+                    setProductSearch(value);
+                    setProductPage(0);
+                  }}
                   onMessage={showMessage}
                 />
               ) : (
@@ -118,7 +142,7 @@ export default function CatalogAdminView() {
           )}
         </div>
       </main>
-    </MainLayout>
+    </>
   );
 }
 

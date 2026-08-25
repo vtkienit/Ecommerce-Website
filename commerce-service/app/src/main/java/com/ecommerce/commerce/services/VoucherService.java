@@ -2,6 +2,7 @@ package com.ecommerce.commerce.services;
 
 import com.ecommerce.commerce.dtos.CartResponse;
 import com.ecommerce.commerce.dtos.VoucherPreviewResponse;
+import com.ecommerce.commerce.dtos.PageResponse;
 import com.ecommerce.commerce.dtos.VoucherRequest;
 import com.ecommerce.commerce.dtos.VoucherResponse;
 import com.ecommerce.commerce.entities.DiscountType;
@@ -11,13 +12,16 @@ import com.ecommerce.commerce.exceptions.CommerceException;
 import com.ecommerce.commerce.repositories.OrderRepository;
 import com.ecommerce.commerce.repositories.VoucherRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Locale;
 
 @Service
@@ -41,13 +45,29 @@ public class VoucherService {
     }
 
     @Transactional(readOnly = true)
-    public List<VoucherResponse> getVouchers() {
+    public PageResponse<VoucherResponse> getVouchers(int page, int size, String search) {
         LocalDateTime now = LocalDateTime.now();
-        return voucherRepository
-                .findAllByOrderByStartDateDesc()
-                .stream()
-                .map(voucher -> toResponse(voucher, now))
-                .toList();
+        Specification<Voucher> specification = (root, query, builder) -> {
+            if (search == null || search.isBlank()) return builder.conjunction();
+            String keyword = "%" + search.trim().toLowerCase(Locale.ROOT) + "%";
+            return builder.or(
+                    builder.like(builder.lower(root.get("code")), keyword),
+                    builder.like(builder.lower(root.get("description")), keyword)
+            );
+        };
+        Page<Voucher> vouchers = voucherRepository.findAll(
+                specification,
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "startDate"))
+        );
+        return new PageResponse<>(
+                vouchers.getContent().stream().map(voucher -> toResponse(voucher, now)).toList(),
+                vouchers.getNumber(),
+                vouchers.getSize(),
+                vouchers.getTotalElements(),
+                vouchers.getTotalPages(),
+                vouchers.isFirst(),
+                vouchers.isLast()
+        );
     }
 
     public VoucherResponse createVoucher(VoucherRequest request) {

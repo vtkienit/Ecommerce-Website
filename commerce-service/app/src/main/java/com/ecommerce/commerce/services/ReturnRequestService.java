@@ -1,7 +1,9 @@
 package com.ecommerce.commerce.services;
 
+import jakarta.persistence.criteria.Predicate;
 import com.ecommerce.commerce.dtos.CreateReturnRequest;
 import com.ecommerce.commerce.dtos.OrderItemResponse;
+import com.ecommerce.commerce.dtos.PageResponse;
 import com.ecommerce.commerce.dtos.ReturnRequestResponse;
 import com.ecommerce.commerce.dtos.UpdateReturnStatusRequest;
 import com.ecommerce.commerce.entities.Inventory;
@@ -17,13 +19,19 @@ import com.ecommerce.commerce.repositories.OrderRepository;
 import com.ecommerce.commerce.repositories.ReturnRequestRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.EnumMap;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -80,11 +88,39 @@ public class ReturnRequestService {
     }
 
     @Transactional(readOnly = true)
-    public List<ReturnRequestResponse> getAdminRequests(ReturnRequestStatus status) {
-        List<ReturnRequest> requests = status == null
-                ? returnRequestRepository.findAllByOrderByRequestedAtDesc()
-                : returnRequestRepository.findByStatusOrderByRequestedAtDesc(status);
-        return requests.stream().map(this::toResponse).toList();
+    public PageResponse<ReturnRequestResponse> getAdminRequests(
+            ReturnRequestStatus status,
+            String search,
+            int page,
+            int size
+    ) {
+        Specification<ReturnRequest> specification = (root, query, builder) -> {
+            ArrayList<Predicate> predicates = new ArrayList<>();
+            if (status != null) {
+                predicates.add(builder.equal(root.get("status"), status));
+            }
+            if (search != null && !search.isBlank()) {
+                String keyword = "%" + search.trim().toLowerCase(Locale.ROOT) + "%";
+                predicates.add(builder.or(
+                        builder.like(builder.lower(root.get("reason")), keyword),
+                        builder.like(builder.lower(root.get("order").get("orderNumber")), keyword)
+                ));
+            }
+            return builder.and(predicates.toArray(Predicate[]::new));
+        };
+        Page<ReturnRequest> requests = returnRequestRepository.findAll(
+                specification,
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "requestedAt"))
+        );
+        return new PageResponse<>(
+                requests.getContent().stream().map(this::toResponse).toList(),
+                requests.getNumber(),
+                requests.getSize(),
+                requests.getTotalElements(),
+                requests.getTotalPages(),
+                requests.isFirst(),
+                requests.isLast()
+        );
     }
 
     public ReturnRequestResponse updateStatus(Long requestId, UpdateReturnStatusRequest request) {

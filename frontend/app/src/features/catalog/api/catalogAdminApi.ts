@@ -1,5 +1,6 @@
 import { ApiError, apiRequest } from "../../../shared/api/httpClient";
 import { getAuthToken } from "../../auth/model/authSession";
+import type { PageQuery, PageResponse } from "../../../shared/model/pagination";
 import type { Category } from "../model/catalogTypes";
 import type {
   AdminProduct,
@@ -42,8 +43,11 @@ export const updateCategory = (id: number, payload: CategoryPayload) =>
 export const deleteCategory = (id: number) =>
   adminRequest<void>(`/api/admin/catalog/categories/${id}`, "DELETE");
 
-export const getAdminProducts = () =>
-  adminRequest<AdminProduct[]>("/api/admin/catalog/products");
+export const getAdminProducts = ({ page = 0, size = 8, search = "" }: PageQuery = {}) => {
+  const params = new URLSearchParams({ page: String(page), size: String(size) });
+  if (search.trim()) params.set("search", search.trim());
+  return adminRequest<PageResponse<AdminProduct>>(`/api/admin/catalog/products?${params}`);
+};
 
 export const createProduct = (payload: ProductPayload) =>
   adminRequest<AdminProduct>("/api/admin/catalog/products", "POST", payload);

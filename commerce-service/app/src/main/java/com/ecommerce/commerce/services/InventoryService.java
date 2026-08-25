@@ -3,6 +3,7 @@ package com.ecommerce.commerce.services;
 import com.ecommerce.commerce.clients.CatalogGateway;
 import com.ecommerce.commerce.dtos.CatalogVariantSnapshot;
 import com.ecommerce.commerce.dtos.InventoryResponse;
+import com.ecommerce.commerce.dtos.PageResponse;
 import com.ecommerce.commerce.entities.Inventory;
 import com.ecommerce.commerce.exceptions.CommerceException;
 import com.ecommerce.commerce.repositories.InventoryRepository;
@@ -13,8 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Transactional
@@ -35,20 +38,17 @@ public class InventoryService {
     }
 
     @Transactional(readOnly = true)
-    public List<InventoryResponse> getInventory() {
+    public PageResponse<InventoryResponse> getInventory(int page, int size, String search) {
         List<CatalogVariantSnapshot> variants = catalogGateway.getVariants();
         Map<Long, Inventory> inventoryByVariant = inventoryRepository
                 .findAllByOrderByVariantIdAsc()
                 .stream()
                 .collect(Collectors.toMap(Inventory::getVariantId, Function.identity()));
 
-        return variants
-                .stream()
-                .map(variant -> toResponse(variant, inventoryByVariant.get(variant.getId())))
-                .toList();
+        return paginate(variants, inventoryByVariant, page, size, search);
     }
 
-    public List<InventoryResponse> syncCatalog() {
+    public PageResponse<InventoryResponse> syncCatalog(int page, int size, String search) {
         List<CatalogVariantSnapshot> variants = catalogGateway.getVariants();
         Map<Long, Inventory> inventoryByVariant = inventoryRepository
                 .findAllByOrderByVariantIdAsc()
@@ -69,10 +69,11 @@ public class InventoryService {
             }
         }
 
-        return variants
-                .stream()
-                .map(variant -> toResponse(variant, inventoryByVariant.get(variant.getId())))
-                .toList();
+        return paginate(variants, inventoryByVariant, page, size, search);
+    }
+
+    public List<InventoryResponse> syncCatalog() {
+        return syncCatalog(0, Integer.MAX_VALUE, "").getContent();
     }
 
     public InventoryResponse updateStock(Long variantId, Integer onHandQuantity) {
@@ -121,6 +122,45 @@ public class InventoryService {
                 onHand,
                 reserved,
                 Math.max(0, onHand - reserved)
+        );
+    }
+
+    private boolean matchesSearch(InventoryResponse item, String search) {
+        if (search == null || search.isBlank()) return true;
+        String keyword = search.trim().toLowerCase(Locale.ROOT);
+        return Stream.of(
+                        item.getProductName(),
+                        item.getSku(),
+                        item.getSize(),
+                        item.getColor()
+                )
+                .filter(value -> value != null && !value.isBlank())
+                .anyMatch(value -> value.toLowerCase(Locale.ROOT).contains(keyword));
+    }
+
+    private PageResponse<InventoryResponse> paginate(
+            List<CatalogVariantSnapshot> variants,
+            Map<Long, Inventory> inventoryByVariant,
+            int page,
+            int size,
+            String search
+    ) {
+        List<InventoryResponse> inventory = variants
+                .stream()
+                .map(variant -> toResponse(variant, inventoryByVariant.get(variant.getId())))
+                .filter(item -> matchesSearch(item, search))
+                .toList();
+        int from = Math.min(page * size, inventory.size());
+        int to = Math.min(from + size, inventory.size());
+        int totalPages = inventory.isEmpty() ? 0 : (int) Math.ceil((double) inventory.size() / size);
+        return new PageResponse<>(
+                inventory.subList(from, to),
+                page,
+                size,
+                inventory.size(),
+                totalPages,
+                page == 0,
+                page + 1 >= totalPages
         );
     }
 }
