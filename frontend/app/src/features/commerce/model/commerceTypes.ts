@@ -52,6 +52,25 @@ export type OrderStatus =
   | "DELIVERED"
   | "CANCELLED";
 
+export type ReturnRequestStatus = "REQUESTED" | "APPROVED" | "REJECTED" | "COMPLETED";
+
+export type ReturnRequest = {
+  id: number;
+  orderId: number;
+  orderNumber: string;
+  userId: number;
+  reason: string;
+  status: ReturnRequestStatus;
+  adminNote: string | null;
+  requestedAt: string;
+  reviewedAt: string | null;
+  completedAt: string | null;
+  totalAmount: number;
+  paymentMethod: PaymentMethod | null;
+  paymentStatus: PaymentStatus | null;
+  items: OrderItem[];
+};
+
 export type Order = {
   id: number;
   orderNumber: string;
@@ -67,6 +86,8 @@ export type Order = {
   paymentMethod: PaymentMethod | null;
   paymentStatus: PaymentStatus | null;
   checkoutUrl: string | null;
+  returnEligible: boolean;
+  returnRequest: ReturnRequest | null;
   createdAt: string;
   items: OrderItem[];
 };

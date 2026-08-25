@@ -11,6 +11,7 @@ import {
   Search,
   ShoppingCart,
   TicketPercent,
+  Undo2,
   UserRound,
   UserRoundPlus,
   X,
@@ -340,6 +341,15 @@ const Header = () => {
                           >
                             <TicketPercent size={18} aria-hidden="true" />
                             {t("voucherManagement")}
+                          </Link>
+                          <Link
+                            to="/admin/returns"
+                            role="menuitem"
+                            className="flex items-center gap-3 rounded-md px-3 py-2.5 font-medium text-text-secondary transition-colors hover:bg-bg-secondary hover:text-primary"
+                            onClick={closeAccountMenu}
+                          >
+                            <Undo2 size={18} aria-hidden="true" />
+                            {t("returnManagement")}
                           </Link>
                         </>
                       )}

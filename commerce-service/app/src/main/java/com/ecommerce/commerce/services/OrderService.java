@@ -34,6 +34,7 @@ public class OrderService {
     private final OrderLifecycleService orderLifecycleService;
     private final PaymentService paymentService;
     private final VoucherService voucherService;
+    private final ReturnRequestService returnRequestService;
     private final int defaultStock;
 
     public OrderService(
@@ -45,6 +46,7 @@ public class OrderService {
             OrderLifecycleService orderLifecycleService,
             PaymentService paymentService,
             VoucherService voucherService,
+            ReturnRequestService returnRequestService,
             @Value("${commerce.inventory.default-stock:10}") int defaultStock
     ) {
         this.cartRepository = cartRepository;
@@ -55,6 +57,7 @@ public class OrderService {
         this.orderLifecycleService = orderLifecycleService;
         this.paymentService = paymentService;
         this.voucherService = voucherService;
+        this.returnRequestService = returnRequestService;
         this.defaultStock = defaultStock;
     }
 
@@ -262,6 +265,10 @@ public class OrderService {
                 payment == null ? null : payment.getPaymentMethod(),
                 payment == null ? null : payment.getStatus(),
                 payment == null ? null : payment.getCheckoutUrl(),
+                returnRequestService.isEligible(order),
+                order.getReturnRequest() == null
+                        ? null
+                        : returnRequestService.toResponse(order.getReturnRequest()),
                 order.getCreatedAt(),
                 items
         );

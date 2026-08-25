@@ -10,6 +10,7 @@ import com.ecommerce.commerce.repositories.CartRepository;
 import com.ecommerce.commerce.repositories.InventoryRepository;
 import com.ecommerce.commerce.repositories.OrderRepository;
 import com.ecommerce.commerce.repositories.PaymentRepository;
+import com.ecommerce.commerce.repositories.ReturnRequestRepository;
 import com.ecommerce.commerce.repositories.StockReservationRepository;
 import com.ecommerce.commerce.repositories.VoucherRepository;
 import io.jsonwebtoken.Jwts;
@@ -84,8 +85,12 @@ class CommerceFlowTests {
     @Autowired
     private VoucherRepository voucherRepository;
 
+    @Autowired
+    private ReturnRequestRepository returnRequestRepository;
+
     @BeforeEach
     void clearDatabase() {
+        returnRequestRepository.deleteAll();
         reservationRepository.deleteAll();
         orderRepository.deleteAll();
         voucherRepository.deleteAll();
@@ -510,6 +515,104 @@ class CommerceFlowTests {
         updateOrderStatus(adminToken, orderId, "CONFIRMED", "CONFIRMED");
     }
 
+    @Test
+    void returnRequestRequiresDeliveredOwnedOrder() throws Exception {
+        String customerToken = token(86L);
+        String adminToken = token(87L, "Admin");
+        long orderId = checkout(customerToken, 101L, 1);
+
+        mockMvc.perform(post("/api/orders/{id}/returns", orderId)
+                        .header("Authorization", "Bearer " + customerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"The product does not fit my bed\"}"))
+                .andExpect(status().isConflict());
+
+        deliverOrder(adminToken, orderId);
+
+        mockMvc.perform(post("/api/orders/{id}/returns", orderId)
+                        .header("Authorization", "Bearer " + token(88L))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"The product does not fit my bed\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void customerAndAdminCanCompleteReturnFlow() throws Exception {
+        String customerToken = token(89L);
+        String adminToken = token(90L, "Admin");
+        long orderId = checkout(customerToken, 101L, 2);
+        deliverOrder(adminToken, orderId);
+
+        mockMvc.perform(get("/api/orders/{id}", orderId)
+                        .header("Authorization", "Bearer " + customerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.returnEligible").value(true))
+                .andExpect(jsonPath("$.returnRequest").doesNotExist());
+
+        String body = mockMvc.perform(post("/api/orders/{id}/returns", orderId)
+                        .header("Authorization", "Bearer " + customerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"The mattress is too firm for my sleep\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("REQUESTED"))
+                .andExpect(jsonPath("$.orderId").value(orderId))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        long requestId = objectMapper.readTree(body).path("id").asLong();
+
+        mockMvc.perform(get("/api/admin/returns")
+                        .header("Authorization", "Bearer " + customerToken))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/admin/returns?status=REQUESTED")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(requestId));
+
+        updateReturnStatus(adminToken, requestId, "APPROVED", "Return accepted", "APPROVED");
+
+        Inventory shippedInventory = inventoryRepository.findByVariantId(101L).orElseThrow();
+        assertThat(shippedInventory.getOnHandQuantity()).isEqualTo(8);
+
+        updateReturnStatus(adminToken, requestId, "COMPLETED", "Items received", "COMPLETED");
+
+        Inventory restoredInventory = inventoryRepository.findByVariantId(101L).orElseThrow();
+        assertThat(restoredInventory.getOnHandQuantity()).isEqualTo(10);
+        assertThat(paymentRepository.findAll().getFirst().getStatus()).isEqualTo(PaymentStatus.REFUNDED);
+
+        mockMvc.perform(get("/api/orders/{id}", orderId)
+                        .header("Authorization", "Bearer " + customerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.returnEligible").value(false))
+                .andExpect(jsonPath("$.returnRequest.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.paymentStatus").value("REFUNDED"));
+    }
+
+    @Test
+    void rejectingReturnRequiresAdminNote() throws Exception {
+        String customerToken = token(91L);
+        String adminToken = token(92L, "Admin");
+        long orderId = checkout(customerToken, 101L, 1);
+        deliverOrder(adminToken, orderId);
+
+        String body = mockMvc.perform(post("/api/orders/{id}/returns", orderId)
+                        .header("Authorization", "Bearer " + customerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"The item arrived with visible damage\"}"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        long requestId = objectMapper.readTree(body).path("id").asLong();
+
+        mockMvc.perform(patch("/api/admin/returns/{id}/status", requestId)
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"REJECTED\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("A rejection reason is required"));
+    }
+
     private void addToCart(String token, Long variantId, int quantity) throws Exception {
         mockMvc.perform(post("/api/cart/items")
                         .header("Authorization", "Bearer " + token)
@@ -545,6 +648,30 @@ class CommerceFlowTests {
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"status\":\"" + requestedStatus + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(expectedStatus));
+    }
+
+    private void deliverOrder(String adminToken, long orderId) throws Exception {
+        updateOrderStatus(adminToken, orderId, "CONFIRMED", "CONFIRMED");
+        updateOrderStatus(adminToken, orderId, "PROCESSING", "PROCESSING");
+        updateOrderStatus(adminToken, orderId, "SHIPPED", "SHIPPED");
+        updateOrderStatus(adminToken, orderId, "DELIVERED", "DELIVERED");
+    }
+
+    private void updateReturnStatus(
+            String token,
+            long requestId,
+            String requestedStatus,
+            String adminNote,
+            String expectedStatus
+    ) throws Exception {
+        mockMvc.perform(patch("/api/admin/returns/{id}/status", requestId)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"%s","adminNote":"%s"}
+                                """.formatted(requestedStatus, adminNote)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(expectedStatus));
     }

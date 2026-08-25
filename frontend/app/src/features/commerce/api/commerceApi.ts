@@ -6,6 +6,8 @@ import type {
   InventoryItem,
   Order,
   OrderStatus,
+  ReturnRequest,
+  ReturnRequestStatus,
   Voucher,
   VoucherPayload,
   VoucherPreview,
@@ -57,6 +59,9 @@ export const getOrders = () => commerceRequest<Order[]>("/api/orders");
 export const cancelOrder = (orderId: number) =>
   commerceRequest<Order>(`/api/orders/${orderId}/cancel`, "PATCH");
 
+export const createReturnRequest = (orderId: number, reason: string) =>
+  commerceRequest<ReturnRequest>(`/api/orders/${orderId}/returns`, "POST", { reason });
+
 export const syncOrderPayment = (orderId: number) =>
   commerceRequest<Order>(`/api/orders/${orderId}/payment/sync`, "POST");
 
@@ -65,6 +70,18 @@ export const getAdminOrders = (status?: OrderStatus) =>
 
 export const updateOrderStatus = (orderId: number, status: OrderStatus) =>
   commerceRequest<Order>(`/api/admin/orders/${orderId}/status`, "PATCH", { status });
+
+export const getAdminReturnRequests = (status?: ReturnRequestStatus) =>
+  commerceRequest<ReturnRequest[]>(`/api/admin/returns${status ? `?status=${status}` : ""}`);
+
+export const updateReturnRequestStatus = (
+  requestId: number,
+  status: ReturnRequestStatus,
+  adminNote?: string,
+) => commerceRequest<ReturnRequest>(`/api/admin/returns/${requestId}/status`, "PATCH", {
+  status,
+  adminNote,
+});
 
 export const getInventory = () =>
   commerceRequest<InventoryItem[]>("/api/admin/inventory");

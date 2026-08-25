@@ -1,7 +1,7 @@
 package com.ecommerce.commerce.dtos;
 
-import com.ecommerce.commerce.entities.OrderStatus;
 import com.ecommerce.commerce.entities.PaymentStatus;
+import com.ecommerce.commerce.entities.ReturnRequestStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -11,24 +11,20 @@ import java.util.List;
 
 @Getter
 @AllArgsConstructor
-public class OrderResponse {
+public class ReturnRequestResponse {
 
     private Long id;
+    private Long orderId;
     private String orderNumber;
     private Long userId;
-    private String recipientName;
-    private String recipientPhone;
-    private String shippingAddress;
-    private BigDecimal subtotal;
-    private String voucherCode;
-    private BigDecimal discountAmount;
+    private String reason;
+    private ReturnRequestStatus status;
+    private String adminNote;
+    private LocalDateTime requestedAt;
+    private LocalDateTime reviewedAt;
+    private LocalDateTime completedAt;
     private BigDecimal totalAmount;
-    private OrderStatus status;
     private String paymentMethod;
     private PaymentStatus paymentStatus;
-    private String checkoutUrl;
-    private boolean returnEligible;
-    private ReturnRequestResponse returnRequest;
-    private LocalDateTime createdAt;
     private List<OrderItemResponse> items;
 }

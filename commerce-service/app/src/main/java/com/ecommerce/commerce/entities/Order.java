@@ -56,9 +56,14 @@ public class Order {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    private LocalDateTime deliveredAt;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Payment> payments = new ArrayList<>();
+
+    @OneToOne(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private ReturnRequest returnRequest;
 }

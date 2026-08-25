@@ -131,6 +131,14 @@ public class PaymentService {
         }
     }
 
+    public void markRefundCompleted(Order order) {
+        Payment payment = getPayment(order);
+        if (payment.getStatus() != PaymentStatus.PAID) {
+            throw new CommerceException("Only paid orders can be refunded", HttpStatus.CONFLICT);
+        }
+        payment.setStatus(PaymentStatus.REFUNDED);
+    }
+
     private Payment getPayment(Order order) {
         return paymentRepository
                 .findByOrderId(order.getId())

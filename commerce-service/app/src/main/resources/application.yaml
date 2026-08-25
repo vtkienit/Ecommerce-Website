@@ -45,6 +45,8 @@ commerce:
     default-stock: ${COMMERCE_DEFAULT_STOCK:10}
     seed:
       enabled: ${COMMERCE_INVENTORY_SEED_ENABLED:true}
+  returns:
+    window-days: 7
 
 payment:
   payos:

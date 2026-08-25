@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
-import { LoaderCircle, PackageCheck, ShoppingBag } from "lucide-react";
+import { LoaderCircle, PackageCheck, RotateCcw, ShoppingBag } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLanguage, type TranslationKey } from "../../../app/contexts/LanguageContext";
-import { cancelOrder, getOrders } from "../../commerce/api/commerceApi";
-import type { Order, OrderStatus, PaymentStatus } from "../../commerce/model/commerceTypes";
+import { cancelOrder, createReturnRequest, getOrders } from "../../commerce/api/commerceApi";
+import type {
+  Order,
+  OrderStatus,
+  PaymentStatus,
+  ReturnRequestStatus,
+} from "../../commerce/model/commerceTypes";
 import { SectionHeading } from "./AccountFormParts";
 
 const statusKeys: Record<OrderStatus, TranslationKey> = {
@@ -21,7 +26,8 @@ export type PurchaseFilter =
   | "awaiting-shipment"
   | "shipping"
   | "completed"
-  | "cancelled";
+  | "cancelled"
+  | "returns";
 
 const filterStatuses: Record<PurchaseFilter, OrderStatus[]> = {
   all: [],
@@ -30,6 +36,7 @@ const filterStatuses: Record<PurchaseFilter, OrderStatus[]> = {
   shipping: ["SHIPPED"],
   completed: ["DELIVERED"],
   cancelled: ["CANCELLED"],
+  returns: [],
 };
 
 export default function PurchaseList({ filter = "all" }: { filter?: PurchaseFilter }) {
@@ -38,13 +45,18 @@ export default function PurchaseList({ filter = "all" }: { filter?: PurchaseFilt
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [cancellingId, setCancellingId] = useState<number | null>(null);
+  const [returningId, setReturningId] = useState<number | null>(null);
+  const [returnReason, setReturnReason] = useState("");
+  const [submittingReturnId, setSubmittingReturnId] = useState<number | null>(null);
   const currency = new Intl.NumberFormat(lang === "vi" ? "vi-VN" : "en-US", {
     style: "currency",
     currency: "VND",
     maximumFractionDigits: 0,
   });
   const statuses = filterStatuses[filter];
-  const visibleOrders = statuses.length === 0
+  const visibleOrders = filter === "returns"
+    ? orders.filter((order) => order.returnRequest !== null)
+    : statuses.length === 0
     ? orders
     : orders.filter((order) => statuses.includes(order.status));
 
@@ -76,6 +88,28 @@ export default function PurchaseList({ filter = "all" }: { filter?: PurchaseFilt
       setError(requestError instanceof Error ? requestError.message : t("checkoutError"));
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  const requestReturn = async (orderId: number) => {
+    if (returnReason.trim().length < 10) {
+      setError(t("returnReasonInvalid"));
+      return;
+    }
+
+    setSubmittingReturnId(orderId);
+    setError("");
+    try {
+      const created = await createReturnRequest(orderId, returnReason.trim());
+      setOrders((current) => current.map((order) => order.id === orderId
+        ? { ...order, returnEligible: false, returnRequest: created }
+        : order));
+      setReturningId(null);
+      setReturnReason("");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : t("returnRequestFailed"));
+    } finally {
+      setSubmittingReturnId(null);
     }
   };
 
@@ -135,6 +169,62 @@ export default function PurchaseList({ filter = "all" }: { filter?: PurchaseFilt
                 ))}
               </div>
 
+              {order.returnRequest && (
+                <section className="border-t border-border bg-amber-500/5 px-4 py-3 text-sm">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <RotateCcw size={17} className="text-amber-700 dark:text-amber-300" />
+                    <span className="font-semibold text-text">{t("returnRequest")}</span>
+                    <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300">
+                      {t(returnStatusKey(order.returnRequest.status))}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-text-secondary">{order.returnRequest.reason}</p>
+                  {order.returnRequest.adminNote && (
+                    <p className="mt-1 text-text-secondary">
+                      <span className="font-medium text-text">{t("adminResponse")}:</span> {order.returnRequest.adminNote}
+                    </p>
+                  )}
+                </section>
+              )}
+
+              {returningId === order.id && (
+                <section className="border-t border-border bg-bg-secondary px-4 py-4">
+                  <label className="text-sm font-semibold text-text" htmlFor={`return-reason-${order.id}`}>
+                    {t("returnReason")}
+                  </label>
+                  <textarea
+                    id={`return-reason-${order.id}`}
+                    value={returnReason}
+                    onChange={(event) => setReturnReason(event.target.value)}
+                    rows={3}
+                    maxLength={1000}
+                    placeholder={t("returnReasonPlaceholder")}
+                    className="mt-2 w-full resize-y rounded-md border border-border bg-bg px-3 py-2 text-sm text-text outline-none focus:border-primary"
+                  />
+                  <div className="mt-3 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReturningId(null);
+                        setReturnReason("");
+                      }}
+                      className="rounded-md border border-border px-3 py-2 text-sm font-semibold text-text-secondary"
+                    >
+                      {t("cancel")}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={submittingReturnId === order.id}
+                      onClick={() => void requestReturn(order.id)}
+                      className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                    >
+                      {submittingReturnId === order.id && <LoaderCircle className="animate-spin" size={16} />}
+                      {t("submitReturnRequest")}
+                    </button>
+                  </div>
+                </section>
+              )}
+
               <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
                 <div className="text-sm text-text-secondary">
                   <p>{order.paymentMethod === "PAYOS" ? t("onlinePayment") : t("cashOnDelivery")} · {paymentLabel(order.paymentStatus, t)}</p>
@@ -165,6 +255,19 @@ export default function PurchaseList({ filter = "all" }: { filter?: PurchaseFilt
                       {cancellingId === order.id ? t("cancellingOrder") : t("cancelOrder")}
                     </button>
                   )}
+                  {order.returnEligible && returningId !== order.id && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReturningId(order.id);
+                        setReturnReason("");
+                        setError("");
+                      }}
+                      className="rounded-md border border-primary/40 px-3 py-1.5 text-sm font-semibold text-primary"
+                    >
+                      {t("requestReturn")}
+                    </button>
+                  )}
                 </div>
               </footer>
             </article>
@@ -173,6 +276,13 @@ export default function PurchaseList({ filter = "all" }: { filter?: PurchaseFilt
       )}
     </>
   );
+}
+
+function returnStatusKey(status: ReturnRequestStatus): TranslationKey {
+  if (status === "APPROVED") return "returnStatusApproved";
+  if (status === "REJECTED") return "returnStatusRejected";
+  if (status === "COMPLETED") return "returnStatusCompleted";
+  return "returnStatusRequested";
 }
 
 function statusClass(status: OrderStatus) {

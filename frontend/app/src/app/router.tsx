@@ -14,6 +14,7 @@ const CatalogAdminPage = lazy(() => import("../pages/CatalogAdminPage"));
 const InventoryAdminPage = lazy(() => import("../pages/InventoryAdminPage"));
 const OrderAdminPage = lazy(() => import("../pages/OrderAdminPage"));
 const VoucherAdminPage = lazy(() => import("../pages/VoucherAdminPage"));
+const ReturnAdminPage = lazy(() => import("../pages/ReturnAdminPage"));
 
 const adminPage = (page: ReactNode) => (
   <Suspense fallback={<div className="min-h-screen bg-bg" />}>
@@ -35,6 +36,7 @@ export default function AppRouter() {
       <Route path="/admin/catalog" element={adminPage(<CatalogAdminPage />)} />
       <Route path="/admin/orders" element={adminPage(<OrderAdminPage />)} />
       <Route path="/admin/vouchers" element={adminPage(<VoucherAdminPage />)} />
+      <Route path="/admin/returns" element={adminPage(<ReturnAdminPage />)} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -46,6 +48,7 @@ export default function AppRouter() {
       <Route path="/purchases/shipping" element={<AccountPage section="purchases" purchaseFilter="shipping" />} />
       <Route path="/purchases/completed" element={<AccountPage section="purchases" purchaseFilter="completed" />} />
       <Route path="/purchases/cancelled" element={<AccountPage section="purchases" purchaseFilter="cancelled" />} />
+      <Route path="/purchases/returns" element={<AccountPage section="purchases" purchaseFilter="returns" />} />
     </Routes>
   );
 }

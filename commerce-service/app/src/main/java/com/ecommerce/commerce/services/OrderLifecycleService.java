@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @Transactional
 public class OrderLifecycleService {
@@ -87,6 +89,7 @@ public class OrderLifecycleService {
                 .filter(payment -> payment.getPaymentMethod().equalsIgnoreCase("COD"))
                 .filter(payment -> payment.getStatus() == PaymentStatus.PENDING)
                 .forEach(payment -> payment.setStatus(PaymentStatus.PAID));
+        order.setDeliveredAt(LocalDateTime.now());
     }
 
     private boolean holdsStock(StockReservation reservation) {

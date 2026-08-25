@@ -9,6 +9,7 @@ import {
   MapPin,
   Package,
   Truck,
+  Undo2,
   UserRound,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
@@ -68,6 +69,9 @@ export default function AccountSidebar({ user }: { user: AuthUser | null }) {
           </AccountLink>
           <AccountLink to="/purchases/cancelled" icon={<CircleX size={16} />}>
             {t("purchaseCancelled")}
+          </AccountLink>
+          <AccountLink to="/purchases/returns" icon={<Undo2 size={16} />}>
+            {t("purchaseReturns")}
           </AccountLink>
         </div>
       </nav>
