@@ -13,6 +13,7 @@ import PaymentResultPage from "../pages/PaymentResultPage";
 const CatalogAdminPage = lazy(() => import("../pages/CatalogAdminPage"));
 const InventoryAdminPage = lazy(() => import("../pages/InventoryAdminPage"));
 const OrderAdminPage = lazy(() => import("../pages/OrderAdminPage"));
+const VoucherAdminPage = lazy(() => import("../pages/VoucherAdminPage"));
 
 const adminPage = (page: ReactNode) => (
   <Suspense fallback={<div className="min-h-screen bg-bg" />}>
@@ -33,6 +34,7 @@ export default function AppRouter() {
       <Route path="/admin/inventory" element={adminPage(<InventoryAdminPage />)} />
       <Route path="/admin/catalog" element={adminPage(<CatalogAdminPage />)} />
       <Route path="/admin/orders" element={adminPage(<OrderAdminPage />)} />
+      <Route path="/admin/vouchers" element={adminPage(<VoucherAdminPage />)} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />

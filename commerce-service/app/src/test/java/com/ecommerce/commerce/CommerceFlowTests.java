@@ -11,6 +11,7 @@ import com.ecommerce.commerce.repositories.InventoryRepository;
 import com.ecommerce.commerce.repositories.OrderRepository;
 import com.ecommerce.commerce.repositories.PaymentRepository;
 import com.ecommerce.commerce.repositories.StockReservationRepository;
+import com.ecommerce.commerce.repositories.VoucherRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
@@ -80,10 +81,14 @@ class CommerceFlowTests {
     @Autowired
     private PaymentRepository paymentRepository;
 
+    @Autowired
+    private VoucherRepository voucherRepository;
+
     @BeforeEach
     void clearDatabase() {
         reservationRepository.deleteAll();
         orderRepository.deleteAll();
+        voucherRepository.deleteAll();
         cartRepository.deleteAll();
         inventoryRepository.deleteAll();
     }
@@ -189,6 +194,86 @@ class CommerceFlowTests {
         assertThat(reservationRepository.findByOrderId(orderId).getFirst().getStatus())
                 .isEqualTo(StockReservationStatus.RELEASED);
         assertThat(paymentRepository.findAll().getFirst().getStatus()).isEqualTo(PaymentStatus.CANCELLED);
+    }
+
+    @Test
+    void adminCanManageVouchers() throws Exception {
+        String adminToken = token(22L, "Admin");
+
+        mockMvc.perform(get("/api/admin/vouchers")
+                        .header("Authorization", "Bearer " + token(23L)))
+                .andExpect(status().isForbidden());
+
+        String body = mockMvc.perform(post("/api/admin/vouchers")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(voucherJson("WELCOME10", 10)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.code").value("WELCOME10"))
+                .andExpect(jsonPath("$.active").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        long voucherId = objectMapper.readTree(body).path("id").asLong();
+
+        mockMvc.perform(patch("/api/admin/vouchers/{id}", voucherId)
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(voucherJson("WELCOME15", 15)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("WELCOME15"))
+                .andExpect(jsonPath("$.quantity").value(15));
+
+        mockMvc.perform(get("/api/admin/vouchers")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(voucherId));
+
+        mockMvc.perform(delete("/api/admin/vouchers/{id}", voucherId)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isNoContent());
+        assertThat(voucherRepository.count()).isZero();
+    }
+
+    @Test
+    void voucherPreviewCheckoutAndCancellationKeepUsageConsistent() throws Exception {
+        String adminToken = token(24L, "Admin");
+        String customerToken = token(25L);
+        mockMvc.perform(post("/api/admin/vouchers")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(voucherJson("SAVE10", 3)))
+                .andExpect(status().isCreated());
+
+        addToCart(customerToken, 101L, 2);
+        mockMvc.perform(post("/api/vouchers/preview")
+                        .header("Authorization", "Bearer " + customerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"code\":\"save10\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.subtotal").value(160000.00))
+                .andExpect(jsonPath("$.discountAmount").value(12000.00))
+                .andExpect(jsonPath("$.totalAmount").value(148000.00));
+
+        String orderBody = mockMvc.perform(post("/api/orders/checkout")
+                        .header("Authorization", "Bearer " + customerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkoutJson("COD", "save10")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.voucherCode").value("SAVE10"))
+                .andExpect(jsonPath("$.discountAmount").value(12000.00))
+                .andExpect(jsonPath("$.totalAmount").value(148000.00))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        long orderId = objectMapper.readTree(orderBody).path("id").asLong();
+        assertThat(voucherRepository.findByCodeIgnoreCase("SAVE10").orElseThrow().getUsedCount()).isOne();
+
+        mockMvc.perform(patch("/api/orders/{id}/cancel", orderId)
+                        .header("Authorization", "Bearer " + customerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CANCELLED"));
+        assertThat(voucherRepository.findByCodeIgnoreCase("SAVE10").orElseThrow().getUsedCount()).isZero();
     }
 
     @Test
@@ -477,6 +562,34 @@ class CommerceFlowTests {
                   "paymentMethod":"%s"
                 }
                 """.formatted(paymentMethod);
+    }
+
+    private String checkoutJson(String paymentMethod, String voucherCode) {
+        return """
+                {
+                  "recipientName":"Kien Vu",
+                  "recipientPhone":"0901234567",
+                  "shippingAddress":"Ha Noi",
+                  "paymentMethod":"%s",
+                  "voucherCode":"%s"
+                }
+                """.formatted(paymentMethod, voucherCode);
+    }
+
+    private String voucherJson(String code, int quantity) {
+        return """
+                {
+                  "code":"%s",
+                  "description":"Ten percent off",
+                  "discountType":"PERCENTAGE",
+                  "discountValue":10,
+                  "minOrderAmount":100000,
+                  "maxDiscountAmount":12000,
+                  "quantity":%d,
+                  "startDate":"2020-01-01T00:00:00",
+                  "endDate":"2099-12-31T23:59:59"
+                }
+                """.formatted(code, quantity);
     }
 
     private String webhookJson(long orderId, long amount, String signature) {

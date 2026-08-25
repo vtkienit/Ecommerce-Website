@@ -113,9 +113,14 @@ export default function PurchaseList() {
               </div>
 
               <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
-                <span className="text-sm text-text-secondary">
-                  {order.paymentMethod === "PAYOS" ? t("onlinePayment") : t("cashOnDelivery")} · {paymentLabel(order.paymentStatus, t)}
-                </span>
+                <div className="text-sm text-text-secondary">
+                  <p>{order.paymentMethod === "PAYOS" ? t("onlinePayment") : t("cashOnDelivery")} · {paymentLabel(order.paymentStatus, t)}</p>
+                  {order.voucherCode && (
+                    <p className="mt-1 text-xs text-green-700 dark:text-green-300">
+                      {order.voucherCode} · -{currency.format(order.discountAmount)}
+                    </p>
+                  )}
+                </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="text-lg font-bold text-red-700">{currency.format(order.totalAmount)}</span>
                   {order.paymentMethod === "PAYOS" && order.paymentStatus === "PENDING" && order.checkoutUrl && (

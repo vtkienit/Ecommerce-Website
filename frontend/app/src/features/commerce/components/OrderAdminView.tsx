@@ -218,9 +218,14 @@ export default function OrderAdminView() {
                     </div>
 
                     <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 sm:px-5">
-                      <span className="text-sm text-text-secondary">
-                        {order.paymentMethod === "PAYOS" ? t("onlinePayment") : t("cashOnDelivery")} · {paymentLabel(order, t)}
-                      </span>
+                      <div className="text-sm text-text-secondary">
+                        <p>{order.paymentMethod === "PAYOS" ? t("onlinePayment") : t("cashOnDelivery")} · {paymentLabel(order, t)}</p>
+                        {order.voucherCode && (
+                          <p className="mt-1 text-xs text-green-700 dark:text-green-300">
+                            {order.voucherCode} · -{currency.format(order.discountAmount)}
+                          </p>
+                        )}
+                      </div>
                       <div className="flex flex-wrap gap-2">
                         {canCancel && (
                           <button

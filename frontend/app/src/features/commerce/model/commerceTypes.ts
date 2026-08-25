@@ -26,6 +26,7 @@ export type CheckoutRequest = {
   recipientPhone: string;
   shippingAddress: string;
   paymentMethod: PaymentMethod;
+  voucherCode?: string;
 };
 
 export type PaymentMethod = "COD" | "PAYOS";
@@ -59,6 +60,7 @@ export type Order = {
   recipientPhone: string;
   shippingAddress: string;
   subtotal: number;
+  voucherCode: string | null;
   discountAmount: number;
   totalAmount: number;
   status: OrderStatus;
@@ -82,4 +84,42 @@ export type InventoryItem = {
   onHandQuantity: number;
   reservedQuantity: number;
   availableQuantity: number;
+};
+
+export type DiscountType = "PERCENTAGE" | "FIXED_AMOUNT";
+
+export type Voucher = {
+  id: number;
+  code: string;
+  description: string | null;
+  discountType: DiscountType;
+  discountValue: number;
+  minOrderAmount: number;
+  maxDiscountAmount: number | null;
+  quantity: number;
+  usedCount: number;
+  remainingQuantity: number;
+  startDate: string;
+  endDate: string;
+  active: boolean;
+};
+
+export type VoucherPayload = {
+  code: string;
+  description?: string;
+  discountType: DiscountType;
+  discountValue: number;
+  minOrderAmount: number;
+  maxDiscountAmount: number | null;
+  quantity: number;
+  startDate: string;
+  endDate: string;
+};
+
+export type VoucherPreview = {
+  code: string;
+  description: string | null;
+  subtotal: number;
+  discountAmount: number;
+  totalAmount: number;
 };

@@ -1,13 +1,13 @@
 import { useState, type FormEvent } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { Banknote, LoaderCircle, Minus, Plus, QrCode, ShoppingBag, Trash2 } from "lucide-react";
+import { Banknote, LoaderCircle, Minus, Plus, QrCode, ShoppingBag, TicketPercent, Trash2, X } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
 import MainLayout from "../../../shared/layouts/MainLayout";
 import { getStoredUser } from "../../auth/model/authSession";
-import { checkout } from "../api/commerceApi";
+import { checkout, previewVoucher } from "../api/commerceApi";
 import { useCart } from "../context/CartContext";
-import type { PaymentMethod } from "../model/commerceTypes";
+import type { PaymentMethod, VoucherPreview } from "../model/commerceTypes";
 
 export default function CartView() {
   const { lang, t } = useLanguage();
@@ -18,6 +18,9 @@ export default function CartView() {
   const [recipientPhone, setRecipientPhone] = useState(user?.phone ?? "");
   const [shippingAddress, setShippingAddress] = useState(user?.address ?? "");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
+  const [voucherCode, setVoucherCode] = useState("");
+  const [voucher, setVoucher] = useState<VoucherPreview | null>(null);
+  const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
   const [actionError, setActionError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const currency = new Intl.NumberFormat(lang === "vi" ? "vi-VN" : "en-US", {
@@ -32,6 +35,7 @@ export default function CartView() {
 
   const changeQuantity = async (itemId: number, quantity: number) => {
     setActionError("");
+    setVoucher(null);
     try {
       await updateItem(itemId, quantity);
     } catch (requestError) {
@@ -41,10 +45,27 @@ export default function CartView() {
 
   const remove = async (itemId: number) => {
     setActionError("");
+    setVoucher(null);
     try {
       await removeItem(itemId);
     } catch (requestError) {
       setActionError(requestError instanceof Error ? requestError.message : t("checkoutError"));
+    }
+  };
+
+  const applyVoucher = async () => {
+    if (!voucherCode.trim() || isApplyingVoucher) return;
+    setIsApplyingVoucher(true);
+    setActionError("");
+    try {
+      const preview = await previewVoucher(voucherCode.trim());
+      setVoucher(preview);
+      setVoucherCode(preview.code);
+    } catch (requestError) {
+      setVoucher(null);
+      setActionError(requestError instanceof Error ? requestError.message : t("voucherInvalid"));
+    } finally {
+      setIsApplyingVoucher(false);
     }
   };
 
@@ -60,6 +81,7 @@ export default function CartView() {
         recipientPhone: recipientPhone.trim(),
         shippingAddress: shippingAddress.trim(),
         paymentMethod,
+        voucherCode: voucher?.code,
       });
 
       if (paymentMethod === "PAYOS") {
@@ -193,12 +215,71 @@ export default function CartView() {
                       />
                     </div>
                   </fieldset>
+                  <div>
+                    <label htmlFor="voucher-code" className="text-sm font-medium text-text-secondary">
+                      {t("voucherCode")}
+                    </label>
+                    <div className="mt-2 flex gap-2">
+                      <div className="relative min-w-0 flex-1">
+                        <TicketPercent className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" size={18} />
+                        <input
+                          id="voucher-code"
+                          value={voucherCode}
+                          onChange={(event) => {
+                            setVoucherCode(event.target.value.toUpperCase());
+                            setVoucher(null);
+                          }}
+                          placeholder={t("voucherPlaceholder")}
+                          className="h-11 w-full rounded-md border border-border bg-bg pl-10 pr-3 uppercase text-text outline-none focus:border-primary"
+                        />
+                      </div>
+                      {voucher ? (
+                        <button
+                          type="button"
+                          aria-label={t("removeVoucher")}
+                          onClick={() => {
+                            setVoucher(null);
+                            setVoucherCode("");
+                          }}
+                          className="flex h-11 w-11 items-center justify-center rounded-md border border-border text-text-secondary hover:text-red-600"
+                        >
+                          <X size={18} />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={!voucherCode.trim() || isApplyingVoucher}
+                          onClick={() => void applyVoucher()}
+                          className="h-11 rounded-md border border-primary px-4 text-sm font-semibold text-primary disabled:opacity-50"
+                        >
+                          {isApplyingVoucher ? t("applyingVoucher") : t("applyVoucher")}
+                        </button>
+                      )}
+                    </div>
+                    {voucher && (
+                      <p className="mt-2 rounded-md bg-green-500/10 px-3 py-2 text-xs font-medium text-green-700 dark:text-green-300">
+                        {t("voucherApplied").replace("{code}", voucher.code)}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="my-5 border-t border-border" />
                 <div className="flex items-center justify-between text-text-secondary">
                   <span>{t("subtotal")}</span>
-                  <span className="text-xl font-bold text-text">{currency.format(cart.subtotal)}</span>
+                  <span className="font-semibold text-text">{currency.format(cart.subtotal)}</span>
+                </div>
+                {voucher && (
+                  <div className="mt-3 flex items-center justify-between text-sm text-green-700 dark:text-green-300">
+                    <span>{t("voucherDiscount")}</span>
+                    <span className="font-semibold">-{currency.format(voucher.discountAmount)}</span>
+                  </div>
+                )}
+                <div className="mt-3 flex items-center justify-between border-t border-border pt-3 text-text-secondary">
+                  <span>{t("total")}</span>
+                  <span className="text-xl font-bold text-red-700">
+                    {currency.format(voucher?.totalAmount ?? cart.subtotal)}
+                  </span>
                 </div>
                 {(actionError || cartError) && (
                   <p className="mt-4 rounded-md bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">{actionError || cartError}</p>

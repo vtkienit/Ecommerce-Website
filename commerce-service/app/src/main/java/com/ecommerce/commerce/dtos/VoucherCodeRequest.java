@@ -7,20 +7,9 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class CheckoutRequest {
+public class VoucherCodeRequest {
 
     @NotBlank
-    private String recipientName;
-
-    @NotBlank
-    private String recipientPhone;
-
-    @NotBlank
-    private String shippingAddress;
-
-    @NotBlank
-    private String paymentMethod;
-
     @Size(max = 30)
-    private String voucherCode;
+    private String code;
 }

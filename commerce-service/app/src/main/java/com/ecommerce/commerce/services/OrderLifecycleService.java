@@ -19,15 +19,18 @@ public class OrderLifecycleService {
     private final InventoryRepository inventoryRepository;
     private final StockReservationRepository reservationRepository;
     private final PaymentService paymentService;
+    private final VoucherService voucherService;
 
     public OrderLifecycleService(
             InventoryRepository inventoryRepository,
             StockReservationRepository reservationRepository,
-            PaymentService paymentService
+            PaymentService paymentService,
+            VoucherService voucherService
     ) {
         this.inventoryRepository = inventoryRepository;
         this.reservationRepository = reservationRepository;
         this.paymentService = paymentService;
+        this.voucherService = voucherService;
     }
 
     public void confirm(Order order) {
@@ -41,6 +44,7 @@ public class OrderLifecycleService {
 
     public void cancel(Order order) {
         paymentService.cancelPendingPayment(order);
+        voucherService.release(order);
         for (StockReservation reservation : reservationRepository.findByOrderId(order.getId())) {
             if (!holdsStock(reservation)) continue;
 

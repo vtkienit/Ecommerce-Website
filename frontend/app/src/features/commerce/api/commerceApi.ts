@@ -6,6 +6,9 @@ import type {
   InventoryItem,
   Order,
   OrderStatus,
+  Voucher,
+  VoucherPayload,
+  VoucherPreview,
 } from "../model/commerceTypes";
 
 const commerceApiUrl = (
@@ -46,6 +49,9 @@ export const removeCartItem = (itemId: number) =>
 export const checkout = (request: CheckoutRequest) =>
   commerceRequest<Order>("/api/orders/checkout", "POST", request);
 
+export const previewVoucher = (code: string) =>
+  commerceRequest<VoucherPreview>("/api/vouchers/preview", "POST", { code });
+
 export const getOrders = () => commerceRequest<Order[]>("/api/orders");
 
 export const cancelOrder = (orderId: number) =>
@@ -68,3 +74,15 @@ export const syncInventory = () =>
 
 export const updateInventory = (variantId: number, onHandQuantity: number) =>
   commerceRequest<InventoryItem>(`/api/admin/inventory/${variantId}`, "PATCH", { onHandQuantity });
+
+export const getVouchers = () =>
+  commerceRequest<Voucher[]>("/api/admin/vouchers");
+
+export const createVoucher = (request: VoucherPayload) =>
+  commerceRequest<Voucher>("/api/admin/vouchers", "POST", request);
+
+export const updateVoucher = (id: number, request: VoucherPayload) =>
+  commerceRequest<Voucher>(`/api/admin/vouchers/${id}`, "PATCH", request);
+
+export const deleteVoucher = (id: number) =>
+  commerceRequest<void>(`/api/admin/vouchers/${id}`, "DELETE");

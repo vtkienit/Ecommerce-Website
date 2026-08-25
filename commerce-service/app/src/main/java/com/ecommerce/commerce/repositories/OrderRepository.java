@@ -14,6 +14,8 @@ import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
+    boolean existsByVoucherId(Long voucherId);
+
     @EntityGraph(attributePaths = "items")
     List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
 

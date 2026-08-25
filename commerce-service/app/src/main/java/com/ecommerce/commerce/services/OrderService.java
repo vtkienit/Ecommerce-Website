@@ -33,6 +33,7 @@ public class OrderService {
     private final CatalogGateway catalogGateway;
     private final OrderLifecycleService orderLifecycleService;
     private final PaymentService paymentService;
+    private final VoucherService voucherService;
     private final int defaultStock;
 
     public OrderService(
@@ -43,6 +44,7 @@ public class OrderService {
             CatalogGateway catalogGateway,
             OrderLifecycleService orderLifecycleService,
             PaymentService paymentService,
+            VoucherService voucherService,
             @Value("${commerce.inventory.default-stock:10}") int defaultStock
     ) {
         this.cartRepository = cartRepository;
@@ -52,6 +54,7 @@ public class OrderService {
         this.catalogGateway = catalogGateway;
         this.orderLifecycleService = orderLifecycleService;
         this.paymentService = paymentService;
+        this.voucherService = voucherService;
         this.defaultStock = defaultStock;
     }
 
@@ -87,6 +90,7 @@ public class OrderService {
         }
 
         calculateTotals(order);
+        voucherService.apply(order, request.getVoucherCode());
         Payment payment = addPayment(order, paymentMethod);
         Order savedOrder = orderRepository.save(order);
         createReservations(savedOrder);
@@ -251,6 +255,7 @@ public class OrderService {
                 order.getRecipientPhone(),
                 order.getShippingAddress(),
                 order.getSubtotal(),
+                order.getVoucher() == null ? null : order.getVoucher().getCode(),
                 order.getVoucherDiscountAmount(),
                 order.getTotalAmount(),
                 order.getStatus(),
