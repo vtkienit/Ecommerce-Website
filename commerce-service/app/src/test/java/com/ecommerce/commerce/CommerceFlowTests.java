@@ -437,6 +437,36 @@ class CommerceFlowTests {
     }
 
     @Test
+    void adminDashboardSummarizesOrdersAndLowStock() throws Exception {
+        String adminToken = token(76L, "Admin");
+        long deliveredOrderId = checkout(token(77L), 101L, 1);
+        deliverOrder(adminToken, deliveredOrderId);
+        long pendingOrderId = checkout(token(78L), 102L, 1);
+
+        Inventory lowStock = inventoryRepository.findByVariantId(102L).orElseThrow();
+        lowStock.setOnHandQuantity(5);
+        inventoryRepository.save(lowStock);
+
+        mockMvc.perform(get("/api/admin/dashboard")
+                        .header("Authorization", "Bearer " + token(79L)))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/admin/dashboard")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalRevenue").value(80000.00))
+                .andExpect(jsonPath("$.monthlyRevenue").value(80000.00))
+                .andExpect(jsonPath("$.totalOrders").value(2))
+                .andExpect(jsonPath("$.pendingOrders").value(1))
+                .andExpect(jsonPath("$.lowStockVariants").value(1))
+                .andExpect(jsonPath("$.ordersByStatus.PENDING").value(1))
+                .andExpect(jsonPath("$.ordersByStatus.DELIVERED").value(1))
+                .andExpect(jsonPath("$.recentOrders[0].id").value(pendingOrderId))
+                .andExpect(jsonPath("$.lowStockItems[0].variantId").value(102))
+                .andExpect(jsonPath("$.lowStockItems[0].availableQuantity").value(4));
+    }
+
+    @Test
     void onlineCheckoutCreatesPayOSPaymentLink() throws Exception {
         String token = token(81L);
         addToCart(token, 101L, 1);

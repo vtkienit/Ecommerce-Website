@@ -45,6 +45,7 @@ catalog:
 commerce:
   inventory:
     default-stock: ${COMMERCE_DEFAULT_STOCK:10}
+    low-stock-threshold: 5
     seed:
       enabled: ${COMMERCE_INVENTORY_SEED_ENABLED:true}
   returns:

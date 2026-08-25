@@ -107,6 +107,34 @@ export type InventoryItem = {
   availableQuantity: number;
 };
 
+export type DashboardOrder = {
+  id: number;
+  orderNumber: string;
+  recipientName: string;
+  totalAmount: number;
+  status: OrderStatus;
+  createdAt: string;
+};
+
+export type DashboardLowStockItem = {
+  variantId: number;
+  sku: string;
+  onHandQuantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
+};
+
+export type AdminDashboard = {
+  totalRevenue: number;
+  monthlyRevenue: number;
+  totalOrders: number;
+  pendingOrders: number;
+  lowStockVariants: number;
+  ordersByStatus: Record<OrderStatus, number>;
+  recentOrders: DashboardOrder[];
+  lowStockItems: DashboardLowStockItem[];
+};
+
 export type DiscountType = "PERCENTAGE" | "FIXED_AMOUNT";
 
 export type Voucher = {

@@ -20,6 +20,7 @@ import LanguageSelector from "./LanguageSelector";
 import ThemeToggle from "./ThemeToggle";
 
 const navigation = [
+  { to: "/admin", label: "adminDashboard", icon: LayoutDashboard },
   { to: "/admin/catalog", label: "catalogManagement", icon: Package },
   { to: "/admin/inventory", label: "inventoryManagement", icon: Boxes },
   { to: "/admin/orders", label: "orderManagement", icon: ClipboardList },
@@ -62,7 +63,7 @@ export default function AdminLayout() {
         sidebarOpen ? "translate-x-0" : "-translate-x-full",
       )}>
         <div className="flex h-20 items-center justify-between border-b border-border px-6">
-          <NavLink to="/admin/catalog" className="flex items-center gap-3 text-text no-underline">
+          <NavLink to="/admin" className="flex items-center gap-3 text-text no-underline">
             <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary text-white">
               <LayoutDashboard size={21} aria-hidden="true" />
             </span>
@@ -84,6 +85,7 @@ export default function AdminLayout() {
             <NavLink
               key={to}
               to={to}
+              end={to === "/admin"}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) => clsx(
                 "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold no-underline transition-colors",

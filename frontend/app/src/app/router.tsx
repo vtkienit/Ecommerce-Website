@@ -12,6 +12,7 @@ import CartPage from "../pages/CartPage";
 import PaymentResultPage from "../pages/PaymentResultPage";
 
 const CatalogAdminPage = lazy(() => import("../pages/CatalogAdminPage"));
+const DashboardAdminPage = lazy(() => import("../pages/DashboardAdminPage"));
 const InventoryAdminPage = lazy(() => import("../pages/InventoryAdminPage"));
 const OrderAdminPage = lazy(() => import("../pages/OrderAdminPage"));
 const VoucherAdminPage = lazy(() => import("../pages/VoucherAdminPage"));
@@ -39,7 +40,7 @@ export default function AppRouter() {
       <Route path="/payment/success" element={<PaymentResultPage mode="success" />} />
       <Route path="/payment/cancel" element={<PaymentResultPage mode="cancel" />} />
       <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<Navigate to="catalog" replace />} />
+        <Route index element={adminPage(<DashboardAdminPage />)} />
         <Route path="catalog" element={adminPage(<CatalogAdminPage />)} />
         <Route path="inventory" element={adminPage(<InventoryAdminPage />)} />
         <Route path="orders" element={adminPage(<OrderAdminPage />)} />

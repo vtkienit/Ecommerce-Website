@@ -2,6 +2,7 @@ import { ApiError, apiRequest } from "../../../shared/api/httpClient";
 import { getAuthToken } from "../../auth/model/authSession";
 import type { PageQuery, PageResponse } from "../../../shared/model/pagination";
 import type {
+  AdminDashboard,
   Cart,
   CheckoutRequest,
   InventoryItem,
@@ -68,6 +69,9 @@ export const syncOrderPayment = (orderId: number) =>
 
 export const getAdminOrders = (query: PageQuery & { status?: OrderStatus } = {}) =>
   commerceRequest<PageResponse<Order>>(`/api/admin/orders?${adminParams(query)}`);
+
+export const getAdminDashboard = () =>
+  commerceRequest<AdminDashboard>("/api/admin/dashboard");
 
 export const updateOrderStatus = (orderId: number, status: OrderStatus) =>
   commerceRequest<Order>(`/api/admin/orders/${orderId}/status`, "PATCH", { status });
