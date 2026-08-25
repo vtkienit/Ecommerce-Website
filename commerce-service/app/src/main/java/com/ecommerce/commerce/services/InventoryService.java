@@ -4,6 +4,7 @@ import com.ecommerce.commerce.clients.CatalogGateway;
 import com.ecommerce.commerce.dtos.CatalogVariantSnapshot;
 import com.ecommerce.commerce.dtos.InventoryResponse;
 import com.ecommerce.commerce.dtos.PageResponse;
+import com.ecommerce.commerce.dtos.VariantAvailabilityResponse;
 import com.ecommerce.commerce.entities.Inventory;
 import com.ecommerce.commerce.exceptions.CommerceException;
 import com.ecommerce.commerce.repositories.InventoryRepository;
@@ -92,6 +93,25 @@ public class InventoryService {
         inventory.setOnHandQuantity(onHandQuantity);
         inventory.setSku(variant.getSku());
         return toResponse(variant, inventoryRepository.save(inventory));
+    }
+
+    @Transactional(readOnly = true)
+    public List<VariantAvailabilityResponse> getAvailability(List<Long> variantIds) {
+        Map<Long, Inventory> inventoryByVariant = inventoryRepository
+                .findAllByVariantIdIn(variantIds)
+                .stream()
+                .collect(Collectors.toMap(Inventory::getVariantId, Function.identity()));
+
+        return variantIds.stream()
+                .distinct()
+                .map(variantId -> {
+                    Inventory inventory = inventoryByVariant.get(variantId);
+                    int available = inventory == null
+                            ? 0
+                            : inventory.getOnHandQuantity() - inventory.getReservedQuantity();
+                    return new VariantAvailabilityResponse(variantId, Math.max(0, available));
+                })
+                .toList();
     }
 
     private Inventory createEmptyInventory(CatalogVariantSnapshot variant) {

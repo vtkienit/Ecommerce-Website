@@ -105,6 +105,24 @@ class CommerceFlowTests {
     }
 
     @Test
+    void inventoryAvailabilityIsPublicAndExcludesReservedStock() throws Exception {
+        Inventory inventory = new Inventory();
+        inventory.setVariantId(101L);
+        inventory.setSku("CLOUD-PILLOW-WHITE");
+        inventory.setOnHandQuantity(10);
+        inventory.setReservedQuantity(3);
+        inventoryRepository.save(inventory);
+
+        mockMvc.perform(get("/api/inventory/availability")
+                        .param("variantIds", "101", "999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].variantId").value(101))
+                .andExpect(jsonPath("$[0].availableQuantity").value(7))
+                .andExpect(jsonPath("$[1].variantId").value(999))
+                .andExpect(jsonPath("$[1].availableQuantity").value(0));
+    }
+
+    @Test
     void cartSupportsAddUpdateAndRemove() throws Exception {
         String token = token(7L);
         String body = mockMvc.perform(post("/api/cart/items")

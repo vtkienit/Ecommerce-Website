@@ -10,6 +10,7 @@ import type {
   OrderStatus,
   ReturnRequest,
   ReturnRequestStatus,
+  VariantAvailability,
   Voucher,
   VoucherPayload,
   VoucherPreview,
@@ -39,7 +40,18 @@ const commerceRequest = <TResponse>(
   });
 };
 
+const publicCommerceRequest = <TResponse>(path: string) => apiRequest<TResponse>(path, {
+  baseUrl: commerceApiUrl,
+  fallbackMessage: "Commerce request failed",
+});
+
 export const getCart = () => commerceRequest<Cart>("/api/cart");
+
+export const getVariantAvailability = (variantIds: number[]) => {
+  const params = new URLSearchParams();
+  variantIds.forEach((variantId) => params.append("variantIds", String(variantId)));
+  return publicCommerceRequest<VariantAvailability[]>(`/api/inventory/availability?${params}`);
+};
 
 export const addCartItem = (variantId: number, quantity: number) =>
   commerceRequest<Cart>("/api/cart/items", "POST", { variantId, quantity });

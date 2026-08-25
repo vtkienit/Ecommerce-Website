@@ -107,6 +107,11 @@ export type InventoryItem = {
   availableQuantity: number;
 };
 
+export type VariantAvailability = {
+  variantId: number;
+  availableQuantity: number;
+};
+
 export type DashboardOrder = {
   id: number;
   orderNumber: string;

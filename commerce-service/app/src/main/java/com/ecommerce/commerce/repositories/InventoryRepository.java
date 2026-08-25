@@ -15,6 +15,8 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
     Optional<Inventory> findByVariantId(Long variantId);
 
+    List<Inventory> findAllByVariantIdIn(List<Long> variantIds);
+
     List<Inventory> findAllByOrderByVariantIdAsc();
 
     @Query("""
