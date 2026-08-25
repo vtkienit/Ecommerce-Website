@@ -134,7 +134,7 @@ export default function InventoryAdminView() {
             </div>
           ) : (
             <div className="mt-6 overflow-hidden rounded-xl border border-border bg-bg shadow-sm">
-              <div className="hidden grid-cols-[minmax(260px,1fr)_110px_110px_150px_130px] gap-4 border-b border-border bg-bg-secondary px-5 py-3 text-xs font-semibold uppercase tracking-wide text-text-tertiary xl:grid">
+              <div className="hidden grid-cols-[minmax(180px,1fr)_90px_80px_90px_130px] gap-3 border-b border-border bg-bg-secondary px-5 py-3 text-xs font-semibold uppercase tracking-wide text-text-tertiary md:grid">
                 <span>{t("productDesc")}</span>
                 <span>{t("stockOnHand")}</span>
                 <span>{t("stockReserved")}</span>
@@ -143,7 +143,7 @@ export default function InventoryAdminView() {
               </div>
               <div className="divide-y divide-border">
                 {inventory.map((item) => (
-                  <article key={item.variantId} className="grid gap-4 p-4 xl:grid-cols-[minmax(260px,1fr)_110px_110px_150px_130px] xl:items-center xl:px-5">
+                  <article key={item.variantId} className="grid gap-4 p-4 md:grid-cols-[minmax(180px,1fr)_90px_80px_90px_130px] md:items-center md:gap-3 md:px-5">
                     <div className="flex min-w-0 items-center gap-3">
                       <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md bg-bg-secondary">
                         {item.imageUrl && <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />}
@@ -154,8 +154,8 @@ export default function InventoryAdminView() {
                         <p className="mt-1 text-xs text-text-secondary">{[item.size, item.thickness, item.color].filter(Boolean).join(" · ")}</p>
                       </div>
                     </div>
-                    <label className="flex items-center justify-between gap-3 text-sm text-text-secondary xl:block">
-                      <span className="xl:hidden">{t("stockOnHand")}</span>
+                    <label className="flex items-center justify-between gap-3 text-sm text-text-secondary md:block">
+                      <span className="md:hidden">{t("stockOnHand")}</span>
                       <input
                         type="number"
                         min="0"
@@ -165,7 +165,7 @@ export default function InventoryAdminView() {
                           ...current,
                           [item.variantId]: event.target.value,
                         }))}
-                        className="h-10 w-28 rounded-md border border-border bg-bg px-3 text-right font-semibold text-text outline-none focus:border-primary xl:w-full xl:text-left"
+                        className="h-10 w-28 rounded-md border border-border bg-bg px-3 text-right font-semibold text-text outline-none focus:border-primary md:w-full md:text-left"
                       />
                     </label>
                     <StockValue label={t("stockReserved")} value={item.reservedQuantity} />
@@ -195,8 +195,8 @@ export default function InventoryAdminView() {
 
 function StockValue({ label, value, highlight = false }: { label: string; value: number; highlight?: boolean }) {
   return (
-    <div className="flex items-center justify-between text-sm xl:block">
-      <span className="text-text-secondary xl:hidden">{label}</span>
+    <div className="flex items-center justify-between text-sm md:block">
+      <span className="text-text-secondary md:hidden">{label}</span>
       <span className={highlight ? "font-bold text-red-600" : "font-semibold text-text"}>{value}</span>
     </div>
   );
