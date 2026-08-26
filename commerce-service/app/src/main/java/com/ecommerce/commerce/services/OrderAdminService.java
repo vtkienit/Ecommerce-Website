@@ -10,6 +10,7 @@ import com.ecommerce.commerce.notifications.OrderNotification;
 import com.ecommerce.commerce.notifications.OrderNotificationType;
 import com.ecommerce.commerce.repositories.OrderRepository;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -30,6 +31,7 @@ import java.util.Set;
 @Transactional
 public class OrderAdminService {
 
+    private static final String TRACKING_CODE_PATTERN = "[A-Za-z0-9]{8}";
     private static final Map<OrderStatus, Set<OrderStatus>> ALLOWED_TRANSITIONS = createTransitions();
 
     private final OrderRepository orderRepository;
@@ -106,7 +108,7 @@ public class OrderAdminService {
         order.setStatus(nextStatus);
         LocalDateTime changedAt = LocalDateTime.now();
         order.addStatusHistory(nextStatus, changedAt);
-        Order savedOrder = orderRepository.save(order);
+        Order savedOrder = saveOrder(order, nextStatus);
         if (nextStatus == OrderStatus.CONFIRMED) {
             eventPublisher.publishEvent(new OrderNotification(
                     OrderNotificationType.ORDER_CONFIRMED,
@@ -128,9 +130,31 @@ public class OrderAdminService {
                     HttpStatus.BAD_REQUEST
             );
         }
+        String trackingCode = request.getTrackingCode().trim();
+        if (!trackingCode.matches(TRACKING_CODE_PATTERN)) {
+            throw new CommerceException(
+                    "Tracking code must contain exactly 8 letters or numbers",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+        String normalizedTrackingCode = trackingCode.toUpperCase(Locale.ROOT);
+        if (orderRepository.existsByTrackingCodeIgnoreCase(normalizedTrackingCode)) {
+            throw new CommerceException("Tracking code already exists", HttpStatus.CONFLICT);
+        }
         order.setShippingCarrier(request.getShippingCarrier().trim());
-        order.setTrackingCode(request.getTrackingCode().trim());
+        order.setTrackingCode(normalizedTrackingCode);
         order.setShippedAt(LocalDateTime.now());
+    }
+
+    private Order saveOrder(Order order, OrderStatus nextStatus) {
+        try {
+            return orderRepository.saveAndFlush(order);
+        } catch (DataIntegrityViolationException exception) {
+            if (nextStatus == OrderStatus.SHIPPED) {
+                throw new CommerceException("Tracking code already exists", HttpStatus.CONFLICT);
+            }
+            throw exception;
+        }
     }
 
     private void applyLifecycleChange(Order order, OrderStatus nextStatus) {

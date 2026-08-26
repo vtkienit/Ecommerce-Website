@@ -11,6 +11,8 @@ import OrderStatusTimeline from "./OrderStatusTimeline";
 type StatusFilter = "ALL" | OrderStatus;
 type ShippingDraft = { shippingCarrier: string; trackingCode: string };
 
+const trackingCodePattern = /^[A-Za-z0-9]{8}$/;
+
 const statuses: StatusFilter[] = [
   "ALL",
   "PENDING",
@@ -106,6 +108,11 @@ export default function OrderAdminView() {
       setError(t("shippingInfoRequired"));
       return;
     }
+    if (target === "SHIPPED" && shippingDetails
+      && !trackingCodePattern.test(shippingDetails.trackingCode.trim())) {
+      setError(t("trackingCodeInvalid"));
+      return;
+    }
     if (target === "SHIPPED" && shippingDetails) {
       handoffDetails = {
         shippingCarrier: shippingDetails.shippingCarrier.trim(),
@@ -133,7 +140,8 @@ export default function OrderAdminView() {
       });
       setSuccess(t("orderStatusUpdated"));
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : t("orderAdminError"));
+      const message = requestError instanceof Error ? requestError.message : t("orderAdminError");
+      setError(message === "Tracking code already exists" ? t("trackingCodeDuplicate") : message);
     } finally {
       setUpdatingId(null);
     }
@@ -276,6 +284,10 @@ export default function OrderAdminView() {
                                 },
                               }))}
                               placeholder={t("trackingCodePlaceholder")}
+                              maxLength={8}
+                              pattern="[A-Za-z0-9]{8}"
+                              autoComplete="off"
+                              title={t("trackingCodeInvalid")}
                               className="mt-1.5 h-11 w-full rounded-md border border-border bg-bg px-3 text-text outline-none transition-colors focus:border-primary"
                             />
                           </label>

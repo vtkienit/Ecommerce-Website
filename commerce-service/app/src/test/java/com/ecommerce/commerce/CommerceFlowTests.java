@@ -493,7 +493,7 @@ class CommerceFlowTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].status").value("SHIPPED"))
                 .andExpect(jsonPath("$[0].shippingCarrier").value("GHN"))
-                .andExpect(jsonPath("$[0].trackingCode").value("GHN-TEST-001"))
+                .andExpect(jsonPath("$[0].trackingCode").value("GHN00001"))
                 .andExpect(jsonPath("$[0].shippedAt").isNotEmpty());
 
         updateOrderStatus(adminToken, orderId, "DELIVERED", "DELIVERED");
@@ -529,6 +529,53 @@ class CommerceFlowTests {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message")
                         .value("Shipping carrier and tracking code are required"));
+    }
+
+    @Test
+    void trackingCodeMustHaveEightLettersOrNumbers() throws Exception {
+        long orderId = checkout(token(82L), 101L, 1);
+        String adminToken = token(83L, "Admin");
+        updateOrderStatus(adminToken, orderId, "CONFIRMED", "CONFIRMED");
+        updateOrderStatus(adminToken, orderId, "PROCESSING", "PROCESSING");
+
+        mockMvc.perform(patch("/api/admin/orders/{id}/status", orderId)
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"SHIPPED","shippingCarrier":"GHN","trackingCode":"ABC-1234"}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message")
+                        .value("Tracking code must contain exactly 8 letters or numbers"));
+    }
+
+    @Test
+    void trackingCodeMustBeUniqueIgnoringCase() throws Exception {
+        long firstOrderId = checkout(token(84L), 101L, 1);
+        long secondOrderId = checkout(token(85L), 102L, 1);
+        String adminToken = token(86L, "Admin");
+        updateOrderStatus(adminToken, firstOrderId, "CONFIRMED", "CONFIRMED");
+        updateOrderStatus(adminToken, firstOrderId, "PROCESSING", "PROCESSING");
+        updateOrderStatus(adminToken, secondOrderId, "CONFIRMED", "CONFIRMED");
+        updateOrderStatus(adminToken, secondOrderId, "PROCESSING", "PROCESSING");
+
+        mockMvc.perform(patch("/api/admin/orders/{id}/status", firstOrderId)
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"SHIPPED","shippingCarrier":"GHN","trackingCode":"ab12cd34"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trackingCode").value("AB12CD34"));
+
+        mockMvc.perform(patch("/api/admin/orders/{id}/status", secondOrderId)
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"SHIPPED","shippingCarrier":"GHTK","trackingCode":"AB12CD34"}
+                                """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Tracking code already exists"));
     }
 
     @Test
@@ -777,7 +824,7 @@ class CommerceFlowTests {
     ) throws Exception {
         String requestBody = "SHIPPED".equals(requestedStatus)
                 ? """
-                        {"status":"SHIPPED","shippingCarrier":"GHN","trackingCode":"GHN-TEST-001"}
+                        {"status":"SHIPPED","shippingCarrier":"GHN","trackingCode":"GHN00001"}
                         """
                 : "{\"status\":\"" + requestedStatus + "\"}";
 
@@ -791,7 +838,7 @@ class CommerceFlowTests {
         if ("SHIPPED".equals(requestedStatus)) {
             response
                     .andExpect(jsonPath("$.shippingCarrier").value("GHN"))
-                    .andExpect(jsonPath("$.trackingCode").value("GHN-TEST-001"))
+                    .andExpect(jsonPath("$.trackingCode").value("GHN00001"))
                     .andExpect(jsonPath("$.shippedAt").isNotEmpty());
         }
     }
