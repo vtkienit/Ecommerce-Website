@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { LoaderCircle, PackagePlus, Pencil, Save, Search, Trash2, X } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
+import { useConfirmDialog } from "../../../app/contexts/ConfirmDialogContext";
 import AdminPagination from "../../../shared/components/AdminPagination";
 import { createProduct, deleteProduct, updateProduct } from "../api/catalogAdminApi";
 import type { AdminProduct } from "../model/catalogAdminTypes";
@@ -53,6 +54,7 @@ export default function ProductManager({
   onMessage,
 }: Props) {
   const { t } = useLanguage();
+  const requestConfirmation = useConfirmDialog();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState<ProductDraft>(() => emptyDraft(categories[0]?.id));
@@ -123,7 +125,11 @@ export default function ProductManager({
   };
 
   const remove = async () => {
-    if (!selectedProduct || !window.confirm(t("deleteProductConfirm"))) return;
+    if (!selectedProduct || !await requestConfirmation({
+      message: t("deleteProductConfirm"),
+      confirmLabel: t("delete"),
+      tone: "danger",
+    })) return;
 
     setIsDeleting(true);
     try {

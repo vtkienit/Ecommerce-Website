@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { LoaderCircle, PackageOpen, RotateCcw, Search } from "lucide-react";
 import { useLanguage, type TranslationKey } from "../../../app/contexts/LanguageContext";
+import { useConfirmDialog } from "../../../app/contexts/ConfirmDialogContext";
 import AdminFeedbackBanner from "../../../shared/components/AdminFeedbackBanner";
 import AdminPagination from "../../../shared/components/AdminPagination";
 import useDebouncedValue from "../../../shared/hooks/useDebouncedValue";
@@ -21,6 +22,7 @@ const statusKeys: Record<ReturnRequestStatus, TranslationKey> = {
 
 export default function ReturnAdminView() {
   const { lang, t } = useLanguage();
+  const requestConfirmation = useConfirmDialog();
   const [requests, setRequests] = useState<ReturnRequest[]>([]);
   const [filter, setFilter] = useState<StatusFilter>("ALL");
   const [search, setSearch] = useState("");
@@ -77,7 +79,11 @@ export default function ReturnAdminView() {
       setError(t("returnRejectionNoteRequired"));
       return;
     }
-    if (status === "COMPLETED" && !window.confirm(t("completeReturnConfirm"))) return;
+    if (status === "COMPLETED" && !await requestConfirmation({
+      title: t("completeReturn"),
+      message: t("completeReturnConfirm"),
+      confirmLabel: t("completeReturn"),
+    })) return;
 
     setUpdatingId(request.id);
     setError("");

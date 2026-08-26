@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { LoaderCircle, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
+import { useConfirmDialog } from "../../../app/contexts/ConfirmDialogContext";
 import AdminPagination from "../../../shared/components/AdminPagination";
 import type { Category } from "../model/catalogTypes";
 import { createCategory, deleteCategory, updateCategory } from "../api/catalogAdminApi";
@@ -14,6 +15,7 @@ type Props = {
 
 export default function CategoryManager({ categories, onChange, onMessage }: Props) {
   const { t } = useLanguage();
+  const requestConfirmation = useConfirmDialog();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -64,7 +66,11 @@ export default function CategoryManager({ categories, onChange, onMessage }: Pro
   };
 
   const remove = async (category: Category) => {
-    if (!window.confirm(t("deleteCategoryConfirm"))) return;
+    if (!await requestConfirmation({
+      message: t("deleteCategoryConfirm"),
+      confirmLabel: t("delete"),
+      tone: "danger",
+    })) return;
 
     setDeletingId(category.id);
     try {

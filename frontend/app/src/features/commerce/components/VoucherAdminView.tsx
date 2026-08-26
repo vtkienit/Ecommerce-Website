@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Helmet } from "react-helmet-async";
 import { CalendarClock, LoaderCircle, Pencil, Plus, Save, Search, TicketPercent, Trash2, X } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
+import { useConfirmDialog } from "../../../app/contexts/ConfirmDialogContext";
 import AdminFeedbackBanner from "../../../shared/components/AdminFeedbackBanner";
 import AdminPagination from "../../../shared/components/AdminPagination";
 import useDebouncedValue from "../../../shared/hooks/useDebouncedValue";
@@ -22,6 +23,7 @@ type VoucherDraft = {
 
 export default function VoucherAdminView() {
   const { lang, t } = useLanguage();
+  const requestConfirmation = useConfirmDialog();
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [draft, setDraft] = useState<VoucherDraft>(() => emptyDraft());
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -125,7 +127,11 @@ export default function VoucherAdminView() {
   };
 
   const remove = async (voucher: Voucher) => {
-    if (!window.confirm(t("deleteVoucherConfirm").replace("{code}", voucher.code))) return;
+    if (!await requestConfirmation({
+      message: t("deleteVoucherConfirm").replace("{code}", voucher.code),
+      confirmLabel: t("delete"),
+      tone: "danger",
+    })) return;
     setDeletingId(voucher.id);
     setError("");
     setSuccess("");

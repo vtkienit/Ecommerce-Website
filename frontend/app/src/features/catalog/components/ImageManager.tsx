@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Check, ImagePlus, LoaderCircle, Save, Trash2, X } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
+import { useConfirmDialog } from "../../../app/contexts/ConfirmDialogContext";
 import { deleteImage, updateImage, uploadImages } from "../api/catalogAdminApi";
 import type { AdminImage, AdminProduct } from "../model/catalogAdminTypes";
 import { dangerButtonClass, primaryButtonClass, secondaryButtonClass } from "./adminCatalogStyles";
@@ -18,6 +19,7 @@ type Props = {
 
 export default function ImageManager({ product, onChange, onMessage }: Props) {
   const { t } = useLanguage();
+  const requestConfirmation = useConfirmDialog();
   const [primaryFile, setPrimaryFile] = useState<File | null>(null);
   const [secondaryFiles, setSecondaryFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -96,7 +98,11 @@ export default function ImageManager({ product, onChange, onMessage }: Props) {
   };
 
   const remove = async (image: AdminImage) => {
-    if (!window.confirm(t("deleteImageConfirm"))) return;
+    if (!await requestConfirmation({
+      message: t("deleteImageConfirm"),
+      confirmLabel: t("delete"),
+      tone: "danger",
+    })) return;
 
     setDeletingId(image.id);
     try {

@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
+import { useConfirmDialog } from "../../../app/contexts/ConfirmDialogContext";
 import AdminFeedbackBanner from "../../../shared/components/AdminFeedbackBanner";
 import AdminPagination from "../../../shared/components/AdminPagination";
 import useDebouncedValue from "../../../shared/hooks/useDebouncedValue";
@@ -39,6 +40,7 @@ type FlashSaleDraft = {
 
 export default function FlashSaleAdminView() {
   const { lang, t } = useLanguage();
+  const requestConfirmation = useConfirmDialog();
   const [flashSales, setFlashSales] = useState<AdminFlashSale[]>([]);
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [draft, setDraft] = useState<FlashSaleDraft>(() => emptyDraft());
@@ -175,7 +177,11 @@ export default function FlashSaleAdminView() {
   };
 
   const remove = async (flashSale: AdminFlashSale) => {
-    if (!window.confirm(t("deleteFlashSaleConfirm").replace("{name}", flashSale.name))) return;
+    if (!await requestConfirmation({
+      message: t("deleteFlashSaleConfirm").replace("{name}", flashSale.name),
+      confirmLabel: t("delete"),
+      tone: "danger",
+    })) return;
     setDeletingId(flashSale.id);
     setError("");
     setSuccess("");

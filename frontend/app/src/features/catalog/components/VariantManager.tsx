@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { LoaderCircle, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
+import { useConfirmDialog } from "../../../app/contexts/ConfirmDialogContext";
 import { createVariant, deleteVariant, updateVariant } from "../api/catalogAdminApi";
 import type { AdminProduct, AdminVariant } from "../model/catalogAdminTypes";
 import { dangerButtonClass, fieldClass, primaryButtonClass, secondaryButtonClass } from "./adminCatalogStyles";
@@ -15,6 +16,7 @@ const emptyDraft = { sku: "", size: "", thickness: "", color: "", price: "" };
 
 export default function VariantManager({ product, onChange, onMessage }: Props) {
   const { lang, t } = useLanguage();
+  const requestConfirmation = useConfirmDialog();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [draft, setDraft] = useState(emptyDraft);
   const [isSaving, setIsSaving] = useState(false);
@@ -60,7 +62,11 @@ export default function VariantManager({ product, onChange, onMessage }: Props) 
   };
 
   const remove = async (variant: AdminVariant) => {
-    if (!window.confirm(t("deleteVariantConfirm"))) return;
+    if (!await requestConfirmation({
+      message: t("deleteVariantConfirm"),
+      confirmLabel: t("delete"),
+      tone: "danger",
+    })) return;
 
     setDeletingId(variant.id);
     try {

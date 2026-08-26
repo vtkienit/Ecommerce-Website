@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { LoaderCircle, PackageOpen, Search, Truck, UserRound } from "lucide-react";
 import { useLanguage, type TranslationKey } from "../../../app/contexts/LanguageContext";
+import { useConfirmDialog } from "../../../app/contexts/ConfirmDialogContext";
 import AdminFeedbackBanner from "../../../shared/components/AdminFeedbackBanner";
 import AdminPagination from "../../../shared/components/AdminPagination";
 import useDebouncedValue from "../../../shared/hooks/useDebouncedValue";
@@ -47,6 +48,7 @@ const actionKeys: Partial<Record<OrderStatus, TranslationKey>> = {
 
 export default function OrderAdminView() {
   const { lang, t } = useLanguage();
+  const requestConfirmation = useConfirmDialog();
   const [orders, setOrders] = useState<Order[]>([]);
   const [filter, setFilter] = useState<StatusFilter>("ALL");
   const [search, setSearch] = useState("");
@@ -98,7 +100,12 @@ export default function OrderAdminView() {
   });
 
   const changeStatus = async (order: Order, target: OrderStatus) => {
-    if (target === "CANCELLED" && !window.confirm(t("adminCancelOrderConfirm"))) return;
+    if (target === "CANCELLED" && !await requestConfirmation({
+      title: t("cancelOrder"),
+      message: t("adminCancelOrderConfirm"),
+      confirmLabel: t("cancelOrder"),
+      tone: "danger",
+    })) return;
 
     const shippingDetails = shippingDrafts[order.id];
     let handoffDetails: ShippingDraft | undefined;
