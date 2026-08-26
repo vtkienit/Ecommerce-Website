@@ -9,10 +9,10 @@ type RequestOptions = {
   token?: string;
   signal?: AbortSignal;
   fallbackMessage?: string;
-  baseUrl?: string;
 };
 
-const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/$/, "");
+export const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/$/, "");
+export const apiWebSocketUrl = apiUrl.replace(/^http/, "ws");
 
 export class ApiError extends Error {
   status: number;
@@ -34,14 +34,13 @@ export async function apiRequest<TResponse>(
     token,
     signal,
     fallbackMessage = "The request could not be completed",
-    baseUrl = apiUrl,
   }: RequestOptions = {},
 ): Promise<TResponse> {
   let response: Response;
   const formBody = body instanceof FormData;
 
   try {
-    response = await fetch(`${baseUrl.replace(/\/$/, "")}${path}`, {
+    response = await fetch(`${apiUrl}${path}`, {
       method,
       headers: {
         ...(body === undefined || formBody ? {} : { "Content-Type": "application/json" }),

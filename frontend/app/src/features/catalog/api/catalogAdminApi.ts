@@ -12,10 +12,6 @@ import type {
   VariantPayload,
 } from "../model/catalogAdminTypes";
 
-const catalogApiUrl = (
-  import.meta.env.VITE_CATALOG_API_URL || "http://localhost:8081"
-).replace(/\/$/, "");
-
 const adminRequest = <TResponse>(
   path: string,
   method: "GET" | "POST" | "PATCH" | "DELETE" = "GET",
@@ -25,7 +21,6 @@ const adminRequest = <TResponse>(
   if (!token) throw new ApiError("Authentication is required", 401);
 
   return apiRequest<TResponse>(path, {
-    baseUrl: catalogApiUrl,
     method,
     body,
     token,

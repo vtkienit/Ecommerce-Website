@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import notificationSound from "../../../assets/sounds/notification.mp3";
+import { apiWebSocketUrl } from "../../../shared/api/httpClient";
 import { clearAuthSession, getAuthToken, onAuthChange } from "../../auth/model/authSession";
 import NotificationToastQueue from "../components/NotificationToastQueue";
 import type { OrderNotification, ToastNotification } from "../model/notificationTypes";
 
-const commerceApiUrl = (
-  import.meta.env.VITE_COMMERCE_API_URL || "http://localhost:8082"
-).replace(/\/$/, "");
-const notificationWebSocketUrl = `${commerceApiUrl.replace(/^http/, "ws")}/ws/notifications`;
+const notificationWebSocketUrl = `${apiWebSocketUrl}/ws/notifications`;
 const toastDurationMs = 5000;
 
 export default function RealtimeNotificationProvider({ children }: { children: ReactNode }) {

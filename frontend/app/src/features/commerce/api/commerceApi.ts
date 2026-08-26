@@ -16,10 +16,6 @@ import type {
   VoucherPreview,
 } from "../model/commerceTypes";
 
-const commerceApiUrl = (
-  import.meta.env.VITE_COMMERCE_API_URL || "http://localhost:8082"
-).replace(/\/$/, "");
-
 const commerceRequest = <TResponse>(
   path: string,
   method: "GET" | "POST" | "PATCH" | "DELETE" = "GET",
@@ -32,7 +28,6 @@ const commerceRequest = <TResponse>(
   }
 
   return apiRequest<TResponse>(path, {
-    baseUrl: commerceApiUrl,
     method,
     body,
     token,
@@ -41,7 +36,6 @@ const commerceRequest = <TResponse>(
 };
 
 const publicCommerceRequest = <TResponse>(path: string) => apiRequest<TResponse>(path, {
-  baseUrl: commerceApiUrl,
   fallbackMessage: "Commerce request failed",
 });
 

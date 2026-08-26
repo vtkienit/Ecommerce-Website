@@ -4,11 +4,12 @@
 
 | Service | Default port | Owns |
 | --- | ---: | --- |
-| `user-service` | `8080` | authentication, Google login and user profiles |
-| `catalog-service` | `8081` | categories, products, variants, prices and promotions |
-| `commerce-service` | `8082` | carts, orders, payments, vouchers, inventory and stock reservations |
+| `api-gateway` | `8080` | public HTTP/WebSocket entry point and request routing |
+| `user-service` | `8081` | authentication, Google login and user profiles |
+| `catalog-service` | `8082` | categories, products, variants, prices and promotions |
+| `commerce-service` | `8083` | carts, orders, payments, vouchers, inventory and stock reservations |
 
-Each backend service is an independent Spring Boot project under its own `app` directory. Catalog and Commerce use the `catalog` and `commerce` database schemas by default.
+Each backend service is an independent Spring Boot project under its own `app` directory. The frontend sends every API and notification WebSocket request to `api-gateway`; internal services remain responsible for authorization and business rules. Catalog and Commerce use the `catalog` and `commerce` database schemas by default.
 
 Commerce references users and catalog variants through scalar IDs instead of cross-service JPA relationships. Order items keep product and price snapshots so historical orders remain unchanged when the catalog changes.
 
@@ -27,4 +28,4 @@ Get the server key from **Supabase Dashboard → Project Settings → API Keys �
 
 ## Run tests
 
-Run `mvnw.cmd test` from each service's `app` directory.
+Run `mvnw.cmd test` from each service's `app` directory. The default local startup order is User (`8081`), Catalog (`8082`), Commerce (`8083`) and API Gateway (`8080`).

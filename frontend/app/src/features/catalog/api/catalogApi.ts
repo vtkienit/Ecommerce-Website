@@ -9,13 +9,8 @@ import type {
   ProductSummary,
 } from "../model/catalogTypes";
 
-const catalogApiUrl = (
-  import.meta.env.VITE_CATALOG_API_URL || "http://localhost:8081"
-).replace(/\/$/, "");
-
 const catalogRequest = <TResponse>(path: string, signal?: AbortSignal) =>
   apiRequest<TResponse>(path, {
-    baseUrl: catalogApiUrl,
     fallbackMessage: "Catalog request failed",
     signal,
   });
