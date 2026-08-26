@@ -206,9 +206,11 @@ export default function ReturnAdminView() {
                   {(request.status === "REQUESTED" || request.status === "APPROVED") && (
                     <footer className="border-t border-border px-4 py-4 sm:px-5">
                       {request.status === "APPROVED" && (
-                        <p className="mb-3 rounded-md bg-amber-500/10 p-3 text-xs leading-5 text-amber-800 dark:text-amber-200">
-                          {t("manualRefundNotice")}
-                        </p>
+                        <AdminFeedbackBanner
+                          type="warning"
+                          message={t("manualRefundNotice")}
+                          className="mb-3"
+                        />
                       )}
                       <textarea
                         value={notes[request.id] ?? ""}
