@@ -3,7 +3,6 @@ import type { AuthResponse } from "../model/authTypes";
 import {
   clearAuthSession,
   getAuthToken,
-  getRefreshToken,
   isAuthSessionPersistent,
   saveAuthSession,
 } from "../model/authSession";
@@ -51,16 +50,9 @@ export function refreshAuthSession(): Promise<AuthResponse> {
     return refreshPromise;
   }
 
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) {
-    clearAuthSession();
-    return Promise.reject(new ApiError("Your session has expired", 401));
-  }
-
   const persistent = isAuthSessionPersistent();
   refreshPromise = apiRequest<AuthResponse>("/api/auth/refresh", {
     method: "POST",
-    body: { refreshToken },
     fallbackMessage: "Could not renew the session",
   })
     .then((response) => {

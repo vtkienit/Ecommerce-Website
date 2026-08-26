@@ -42,6 +42,7 @@ export async function apiRequest<TResponse>(
   try {
     response = await fetch(`${apiUrl}${path}`, {
       method,
+      credentials: "include",
       headers: {
         ...(body === undefined || formBody ? {} : { "Content-Type": "application/json" }),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),

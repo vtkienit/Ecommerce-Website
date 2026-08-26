@@ -63,6 +63,24 @@ class ApiGatewayApplicationTests {
                 .jsonPath("$.message").isEqualTo("Invalid or expired token");
     }
 
+    @Test
+    void corsAllowsCredentialsOnlyForTheConfiguredFrontend() {
+        webTestClient.options()
+                .uri("/api/auth/login")
+                .header(HttpHeaders.ORIGIN, "http://localhost:5173")
+                .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().valueEquals(
+                        HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN,
+                        "http://localhost:5173"
+                )
+                .expectHeader().valueEquals(
+                        HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS,
+                        "true"
+                );
+    }
+
     private String token(String role) {
         return Jwts.builder()
                 .subject("customer@example.com")

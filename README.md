@@ -11,7 +11,9 @@
 
 Each backend service is an independent Spring Boot project under its own `app` directory. The frontend sends every API and notification WebSocket request to `api-gateway`. The gateway validates JWT roles and rate-limits sensitive authentication endpoints with Redis; internal services still validate authorization and business rules as a second protection layer. Catalog and Commerce use the `catalog` and `commerce` database schemas by default.
 
-Authentication uses a 15-minute JWT access token and a rotating 30-day refresh token. Refresh tokens are stored as SHA-256 hashes in Redis, are replaced after every refresh, and are revoked on logout or password reset.
+Authentication uses a 15-minute JWT access token and a rotating refresh token. The browser receives the refresh token only as an `HttpOnly`, `SameSite=Lax` cookie, while Redis stores only its SHA-256 hash. The cookie lasts for the browser session by default, or 30 days when **Remember me** is selected. Refresh tokens are replaced after every refresh and revoked on logout or password reset.
+
+Local HTTP development uses `REFRESH_TOKEN_COOKIE_SECURE=false` by default. Set it to `true` in the production deployment so the refresh cookie is sent only over HTTPS. If the frontend and API are deployed on different sites, also set `REFRESH_TOKEN_COOKIE_SAME_SITE=None`; otherwise keep the safer `Lax` default. These are deployment settings, not secrets, so they do not belong in the root `.env` file.
 
 Commerce references users and catalog variants through scalar IDs instead of cross-service JPA relationships. Order items keep product and price snapshots so historical orders remain unchanged when the catalog changes.
 

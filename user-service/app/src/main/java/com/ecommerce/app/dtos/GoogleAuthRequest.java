@@ -10,4 +10,6 @@ public class GoogleAuthRequest {
 
     @NotBlank(message = "Google credential is required")
     private String credential;
+
+    private boolean rememberMe;
 }

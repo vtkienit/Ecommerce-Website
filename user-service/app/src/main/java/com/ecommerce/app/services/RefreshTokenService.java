@@ -1,9 +1,9 @@
 package com.ecommerce.app.services;
 
+import com.ecommerce.app.dtos.RefreshTokenData;
 import com.ecommerce.app.entities.User;
 import com.ecommerce.app.exceptions.BaseException;
 import com.ecommerce.app.repositories.RefreshTokenStore;
-import com.ecommerce.app.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -19,38 +19,41 @@ import java.util.HexFormat;
 public class RefreshTokenService {
 
     private final RefreshTokenStore tokenStore;
-    private final UserRepository userRepository;
     private final SecureRandom secureRandom = new SecureRandom();
     private final long expirationSeconds;
 
     public RefreshTokenService(
             RefreshTokenStore tokenStore,
-            UserRepository userRepository,
             @Value("${security.refresh-token.expiration-seconds:2592000}") long expirationSeconds
     ) {
         this.tokenStore = tokenStore;
-        this.userRepository = userRepository;
         this.expirationSeconds = expirationSeconds;
     }
 
-    public String create(User user) {
+    public String create(User user, boolean persistent) {
         byte[] tokenBytes = new byte[32];
         secureRandom.nextBytes(tokenBytes);
         String token = Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
-        tokenStore.save(hash(token), user.getId());
+        tokenStore.save(hash(token), user.getId(), persistent);
         return token;
     }
 
-    public User consume(String token) {
-        Long userId = tokenStore.consume(hash(token.trim()));
-        if (userId == null) {
+    public RefreshTokenData consume(String token) {
+        if (token == null || token.isBlank()) {
             throw invalidToken();
         }
 
-        return userRepository.findById(userId).orElseThrow(this::invalidToken);
+        RefreshTokenData tokenData = tokenStore.consume(hash(token.trim()));
+        if (tokenData == null) {
+            throw invalidToken();
+        }
+        return tokenData;
     }
 
     public void revoke(String token) {
+        if (token == null || token.isBlank()) {
+            return;
+        }
         tokenStore.delete(hash(token.trim()));
     }
 

@@ -1,7 +1,7 @@
 import type { AuthResponse, AuthUser } from "./authTypes";
 
 const tokenKey = "quydung.auth.token";
-const refreshTokenKey = "quydung.auth.refresh-token";
+const legacyRefreshTokenKey = "quydung.auth.refresh-token";
 const userKey = "quydung.auth.user";
 const authChangeEvent = "quydung-auth-change";
 
@@ -10,7 +10,6 @@ export function saveAuthSession(response: AuthResponse, persistent: boolean) {
 
   const storage = persistent ? localStorage : sessionStorage;
   storage.setItem(tokenKey, response.token);
-  storage.setItem(refreshTokenKey, response.refreshToken);
   storage.setItem(userKey, JSON.stringify(response.user));
   window.dispatchEvent(new Event(authChangeEvent));
 }
@@ -22,10 +21,10 @@ export function clearAuthSession() {
 
 function clearStoredSession() {
   localStorage.removeItem(tokenKey);
-  localStorage.removeItem(refreshTokenKey);
+  localStorage.removeItem(legacyRefreshTokenKey);
   localStorage.removeItem(userKey);
   sessionStorage.removeItem(tokenKey);
-  sessionStorage.removeItem(refreshTokenKey);
+  sessionStorage.removeItem(legacyRefreshTokenKey);
   sessionStorage.removeItem(userKey);
 }
 
@@ -42,12 +41,8 @@ export function getAuthToken() {
   return localStorage.getItem(tokenKey) || sessionStorage.getItem(tokenKey);
 }
 
-export function getRefreshToken() {
-  return localStorage.getItem(refreshTokenKey) || sessionStorage.getItem(refreshTokenKey);
-}
-
 export function isAuthSessionPersistent() {
-  return Boolean(localStorage.getItem(refreshTokenKey) || localStorage.getItem(tokenKey));
+  return Boolean(localStorage.getItem(tokenKey));
 }
 
 export function getStoredUser(): AuthUser | null {
@@ -69,10 +64,10 @@ export const onAuthChange = (listener: () => void) => {
 };
 
 function getSessionStorage() {
-  if (localStorage.getItem(tokenKey) || localStorage.getItem(refreshTokenKey)) {
+  if (localStorage.getItem(tokenKey)) {
     return localStorage;
   }
-  if (sessionStorage.getItem(tokenKey) || sessionStorage.getItem(refreshTokenKey)) {
+  if (sessionStorage.getItem(tokenKey)) {
     return sessionStorage;
   }
   return null;

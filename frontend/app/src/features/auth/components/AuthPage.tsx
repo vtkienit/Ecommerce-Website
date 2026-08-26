@@ -113,10 +113,12 @@ export default function AuthPage({ mode }: AuthPageProps) {
             name: fields.name.trim(),
             email: fields.email.trim(),
             password: fields.password,
+            rememberMe: true,
           })
         : await login({
             email: fields.email.trim(),
             password: fields.password,
+            rememberMe,
           });
 
       saveAuthSession(response, isRegister || rememberMe);
@@ -138,8 +140,9 @@ export default function AuthPage({ mode }: AuthPageProps) {
       setIsSubmitting(true);
 
       try {
-        const response = await authenticateWithGoogle(credential);
-        saveAuthSession(response, isRegister || rememberMe);
+        const persistent = isRegister || rememberMe;
+        const response = await authenticateWithGoogle(credential, persistent);
+        saveAuthSession(response, persistent);
         navigate(returnTo, { replace: true });
       } catch (error) {
         setAuthError(error instanceof Error ? error.message : t("authRequestFailed"));

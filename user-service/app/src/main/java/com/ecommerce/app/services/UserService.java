@@ -1,9 +1,10 @@
 package com.ecommerce.app.services;
 
 import com.ecommerce.app.dtos.AuthResponse;
+import com.ecommerce.app.dtos.AuthSession;
 import com.ecommerce.app.dtos.GoogleAuthRequest;
 import com.ecommerce.app.dtos.GoogleUserInfo;
-import com.ecommerce.app.dtos.RefreshTokenRequest;
+import com.ecommerce.app.dtos.RefreshTokenData;
 import com.ecommerce.app.dtos.UserLoginRequest;
 import com.ecommerce.app.dtos.UserAddressUpdateRequest;
 import com.ecommerce.app.dtos.UserProfileUpdateRequest;
@@ -45,7 +46,7 @@ public class UserService {
     }
 
     @Transactional
-    public AuthResponse register(UserRegisterRequest request) {
+    public AuthSession register(UserRegisterRequest request) {
         String email = normalizeEmail(request.getEmail());
 
         if (userRepository.existsByEmailIgnoreCase(email)) {
@@ -57,10 +58,10 @@ public class UserService {
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        return createAuthResponse(userRepository.save(user), true);
+        return createAuthSession(userRepository.save(user), true, request.isRememberMe());
     }
 
-    public AuthResponse login(UserLoginRequest request) {
+    public AuthSession login(UserLoginRequest request) {
         User user = userRepository.findByEmailIgnoreCase(normalizeEmail(request.getEmail()))
                 .orElseThrow(this::invalidCredentials);
 
@@ -68,17 +69,17 @@ public class UserService {
             throw invalidCredentials();
         }
 
-        return createAuthResponse(user, false);
+        return createAuthSession(user, false, request.isRememberMe());
     }
 
     @Transactional
-    public AuthResponse authenticateWithGoogle(GoogleAuthRequest request) {
+    public AuthSession authenticateWithGoogle(GoogleAuthRequest request) {
         GoogleUserInfo googleUser = googleIdentityService.verify(request.getCredential());
         String email = normalizeEmail(googleUser.getEmail());
 
         User user = userRepository.findByGoogleSubject(googleUser.getSubject()).orElse(null);
         if (user != null) {
-            return createAuthResponse(user, false);
+            return createAuthSession(user, false, request.isRememberMe());
         }
 
         user = userRepository.findByEmailIgnoreCase(email).orElse(null);
@@ -94,7 +95,7 @@ public class UserService {
 
         user.setGoogleSubject(googleUser.getSubject());
 
-        return createAuthResponse(userRepository.save(user), newUser);
+        return createAuthSession(userRepository.save(user), newUser, request.isRememberMe());
     }
 
     public List<UserResponse> getAllUsers() {
@@ -104,13 +105,18 @@ public class UserService {
                 .toList();
     }
 
-    public AuthResponse refresh(RefreshTokenRequest request) {
-        User user = refreshTokenService.consume(request.getRefreshToken());
-        return createAuthResponse(user, false);
+    public AuthSession refresh(String refreshToken) {
+        RefreshTokenData tokenData = refreshTokenService.consume(refreshToken);
+        User user = userRepository.findById(tokenData.getUserId())
+                .orElseThrow(() -> new BaseException(
+                        "Invalid or expired refresh token",
+                        HttpStatus.UNAUTHORIZED
+                ));
+        return createAuthSession(user, false, tokenData.isPersistent());
     }
 
-    public void logout(RefreshTokenRequest request) {
-        refreshTokenService.revoke(request.getRefreshToken());
+    public void logout(String refreshToken) {
+        refreshTokenService.revoke(refreshToken);
     }
 
     public UserResponse getCurrentUser(String email) {
@@ -145,15 +151,18 @@ public class UserService {
         return toResponse(userRepository.save(user));
     }
 
-    private AuthResponse createAuthResponse(User user, boolean newUser) {
-        return new AuthResponse(
+    private AuthSession createAuthSession(User user, boolean newUser, boolean persistent) {
+        AuthResponse response = new AuthResponse(
                 jwtService.generateToken(user),
                 "Bearer",
                 jwtService.getExpirationSeconds(),
-                refreshTokenService.create(user),
-                refreshTokenService.getExpirationSeconds(),
                 newUser,
                 toResponse(user)
+        );
+        return new AuthSession(
+                response,
+                refreshTokenService.create(user, persistent),
+                persistent
         );
     }
 

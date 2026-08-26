@@ -1,5 +1,6 @@
 package com.ecommerce.app.repositories;
 
+import com.ecommerce.app.dtos.RefreshTokenData;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -25,24 +26,29 @@ public class RefreshTokenStore {
         this.tokenTtl = Duration.ofSeconds(expirationSeconds);
     }
 
-    public void save(String tokenHash, Long userId) {
-        redisTemplate.opsForValue().set(tokenKey(tokenHash), userId.toString(), tokenTtl);
+    public void save(String tokenHash, Long userId, boolean persistent) {
+        String value = userId + ":" + persistent;
+        redisTemplate.opsForValue().set(tokenKey(tokenHash), value, tokenTtl);
         redisTemplate.opsForSet().add(userKey(userId), tokenHash);
         redisTemplate.expire(userKey(userId), tokenTtl);
     }
 
-    public Long consume(String tokenHash) {
-        Long userId = parseUserId(redisTemplate.opsForValue().getAndDelete(tokenKey(tokenHash)));
-        if (userId != null) {
-            redisTemplate.opsForSet().remove(userKey(userId), tokenHash);
+    public RefreshTokenData consume(String tokenHash) {
+        RefreshTokenData tokenData = parseTokenData(
+                redisTemplate.opsForValue().getAndDelete(tokenKey(tokenHash))
+        );
+        if (tokenData != null) {
+            redisTemplate.opsForSet().remove(userKey(tokenData.getUserId()), tokenHash);
         }
-        return userId;
+        return tokenData;
     }
 
     public void delete(String tokenHash) {
-        Long userId = parseUserId(redisTemplate.opsForValue().getAndDelete(tokenKey(tokenHash)));
-        if (userId != null) {
-            redisTemplate.opsForSet().remove(userKey(userId), tokenHash);
+        RefreshTokenData tokenData = parseTokenData(
+                redisTemplate.opsForValue().getAndDelete(tokenKey(tokenHash))
+        );
+        if (tokenData != null) {
+            redisTemplate.opsForSet().remove(userKey(tokenData.getUserId()), tokenHash);
         }
     }
 
@@ -64,10 +70,15 @@ public class RefreshTokenStore {
         return USER_PREFIX + userId;
     }
 
-    private Long parseUserId(String value) {
+    private RefreshTokenData parseTokenData(String value) {
+        if (value == null) {
+            return null;
+        }
+
         try {
-            return value == null ? null : Long.valueOf(value);
-        } catch (NumberFormatException exception) {
+            String[] parts = value.split(":", 2);
+            return new RefreshTokenData(Long.valueOf(parts[0]), Boolean.parseBoolean(parts[1]));
+        } catch (NumberFormatException | ArrayIndexOutOfBoundsException exception) {
             return null;
         }
     }

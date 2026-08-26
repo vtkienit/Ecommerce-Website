@@ -1,5 +1,5 @@
 import { apiRequest } from "../../../shared/api/httpClient";
-import { clearAuthSession, getRefreshToken } from "../model/authSession";
+import { clearAuthSession } from "../model/authSession";
 import type {
   AuthResponse,
   LoginRequest,
@@ -22,10 +22,10 @@ export const register = (request: RegisterRequest) =>
     fallbackMessage: "Registration failed",
   });
 
-export const authenticateWithGoogle = (credential: string) =>
+export const authenticateWithGoogle = (credential: string, rememberMe: boolean) =>
   apiRequest<AuthResponse>("/api/auth/google", {
     method: "POST",
-    body: { credential },
+    body: { credential, rememberMe },
     fallbackMessage: "Google authentication failed",
   });
 
@@ -51,15 +51,11 @@ export const resetPassword = (
 });
 
 export const logout = async () => {
-  const refreshToken = getRefreshToken();
   clearAuthSession();
-
-  if (!refreshToken) return;
 
   try {
     await apiRequest<void>("/api/auth/logout", {
       method: "POST",
-      body: { refreshToken },
     });
   } catch {
     // Local logout must still succeed when the server is unavailable.

@@ -4,22 +4,29 @@ import com.ecommerce.app.repositories.UserRepository;
 import com.ecommerce.app.repositories.RefreshTokenStore;
 import com.ecommerce.app.services.GoogleIdentityService;
 import com.ecommerce.app.dtos.GoogleUserInfo;
+import com.ecommerce.app.dtos.RefreshTokenData;
+import com.ecommerce.app.services.RefreshTokenCookieService;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -51,16 +58,24 @@ class AuthFlowTests {
                                 {
                                   "name": "Quy Dung",
                                   "email": "USER@example.com",
-                                  "password": "password123"
+                                  "password": "password123",
+                                  "rememberMe": true
                                 }
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.token").isNotEmpty())
-                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
-                .andExpect(jsonPath("$.refreshExpiresIn").value(2592000))
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.newUser").value(true))
-                .andExpect(jsonPath("$.user.email").value("user@example.com"));
+                .andExpect(jsonPath("$.user.email").value("user@example.com"))
+                .andExpect(header().string(
+                        HttpHeaders.SET_COOKIE,
+                        containsString("HttpOnly; SameSite=Lax")
+                ))
+                .andExpect(header().string(
+                        HttpHeaders.SET_COOKIE,
+                        containsString("Max-Age=2592000")
+                ));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -78,47 +93,50 @@ class AuthFlowTests {
 
     @Test
     void refreshTokenIsRotatedAndCanBeRevoked() throws Exception {
-        String registerResponse = mockMvc.perform(post("/api/auth/register")
+        String registerCookie = mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
                                   "name": "Refresh User",
                                   "email": "refresh@example.com",
-                                  "password": "password123"
+                                  "password": "password123",
+                                  "rememberMe": true
                                 }
                                 """))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
-                .getContentAsString();
+                .getHeader(HttpHeaders.SET_COOKIE);
 
-        String refreshToken = com.jayway.jsonpath.JsonPath.read(registerResponse, "$.refreshToken");
+        String refreshToken = cookieValue(registerCookie);
         Long userId = userRepository.findByEmailIgnoreCase("refresh@example.com").orElseThrow().getId();
-        when(refreshTokenStore.consume(anyString())).thenReturn(userId, (Long) null);
+        when(refreshTokenStore.consume(anyString()))
+                .thenReturn(new RefreshTokenData(userId, true), (RefreshTokenData) null);
 
-        String refreshResponse = mockMvc.perform(post("/api/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"refreshToken\":\"" + refreshToken + "\"}"))
+        String refreshCookie = mockMvc.perform(post("/api/auth/refresh")
+                        .cookie(new Cookie(RefreshTokenCookieService.COOKIE_NAME, refreshToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isNotEmpty())
-                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
                 .andReturn()
                 .getResponse()
-                .getContentAsString();
+                .getHeader(HttpHeaders.SET_COOKIE);
 
-        String rotatedToken = com.jayway.jsonpath.JsonPath.read(refreshResponse, "$.refreshToken");
+        String rotatedToken = cookieValue(refreshCookie);
         org.assertj.core.api.Assertions.assertThat(rotatedToken).isNotEqualTo(refreshToken);
 
         mockMvc.perform(post("/api/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"refreshToken\":\"" + refreshToken + "\"}"))
+                        .cookie(new Cookie(RefreshTokenCookieService.COOKIE_NAME, refreshToken)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Invalid or expired refresh token"));
 
         mockMvc.perform(post("/api/auth/logout")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"refreshToken\":\"" + rotatedToken + "\"}"))
-                .andExpect(status().isNoContent());
+                        .cookie(new Cookie(RefreshTokenCookieService.COOKIE_NAME, rotatedToken)))
+                .andExpect(status().isNoContent())
+                .andExpect(header().string(
+                        HttpHeaders.SET_COOKIE,
+                        containsString("Max-Age=0")
+                ));
 
         verify(refreshTokenStore).delete(anyString());
     }
@@ -145,6 +163,40 @@ class AuthFlowTests {
                 .andExpect(jsonPath("$.user.email").value("google@example.com"));
 
         org.assertj.core.api.Assertions.assertThat(userRepository.count()).isEqualTo(1);
+    }
+
+    @Test
+    void loginWithoutRememberMeCreatesASessionCookie() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Session User",
+                                  "email": "session@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "session@example.com",
+                                  "password": "password123",
+                                  "rememberMe": false
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("HttpOnly")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, not(containsString("Max-Age="))));
+    }
+
+    @Test
+    void refreshWithoutCookieIsUnauthorized() throws Exception {
+        mockMvc.perform(post("/api/auth/refresh"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Invalid or expired refresh token"));
     }
 
     @Test
@@ -269,5 +321,13 @@ class AuthFlowTests {
                 .andExpect(jsonPath("$.addressLine").value("123 Nguyen Trai"))
                 .andExpect(jsonPath("$.provinceCode").value(1))
                 .andExpect(jsonPath("$.wardCode").value(4));
+    }
+
+    private String cookieValue(String setCookieHeader) {
+        org.assertj.core.api.Assertions.assertThat(setCookieHeader).isNotBlank();
+        return setCookieHeader.substring(
+                setCookieHeader.indexOf('=') + 1,
+                setCookieHeader.indexOf(';')
+        );
     }
 }

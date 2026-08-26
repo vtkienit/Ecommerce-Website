@@ -37,6 +37,8 @@ security:
 
   refresh-token:
     expiration-seconds: ${REFRESH_TOKEN_EXPIRATION_SECONDS:2592000}
+    cookie-secure: ${REFRESH_TOKEN_COOKIE_SECURE:false}
+    cookie-same-site: ${REFRESH_TOKEN_COOKIE_SAME_SITE:Lax}
 
   password-reset:
     secret: ${PASSWORD_RESET_SECRET:${JWT_SECRET}}

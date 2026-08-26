@@ -18,8 +18,6 @@ export type AuthResponse = {
   token: string;
   tokenType: "Bearer";
   expiresIn: number;
-  refreshToken: string;
-  refreshExpiresIn: number;
   newUser: boolean;
   user: AuthUser;
 };
@@ -27,6 +25,7 @@ export type AuthResponse = {
 export type LoginRequest = {
   email: string;
   password: string;
+  rememberMe: boolean;
 };
 
 export type RegisterRequest = LoginRequest & {
