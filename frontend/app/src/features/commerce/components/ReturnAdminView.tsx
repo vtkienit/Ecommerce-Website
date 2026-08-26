@@ -265,10 +265,10 @@ export default function ReturnAdminView() {
 }
 
 function returnStatusClass(status: ReturnRequestStatus) {
-  if (status === "COMPLETED") return "border border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200";
-  if (status === "REJECTED") return "border border-red-300 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200";
-  if (status === "APPROVED") return "border border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200";
-  return "border border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200";
+  if (status === "COMPLETED") return "bg-emerald-700 text-white shadow-sm";
+  if (status === "REJECTED") return "bg-rose-700 text-white shadow-sm";
+  if (status === "APPROVED") return "bg-indigo-700 text-white shadow-sm";
+  return "bg-amber-400 text-amber-950 shadow-sm";
 }
 
 function paymentLabel(

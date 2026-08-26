@@ -419,10 +419,10 @@ function AdminField({ label, value, onChange, type = "text", min, max, step, cla
 function StatusBadge({ status }: { status: "active" | "upcoming" | "expired" }) {
   const { t } = useLanguage();
   const classes = status === "active"
-    ? "bg-green-500/10 text-green-700 dark:text-green-300"
+    ? "bg-emerald-700 text-white shadow-sm"
     : status === "upcoming"
-      ? "bg-blue-500/10 text-blue-700 dark:text-blue-300"
-      : "bg-bg-secondary text-text-tertiary";
+      ? "bg-indigo-700 text-white shadow-sm"
+      : "border border-border bg-bg-tertiary text-text-secondary";
   const label = status === "active" ? t("flashSaleActive") : status === "upcoming" ? t("flashSaleUpcoming") : t("flashSaleExpired");
   return <span className={`rounded-full px-2 py-1 text-xs font-semibold ${classes}`}>{label}</span>;
 }

@@ -332,10 +332,12 @@ export default function OrderAdminView() {
 }
 
 function statusClass(status: OrderStatus) {
-  if (status === "DELIVERED") return "bg-green-500/10 text-green-700 dark:text-green-300";
-  if (status === "CANCELLED") return "bg-red-500/10 text-red-700 dark:text-red-300";
-  if (status === "SHIPPED") return "bg-amber-500/10 text-amber-700 dark:text-amber-300";
-  return "bg-primary/10 text-primary";
+  if (status === "DELIVERED") return "bg-emerald-700 text-white shadow-sm";
+  if (status === "CANCELLED") return "bg-rose-700 text-white shadow-sm";
+  if (status === "SHIPPED") return "bg-sky-700 text-white shadow-sm";
+  if (status === "PROCESSING") return "bg-violet-700 text-white shadow-sm";
+  if (status === "CONFIRMED") return "bg-indigo-700 text-white shadow-sm";
+  return "bg-amber-400 text-amber-950 shadow-sm";
 }
 
 function paymentLabel(order: Order, t: (key: TranslationKey) => string) {

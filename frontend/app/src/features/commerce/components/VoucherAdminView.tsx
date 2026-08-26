@@ -240,7 +240,7 @@ export default function VoucherAdminView() {
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="font-mono text-lg font-bold text-primary">{voucher.code}</span>
-                            <span className={`rounded-full px-2 py-1 text-xs font-semibold ${voucher.active ? "bg-green-500/10 text-green-700 dark:text-green-300" : "bg-bg-secondary text-text-tertiary"}`}>
+                            <span className={`rounded-full px-2 py-1 text-xs font-semibold ${voucher.active ? "bg-emerald-700 text-white shadow-sm" : "border border-border bg-bg-tertiary text-text-secondary"}`}>
                               {voucher.active ? t("voucherActive") : t("voucherInactive")}
                             </span>
                           </div>

@@ -17,17 +17,15 @@ export default function AdminFeedbackBanner({
   return (
     <div
       role={isError ? "alert" : "status"}
-      className={`${className} flex items-start gap-3 rounded-lg border border-l-4 px-4 py-3 text-sm font-medium text-text shadow-sm ${
-        isError
-          ? "border-red-200 border-l-red-600 bg-red-50/80 dark:border-red-900 dark:border-l-red-400 dark:bg-red-950/30"
-          : "border-emerald-200 border-l-emerald-600 bg-emerald-50/80 dark:border-emerald-900 dark:border-l-emerald-400 dark:bg-emerald-950/30"
+      className={`${className} flex items-center gap-3 rounded-lg border border-border border-l-4 bg-bg px-4 py-3 text-sm font-medium text-text shadow-sm ${
+        isError ? "border-l-rose-600" : "border-l-emerald-600"
       }`}
     >
-      <Icon
-        size={19}
-        className={`mt-0.5 shrink-0 ${isError ? "text-red-600 dark:text-red-300" : "text-emerald-600 dark:text-emerald-300"}`}
-        aria-hidden="true"
-      />
+      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white ${
+        isError ? "bg-rose-600" : "bg-emerald-600"
+      }`}>
+        <Icon size={16} aria-hidden="true" />
+      </span>
       <span className="min-w-0 leading-5">{message}</span>
     </div>
   );
