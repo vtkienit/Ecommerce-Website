@@ -88,7 +88,7 @@ export const getAdminDashboard = () =>
 export const updateOrderStatus = (
   orderId: number,
   status: OrderStatus,
-  shippingDetails?: { shippingCarrier: string; trackingCode: string },
+  shippingDetails?: { shippingCarrier: string },
 ) => commerceRequest<Order>(`/api/admin/orders/${orderId}/status`, "PATCH", {
   status,
   ...shippingDetails,

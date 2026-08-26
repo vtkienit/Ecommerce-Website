@@ -9,9 +9,7 @@ import type { Order, OrderStatus } from "../model/commerceTypes";
 import OrderStatusTimeline from "./OrderStatusTimeline";
 
 type StatusFilter = "ALL" | OrderStatus;
-type ShippingDraft = { shippingCarrier: string; trackingCode: string };
-
-const trackingCodePattern = /^[A-Za-z0-9]{8}$/;
+type ShippingDraft = { shippingCarrier: string };
 
 const statuses: StatusFilter[] = [
   "ALL",
@@ -103,20 +101,13 @@ export default function OrderAdminView() {
 
     const shippingDetails = shippingDrafts[order.id];
     let handoffDetails: ShippingDraft | undefined;
-    if (target === "SHIPPED"
-      && (!shippingDetails?.shippingCarrier.trim() || !shippingDetails.trackingCode.trim())) {
+    if (target === "SHIPPED" && !shippingDetails?.shippingCarrier.trim()) {
       setError(t("shippingInfoRequired"));
-      return;
-    }
-    if (target === "SHIPPED" && shippingDetails
-      && !trackingCodePattern.test(shippingDetails.trackingCode.trim())) {
-      setError(t("trackingCodeInvalid"));
       return;
     }
     if (target === "SHIPPED" && shippingDetails) {
       handoffDetails = {
         shippingCarrier: shippingDetails.shippingCarrier.trim(),
-        trackingCode: shippingDetails.trackingCode.trim(),
       };
     }
 
@@ -140,8 +131,7 @@ export default function OrderAdminView() {
       });
       setSuccess(t("orderStatusUpdated"));
     } catch (requestError) {
-      const message = requestError instanceof Error ? requestError.message : t("orderAdminError");
-      setError(message === "Tracking code already exists" ? t("trackingCodeDuplicate") : message);
+      setError(requestError instanceof Error ? requestError.message : t("orderAdminError"));
     } finally {
       setUpdatingId(null);
     }
@@ -255,7 +245,7 @@ export default function OrderAdminView() {
                         <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-text">
                           <Truck size={18} className="text-primary" /> {t("shipmentInformation")}
                         </div>
-                        <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="max-w-xl">
                           <label className="text-sm font-medium text-text-secondary">
                             {t("shippingCarrier")}
                             <input
@@ -265,32 +255,13 @@ export default function OrderAdminView() {
                                 ...current,
                                 [order.id]: {
                                   shippingCarrier: event.target.value,
-                                  trackingCode: current[order.id]?.trackingCode ?? "",
                                 },
                               }))}
                               placeholder={t("shippingCarrierPlaceholder")}
                               className="mt-1.5 h-11 w-full rounded-md border border-border bg-bg px-3 text-text outline-none transition-colors focus:border-primary"
                             />
                           </label>
-                          <label className="text-sm font-medium text-text-secondary">
-                            {t("trackingCode")}
-                            <input
-                              value={shippingDrafts[order.id]?.trackingCode ?? ""}
-                              onChange={(event) => setShippingDrafts((current) => ({
-                                ...current,
-                                [order.id]: {
-                                  shippingCarrier: current[order.id]?.shippingCarrier ?? "",
-                                  trackingCode: event.target.value,
-                                },
-                              }))}
-                              placeholder={t("trackingCodePlaceholder")}
-                              maxLength={8}
-                              pattern="[A-Za-z0-9]{8}"
-                              autoComplete="off"
-                              title={t("trackingCodeInvalid")}
-                              className="mt-1.5 h-11 w-full rounded-md border border-border bg-bg px-3 text-text outline-none transition-colors focus:border-primary"
-                            />
-                          </label>
+                          <p className="mt-2 text-xs text-text-tertiary">{t("trackingCodeGeneratedHint")}</p>
                         </div>
                       </section>
                     )}

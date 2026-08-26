@@ -17,7 +17,4 @@ public class UpdateOrderStatusRequest {
 
     @Size(max = 100, message = "Shipping carrier must not exceed 100 characters")
     private String shippingCarrier;
-
-    @Size(max = 100, message = "Tracking code must not exceed 100 characters")
-    private String trackingCode;
 }

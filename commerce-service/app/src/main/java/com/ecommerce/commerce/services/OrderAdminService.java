@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.criteria.Predicate;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -31,13 +32,17 @@ import java.util.Set;
 @Transactional
 public class OrderAdminService {
 
-    private static final String TRACKING_CODE_PATTERN = "[A-Za-z0-9]{8}";
+    private static final String TRACKING_CODE_CHARACTERS =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    private static final int TRACKING_CODE_LENGTH = 8;
+    private static final int TRACKING_CODE_ATTEMPTS = 20;
     private static final Map<OrderStatus, Set<OrderStatus>> ALLOWED_TRANSITIONS = createTransitions();
 
     private final OrderRepository orderRepository;
     private final OrderLifecycleService lifecycleService;
     private final OrderService orderService;
     private final ApplicationEventPublisher eventPublisher;
+    private final SecureRandom secureRandom = new SecureRandom();
 
     public OrderAdminService(
             OrderRepository orderRepository,
@@ -123,27 +128,31 @@ public class OrderAdminService {
     }
 
     private void addShippingDetails(Order order, UpdateOrderStatusRequest request) {
-        if (request.getShippingCarrier() == null || request.getShippingCarrier().isBlank()
-                || request.getTrackingCode() == null || request.getTrackingCode().isBlank()) {
-            throw new CommerceException(
-                    "Shipping carrier and tracking code are required",
-                    HttpStatus.BAD_REQUEST
-            );
-        }
-        String trackingCode = request.getTrackingCode().trim();
-        if (!trackingCode.matches(TRACKING_CODE_PATTERN)) {
-            throw new CommerceException(
-                    "Tracking code must contain exactly 8 letters or numbers",
-                    HttpStatus.BAD_REQUEST
-            );
-        }
-        String normalizedTrackingCode = trackingCode.toUpperCase(Locale.ROOT);
-        if (orderRepository.existsByTrackingCodeIgnoreCase(normalizedTrackingCode)) {
-            throw new CommerceException("Tracking code already exists", HttpStatus.CONFLICT);
+        if (request.getShippingCarrier() == null || request.getShippingCarrier().isBlank()) {
+            throw new CommerceException("Shipping carrier is required", HttpStatus.BAD_REQUEST);
         }
         order.setShippingCarrier(request.getShippingCarrier().trim());
-        order.setTrackingCode(normalizedTrackingCode);
+        order.setTrackingCode(generateTrackingCode());
         order.setShippedAt(LocalDateTime.now());
+    }
+
+    private String generateTrackingCode() {
+        for (int attempt = 0; attempt < TRACKING_CODE_ATTEMPTS; attempt++) {
+            StringBuilder code = new StringBuilder(TRACKING_CODE_LENGTH);
+            for (int index = 0; index < TRACKING_CODE_LENGTH; index++) {
+                code.append(TRACKING_CODE_CHARACTERS.charAt(
+                        secureRandom.nextInt(TRACKING_CODE_CHARACTERS.length())
+                ));
+            }
+            String trackingCode = code.toString();
+            if (!orderRepository.existsByTrackingCodeIgnoreCase(trackingCode)) {
+                return trackingCode;
+            }
+        }
+        throw new CommerceException(
+                "Could not generate a unique tracking code",
+                HttpStatus.SERVICE_UNAVAILABLE
+        );
     }
 
     private Order saveOrder(Order order, OrderStatus nextStatus) {
@@ -151,7 +160,10 @@ public class OrderAdminService {
             return orderRepository.saveAndFlush(order);
         } catch (DataIntegrityViolationException exception) {
             if (nextStatus == OrderStatus.SHIPPED) {
-                throw new CommerceException("Tracking code already exists", HttpStatus.CONFLICT);
+                throw new CommerceException(
+                        "Could not generate a unique tracking code. Please retry",
+                        HttpStatus.CONFLICT
+                );
             }
             throw exception;
         }

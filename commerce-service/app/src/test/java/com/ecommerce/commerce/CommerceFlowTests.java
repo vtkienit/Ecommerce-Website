@@ -493,7 +493,7 @@ class CommerceFlowTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].status").value("SHIPPED"))
                 .andExpect(jsonPath("$[0].shippingCarrier").value("GHN"))
-                .andExpect(jsonPath("$[0].trackingCode").value("GHN00001"))
+                .andExpect(jsonPath("$[0].trackingCode").isNotEmpty())
                 .andExpect(jsonPath("$[0].shippedAt").isNotEmpty());
 
         updateOrderStatus(adminToken, orderId, "DELIVERED", "DELIVERED");
@@ -512,7 +512,7 @@ class CommerceFlowTests {
     }
 
     @Test
-    void adminMustProvideShippingDetailsWhenHandingOffOrder() throws Exception {
+    void adminMustProvideShippingCarrierWhenHandingOffOrder() throws Exception {
         String customerToken = token(80L);
         long orderId = checkout(customerToken, 101L, 1);
         String adminToken = token(81L, "Admin");
@@ -528,29 +528,11 @@ class CommerceFlowTests {
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message")
-                        .value("Shipping carrier and tracking code are required"));
+                        .value("Shipping carrier is required"));
     }
 
     @Test
-    void trackingCodeMustHaveEightLettersOrNumbers() throws Exception {
-        long orderId = checkout(token(82L), 101L, 1);
-        String adminToken = token(83L, "Admin");
-        updateOrderStatus(adminToken, orderId, "CONFIRMED", "CONFIRMED");
-        updateOrderStatus(adminToken, orderId, "PROCESSING", "PROCESSING");
-
-        mockMvc.perform(patch("/api/admin/orders/{id}/status", orderId)
-                        .header("Authorization", "Bearer " + adminToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"status":"SHIPPED","shippingCarrier":"GHN","trackingCode":"ABC-1234"}
-                                """))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message")
-                        .value("Tracking code must contain exactly 8 letters or numbers"));
-    }
-
-    @Test
-    void trackingCodeMustBeUniqueIgnoringCase() throws Exception {
+    void backendGeneratesUniqueTrackingCodes() throws Exception {
         long firstOrderId = checkout(token(84L), 101L, 1);
         long secondOrderId = checkout(token(85L), 102L, 1);
         String adminToken = token(86L, "Admin");
@@ -559,23 +541,33 @@ class CommerceFlowTests {
         updateOrderStatus(adminToken, secondOrderId, "CONFIRMED", "CONFIRMED");
         updateOrderStatus(adminToken, secondOrderId, "PROCESSING", "PROCESSING");
 
-        mockMvc.perform(patch("/api/admin/orders/{id}/status", firstOrderId)
+        String firstResponse = mockMvc.perform(patch("/api/admin/orders/{id}/status", firstOrderId)
                         .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"status":"SHIPPED","shippingCarrier":"GHN","trackingCode":"ab12cd34"}
+                                {"status":"SHIPPED","shippingCarrier":"GHN"}
                                 """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.trackingCode").value("AB12CD34"));
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        mockMvc.perform(patch("/api/admin/orders/{id}/status", secondOrderId)
+        String secondResponse = mockMvc.perform(patch("/api/admin/orders/{id}/status", secondOrderId)
                         .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"status":"SHIPPED","shippingCarrier":"GHTK","trackingCode":"AB12CD34"}
+                                {"status":"SHIPPED","shippingCarrier":"GHTK"}
                                 """))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("Tracking code already exists"));
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String firstTrackingCode = objectMapper.readTree(firstResponse).path("trackingCode").asString();
+        String secondTrackingCode = objectMapper.readTree(secondResponse).path("trackingCode").asString();
+        assertThat(firstTrackingCode).matches("[A-Za-z0-9]{8}");
+        assertThat(secondTrackingCode).matches("[A-Za-z0-9]{8}");
+        assertThat(secondTrackingCode).isNotEqualToIgnoringCase(firstTrackingCode);
     }
 
     @Test
@@ -824,7 +816,7 @@ class CommerceFlowTests {
     ) throws Exception {
         String requestBody = "SHIPPED".equals(requestedStatus)
                 ? """
-                        {"status":"SHIPPED","shippingCarrier":"GHN","trackingCode":"GHN00001"}
+                        {"status":"SHIPPED","shippingCarrier":"GHN"}
                         """
                 : "{\"status\":\"" + requestedStatus + "\"}";
 
@@ -838,7 +830,7 @@ class CommerceFlowTests {
         if ("SHIPPED".equals(requestedStatus)) {
             response
                     .andExpect(jsonPath("$.shippingCarrier").value("GHN"))
-                    .andExpect(jsonPath("$.trackingCode").value("GHN00001"))
+                    .andExpect(jsonPath("$.trackingCode").isNotEmpty())
                     .andExpect(jsonPath("$.shippedAt").isNotEmpty());
         }
     }
