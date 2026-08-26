@@ -1,28 +1,19 @@
-import { ApiError, apiRequest } from "../../../shared/api/httpClient";
-import { getAuthToken } from "../../auth/model/authSession";
+import { authenticatedRequest } from "../../auth/api/authenticatedRequest";
 import type { AuthUser } from "../../auth/model/authTypes";
 import type { VietnameseAddress } from "../../address/model/addressTypes";
 import type { ProfileUpdateRequest } from "../model/accountTypes";
 
-const authenticatedRequest = <TResponse>(
+const accountRequest = <TResponse>(
   path: string,
   method: "GET" | "PATCH" = "GET",
   body?: unknown,
-) => {
-  const token = getAuthToken();
-
-  if (!token) {
-    throw new ApiError("Authentication is required", 401);
-  }
-
-  return apiRequest<TResponse>(path, { method, body, token });
-};
+) => authenticatedRequest<TResponse>(path, { method, body });
 
 export const getCurrentProfile = () =>
-  authenticatedRequest<AuthUser>("/api/users/me");
+  accountRequest<AuthUser>("/api/users/me");
 
 export const updateProfile = (request: ProfileUpdateRequest) =>
-  authenticatedRequest<AuthUser>("/api/users/me", "PATCH", request);
+  accountRequest<AuthUser>("/api/users/me", "PATCH", request);
 
 export const updateAddress = (address: VietnameseAddress) =>
-  authenticatedRequest<AuthUser>("/api/users/me/address", "PATCH", address);
+  accountRequest<AuthUser>("/api/users/me/address", "PATCH", address);

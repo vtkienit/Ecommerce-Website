@@ -31,6 +31,7 @@ public class PasswordResetService {
     private final PasswordResetStore resetStore;
     private final PasswordResetEmailService emailService;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
     private final SecretKeySpec secretKey;
     private final SecureRandom secureRandom = new SecureRandom();
     private final int maxAttempts;
@@ -41,6 +42,7 @@ public class PasswordResetService {
             PasswordResetStore resetStore,
             PasswordResetEmailService emailService,
             PasswordEncoder passwordEncoder,
+            RefreshTokenService refreshTokenService,
             @Value("${security.password-reset.secret}") String secret,
             @Value("${security.password-reset.max-attempts:5}") int maxAttempts,
             @Value("${security.password-reset.code-ttl-seconds:300}") long codeTtlSeconds
@@ -53,6 +55,7 @@ public class PasswordResetService {
         this.resetStore = resetStore;
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
+        this.refreshTokenService = refreshTokenService;
         this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         this.maxAttempts = maxAttempts;
         this.codeTtlSeconds = codeTtlSeconds;
@@ -132,6 +135,7 @@ public class PasswordResetService {
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+        refreshTokenService.revokeAll(user.getId());
     }
 
     private String hashCode(Long userId, String code) {

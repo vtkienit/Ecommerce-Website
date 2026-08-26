@@ -21,7 +21,7 @@ public class JwtService {
 
     public JwtService(
             @Value("${security.jwt.secret}") String secret,
-            @Value("${security.jwt.expiration-ms:259200000}") long expirationTime
+            @Value("${security.jwt.expiration-ms:900000}") long expirationTime
     ) {
         if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
             throw new IllegalArgumentException("JWT secret must contain at least 32 bytes");

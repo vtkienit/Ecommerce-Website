@@ -18,6 +18,9 @@ security:
     secret: test-jwt-secret-that-is-longer-than-thirty-two-bytes
     expiration-ms: 3600000
 
+  refresh-token:
+    expiration-seconds: 2592000
+
   password-reset:
     secret: test-password-reset-secret-longer-than-thirty-two-bytes
     code-ttl-seconds: 300

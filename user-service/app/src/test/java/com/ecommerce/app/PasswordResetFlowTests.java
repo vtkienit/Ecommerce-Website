@@ -2,6 +2,7 @@ package com.ecommerce.app;
 
 import com.ecommerce.app.entities.User;
 import com.ecommerce.app.repositories.PasswordResetStore;
+import com.ecommerce.app.repositories.RefreshTokenStore;
 import com.ecommerce.app.repositories.UserRepository;
 import com.ecommerce.app.services.GoogleIdentityService;
 import com.ecommerce.app.services.PasswordResetEmailService;
@@ -41,6 +42,9 @@ class PasswordResetFlowTests {
 
     @MockitoBean
     private PasswordResetStore resetStore;
+
+    @MockitoBean
+    private RefreshTokenStore refreshTokenStore;
 
     @MockitoBean
     private PasswordResetEmailService emailService;
@@ -101,6 +105,8 @@ class PasswordResetFlowTests {
                                 }
                                 """.formatted(resetToken)))
                 .andExpect(status().isNoContent());
+
+        verify(refreshTokenStore).deleteAll(user.getId());
 
         login("old-password-123")
                 .andExpect(status().isUnauthorized());

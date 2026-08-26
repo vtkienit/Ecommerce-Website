@@ -1,5 +1,4 @@
-import { ApiError, apiRequest } from "../../../shared/api/httpClient";
-import { getAuthToken } from "../../auth/model/authSession";
+import { authenticatedRequest } from "../../auth/api/authenticatedRequest";
 import type { PageQuery, PageResponse } from "../../../shared/model/pagination";
 import type { Category } from "../model/catalogTypes";
 import type {
@@ -16,17 +15,11 @@ const adminRequest = <TResponse>(
   path: string,
   method: "GET" | "POST" | "PATCH" | "DELETE" = "GET",
   body?: unknown,
-) => {
-  const token = getAuthToken();
-  if (!token) throw new ApiError("Authentication is required", 401);
-
-  return apiRequest<TResponse>(path, {
+) => authenticatedRequest<TResponse>(path, {
     method,
     body,
-    token,
     fallbackMessage: "Catalog administration request failed",
   });
-};
 
 export const getAdminCategories = () =>
   adminRequest<Category[]>("/api/admin/catalog/categories");

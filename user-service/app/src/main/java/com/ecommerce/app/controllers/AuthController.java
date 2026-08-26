@@ -4,6 +4,7 @@ import com.ecommerce.app.dtos.AuthResponse;
 import com.ecommerce.app.dtos.ForgotPasswordRequest;
 import com.ecommerce.app.dtos.GoogleAuthRequest;
 import com.ecommerce.app.dtos.PasswordResetChallengeResponse;
+import com.ecommerce.app.dtos.RefreshTokenRequest;
 import com.ecommerce.app.dtos.ResetPasswordRequest;
 import com.ecommerce.app.dtos.ResetTokenResponse;
 import com.ecommerce.app.dtos.UserLoginRequest;
@@ -41,6 +42,17 @@ public class AuthController {
     @PostMapping("/google")
     public AuthResponse authenticateWithGoogle(@Valid @RequestBody GoogleAuthRequest request) {
         return userService.authenticateWithGoogle(request);
+    }
+
+    @PostMapping("/refresh")
+    public AuthResponse refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        return userService.refresh(request);
+    }
+
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(@Valid @RequestBody RefreshTokenRequest request) {
+        userService.logout(request);
     }
 
     @PostMapping("/forgot-password")

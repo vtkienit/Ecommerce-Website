@@ -17,7 +17,8 @@ import { useLanguage } from "../../app/contexts/LanguageContext";
 import { useTheme } from "../../app/contexts/ThemeContext";
 import ThemeToggle from "./ThemeToggle";
 import LanguageSelector from "./LanguageSelector";
-import { clearAuthSession, getStoredUser, onAuthChange } from "../../features/auth/model/authSession";
+import { getStoredUser, onAuthChange } from "../../features/auth/model/authSession";
+import { logout } from "../../features/auth/api/authApi";
 import { useCart } from "../../features/commerce/context/CartContext";
 import CatalogSearch from "../../features/catalog/components/CatalogSearch";
 
@@ -91,7 +92,7 @@ const Header = () => {
   const closeAccountMenu = () => setAccountMenuOpen(false);
 
   const handleLogout = () => {
-    clearAuthSession();
+    void logout();
     setAuthUser(null);
     closeAccountMenu();
     closeMenu();

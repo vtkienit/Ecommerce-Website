@@ -1,6 +1,7 @@
 package com.ecommerce.app;
 
 import com.ecommerce.app.repositories.UserRepository;
+import com.ecommerce.app.repositories.RefreshTokenStore;
 import com.ecommerce.app.services.GoogleIdentityService;
 import com.ecommerce.app.dtos.GoogleUserInfo;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +14,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -33,6 +35,9 @@ class AuthFlowTests {
     @MockitoBean
     private GoogleIdentityService googleIdentityService;
 
+    @MockitoBean
+    private RefreshTokenStore refreshTokenStore;
+
     @BeforeEach
     void cleanDatabase() {
         userRepository.deleteAll();
@@ -51,6 +56,8 @@ class AuthFlowTests {
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
+                .andExpect(jsonPath("$.refreshExpiresIn").value(2592000))
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.newUser").value(true))
                 .andExpect(jsonPath("$.user.email").value("user@example.com"));
@@ -67,6 +74,53 @@ class AuthFlowTests {
                 .andExpect(jsonPath("$.token").isNotEmpty())
                 .andExpect(jsonPath("$.newUser").value(false))
                 .andExpect(jsonPath("$.user.name").value("Quy Dung"));
+    }
+
+    @Test
+    void refreshTokenIsRotatedAndCanBeRevoked() throws Exception {
+        String registerResponse = mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Refresh User",
+                                  "email": "refresh@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String refreshToken = com.jayway.jsonpath.JsonPath.read(registerResponse, "$.refreshToken");
+        Long userId = userRepository.findByEmailIgnoreCase("refresh@example.com").orElseThrow().getId();
+        when(refreshTokenStore.consume(anyString())).thenReturn(userId, (Long) null);
+
+        String refreshResponse = mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + refreshToken + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String rotatedToken = com.jayway.jsonpath.JsonPath.read(refreshResponse, "$.refreshToken");
+        org.assertj.core.api.Assertions.assertThat(rotatedToken).isNotEqualTo(refreshToken);
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + refreshToken + "\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Invalid or expired refresh token"));
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + rotatedToken + "\"}"))
+                .andExpect(status().isNoContent());
+
+        verify(refreshTokenStore).delete(anyString());
     }
 
     @Test

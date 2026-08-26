@@ -24,6 +24,7 @@ public class AuthRateLimitFilter implements GlobalFilter, Ordered {
             "/api/auth/register", 5,
             "/api/auth/login", 10,
             "/api/auth/google", 10,
+            "/api/auth/refresh", 30,
             "/api/auth/forgot-password", 5,
             "/api/auth/verify-reset-code", 10,
             "/api/auth/reset-password", 10

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import notificationSound from "../../../assets/sounds/notification.mp3";
 import { apiWebSocketUrl } from "../../../shared/api/httpClient";
 import { clearAuthSession, getAuthToken, onAuthChange } from "../../auth/model/authSession";
+import { refreshAuthSession } from "../../auth/api/authenticatedRequest";
 import NotificationToastQueue from "../components/NotificationToastQueue";
 import type { OrderNotification, ToastNotification } from "../model/notificationTypes";
 
@@ -50,7 +51,7 @@ export default function RealtimeNotificationProvider({ children }: { children: R
       socket.onclose = (event) => {
         if (!active) return;
         if (event.code === 1008) {
-          clearAuthSession();
+          void refreshAuthSession().catch(() => clearAuthSession());
           return;
         }
         reconnectTimer = window.setTimeout(connect, reconnectDelay);

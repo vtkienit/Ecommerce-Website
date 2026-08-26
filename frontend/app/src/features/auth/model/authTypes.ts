@@ -18,6 +18,8 @@ export type AuthResponse = {
   token: string;
   tokenType: "Bearer";
   expiresIn: number;
+  refreshToken: string;
+  refreshExpiresIn: number;
   newUser: boolean;
   user: AuthUser;
 };

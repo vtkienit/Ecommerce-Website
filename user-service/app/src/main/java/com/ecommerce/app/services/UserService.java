@@ -3,6 +3,7 @@ package com.ecommerce.app.services;
 import com.ecommerce.app.dtos.AuthResponse;
 import com.ecommerce.app.dtos.GoogleAuthRequest;
 import com.ecommerce.app.dtos.GoogleUserInfo;
+import com.ecommerce.app.dtos.RefreshTokenRequest;
 import com.ecommerce.app.dtos.UserLoginRequest;
 import com.ecommerce.app.dtos.UserAddressUpdateRequest;
 import com.ecommerce.app.dtos.UserProfileUpdateRequest;
@@ -26,17 +27,20 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
     private final GoogleIdentityService googleIdentityService;
 
     public UserService(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
+            RefreshTokenService refreshTokenService,
             GoogleIdentityService googleIdentityService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.refreshTokenService = refreshTokenService;
         this.googleIdentityService = googleIdentityService;
     }
 
@@ -100,6 +104,15 @@ public class UserService {
                 .toList();
     }
 
+    public AuthResponse refresh(RefreshTokenRequest request) {
+        User user = refreshTokenService.consume(request.getRefreshToken());
+        return createAuthResponse(user, false);
+    }
+
+    public void logout(RefreshTokenRequest request) {
+        refreshTokenService.revoke(request.getRefreshToken());
+    }
+
     public UserResponse getCurrentUser(String email) {
         return toResponse(findUserByEmail(email));
     }
@@ -137,6 +150,8 @@ public class UserService {
                 jwtService.generateToken(user),
                 "Bearer",
                 jwtService.getExpirationSeconds(),
+                refreshTokenService.create(user),
+                refreshTokenService.getExpirationSeconds(),
                 newUser,
                 toResponse(user)
         );

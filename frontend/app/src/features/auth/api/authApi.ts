@@ -1,4 +1,5 @@
 import { apiRequest } from "../../../shared/api/httpClient";
+import { clearAuthSession, getRefreshToken } from "../model/authSession";
 import type {
   AuthResponse,
   LoginRequest,
@@ -48,3 +49,19 @@ export const resetPassword = (
   method: "POST",
   body: { resetToken, newPassword, confirmPassword },
 });
+
+export const logout = async () => {
+  const refreshToken = getRefreshToken();
+  clearAuthSession();
+
+  if (!refreshToken) return;
+
+  try {
+    await apiRequest<void>("/api/auth/logout", {
+      method: "POST",
+      body: { refreshToken },
+    });
+  } catch {
+    // Local logout must still succeed when the server is unavailable.
+  }
+};

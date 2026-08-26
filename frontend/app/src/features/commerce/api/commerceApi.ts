@@ -1,5 +1,5 @@
-import { ApiError, apiRequest } from "../../../shared/api/httpClient";
-import { getAuthToken } from "../../auth/model/authSession";
+import { apiRequest } from "../../../shared/api/httpClient";
+import { authenticatedRequest } from "../../auth/api/authenticatedRequest";
 import type { PageQuery, PageResponse } from "../../../shared/model/pagination";
 import type {
   AdminDashboard,
@@ -20,20 +20,11 @@ const commerceRequest = <TResponse>(
   path: string,
   method: "GET" | "POST" | "PATCH" | "DELETE" = "GET",
   body?: unknown,
-) => {
-  const token = getAuthToken();
-
-  if (!token) {
-    throw new ApiError("Authentication is required", 401);
-  }
-
-  return apiRequest<TResponse>(path, {
+) => authenticatedRequest<TResponse>(path, {
     method,
     body,
-    token,
     fallbackMessage: "Commerce request failed",
   });
-};
 
 const publicCommerceRequest = <TResponse>(path: string) => apiRequest<TResponse>(path, {
   fallbackMessage: "Commerce request failed",

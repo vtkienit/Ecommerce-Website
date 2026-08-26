@@ -16,7 +16,8 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import { useLanguage } from "../../app/contexts/LanguageContext";
-import { clearAuthSession, getStoredUser } from "../../features/auth/model/authSession";
+import { getStoredUser } from "../../features/auth/model/authSession";
+import { logout as logoutSession } from "../../features/auth/api/authApi";
 import LanguageSelector from "./LanguageSelector";
 import ThemeToggle from "./ThemeToggle";
 
@@ -45,7 +46,7 @@ export default function AdminLayout() {
   }
 
   const logout = () => {
-    clearAuthSession();
+    void logoutSession();
     navigate("/login", { replace: true });
   };
 
