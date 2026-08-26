@@ -1,7 +1,159 @@
+name: quydung
+
 services:
   redis:
     image: redis:7.4-alpine
-    container_name: ecommerce-redis
+    command: redis-server --appendonly yes --appendfsync everysec
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     restart: unless-stopped
+
+  user-service:
+    image: quydung/user-service:local
+    build:
+      context: ./user-service/app
+    environment:
+      USER_SERVICE_PORT: 8081
+      DB_URL: ${DB_URL:?Add DB_URL to .env}
+      DB_USERNAME: ${DB_USERNAME:?Add DB_USERNAME to .env}
+      DB_PASSWORD: ${DB_PASSWORD:?Add DB_PASSWORD to .env}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?Add JWT_SECRET to .env}
+      RESEND_API_KEY: ${RESEND_API_KEY:?Add RESEND_API_KEY to .env}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?Add GOOGLE_CLIENT_ID to .env}
+      CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      REFRESH_TOKEN_COOKIE_SECURE: "false"
+    expose:
+      - "8081"
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
+    restart: unless-stopped
+    init: true
+
+  catalog-service:
+    image: quydung/catalog-service:local
+    build:
+      context: ./catalog-service/app
+    environment:
+      CATALOG_SERVICE_PORT: 8082
+      DB_URL: ${DB_URL:?Add DB_URL to .env}
+      DB_USERNAME: ${DB_USERNAME:?Add DB_USERNAME to .env}
+      DB_PASSWORD: ${DB_PASSWORD:?Add DB_PASSWORD to .env}
+      JWT_SECRET: ${JWT_SECRET:?Add JWT_SECRET to .env}
+      SUPABASE_URL: ${SUPABASE_URL:?Add SUPABASE_URL to .env}
+      SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:?Add SUPABASE_SECRET_KEY to .env}
+      CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+    expose:
+      - "8082"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
+    restart: unless-stopped
+    init: true
+
+  commerce-service:
+    image: quydung/commerce-service:local
+    build:
+      context: ./commerce-service/app
+    environment:
+      COMMERCE_SERVICE_PORT: 8083
+      DB_URL: ${DB_URL:?Add DB_URL to .env}
+      DB_USERNAME: ${DB_USERNAME:?Add DB_USERNAME to .env}
+      DB_PASSWORD: ${DB_PASSWORD:?Add DB_PASSWORD to .env}
+      JWT_SECRET: ${JWT_SECRET:?Add JWT_SECRET to .env}
+      CATALOG_SERVICE_URL: http://catalog-service:8082
+      PAYOS_CLIENT_ID: ${PAYOS_CLIENT_ID:?Add PAYOS_CLIENT_ID to .env}
+      PAYOS_API_KEY: ${PAYOS_API_KEY:?Add PAYOS_API_KEY to .env}
+      PAYOS_CHECKSUM_KEY: ${PAYOS_CHECKSUM_KEY:?Add PAYOS_CHECKSUM_KEY to .env}
+      PAYOS_RETURN_URL: http://localhost:5173/payment/success
+      PAYOS_CANCEL_URL: http://localhost:5173/payment/cancel
+      CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+    expose:
+      - "8083"
+    depends_on:
+      catalog-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8083/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
+    restart: unless-stopped
+    init: true
+
+  api-gateway:
+    image: quydung/api-gateway:local
+    build:
+      context: ./api-gateway/app
+    environment:
+      API_GATEWAY_PORT: 8080
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?Add JWT_SECRET to .env}
+      USER_SERVICE_URL: http://user-service:8081
+      CATALOG_SERVICE_URL: http://catalog-service:8082
+      COMMERCE_SERVICE_URL: http://commerce-service:8083
+      COMMERCE_WEBSOCKET_URL: ws://commerce-service:8083
+      CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+    ports:
+      - "8080:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      catalog-service:
+        condition: service_healthy
+      commerce-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+    init: true
+
+  frontend:
+    image: quydung/frontend:local
+    build:
+      context: ./frontend/app
+      args:
+        GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?Add GOOGLE_CLIENT_ID to .env}
+        VITE_API_URL: /
+    ports:
+      - "5173:80"
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+
+networks:
+  default:
+    name: quydung-network

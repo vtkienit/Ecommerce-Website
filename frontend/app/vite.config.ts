@@ -13,7 +13,9 @@ export default defineConfig(({ mode }) => {
     envDir,
     envPrefix: 'VITE_',
     define: {
-      'import.meta.env.GOOGLE_CLIENT_ID': JSON.stringify(env.GOOGLE_CLIENT_ID ?? ''),
+      'import.meta.env.GOOGLE_CLIENT_ID': JSON.stringify(
+        env.GOOGLE_CLIENT_ID ?? process.env.GOOGLE_CLIENT_ID ?? '',
+      ),
     },
   }
 })

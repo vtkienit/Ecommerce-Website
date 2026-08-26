@@ -12,7 +12,9 @@ type RequestOptions = {
 };
 
 export const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/$/, "");
-export const apiWebSocketUrl = apiUrl.replace(/^http/, "ws");
+export const apiWebSocketUrl = apiUrl
+  ? apiUrl.replace(/^http/, "ws")
+  : `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}`;
 
 export class ApiError extends Error {
   status: number;
