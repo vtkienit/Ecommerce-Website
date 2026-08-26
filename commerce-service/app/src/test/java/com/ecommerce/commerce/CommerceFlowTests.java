@@ -488,6 +488,14 @@ class CommerceFlowTests {
         assertThat(reservationRepository.findByOrderId(orderId).getFirst().getStatus())
                 .isEqualTo(StockReservationStatus.CONSUMED);
 
+        mockMvc.perform(get("/api/orders")
+                        .header("Authorization", "Bearer " + customerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].status").value("SHIPPED"))
+                .andExpect(jsonPath("$[0].shippingCarrier").value("GHN"))
+                .andExpect(jsonPath("$[0].trackingCode").value("GHN-TEST-001"))
+                .andExpect(jsonPath("$[0].shippedAt").isNotEmpty());
+
         updateOrderStatus(adminToken, orderId, "DELIVERED", "DELIVERED");
         assertThat(paymentRepository.findAll().getFirst().getStatus()).isEqualTo(PaymentStatus.PAID);
 
