@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { LoaderCircle, PackageSearch, Save, Search } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
+import AdminFeedbackBanner from "../../../shared/components/AdminFeedbackBanner";
 import AdminPagination from "../../../shared/components/AdminPagination";
 import useDebouncedValue from "../../../shared/hooks/useDebouncedValue";
 import { getInventory, updateInventory } from "../api/commerceApi";
@@ -92,8 +93,8 @@ export default function InventoryAdminView() {
             <span className="text-sm text-text-tertiary">{totalElements}</span>
           </div>
 
-          {error && <p className="mt-4 rounded-md bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">{error}</p>}
-          {success && <p className="mt-4 rounded-md bg-green-500/10 p-3 text-sm text-green-700 dark:text-green-300">{success}</p>}
+          {error && <AdminFeedbackBanner type="error" message={error} />}
+          {success && <AdminFeedbackBanner type="success" message={success} />}
 
           {isLoading ? (
             <div className="flex min-h-72 items-center justify-center gap-2 text-text-secondary">

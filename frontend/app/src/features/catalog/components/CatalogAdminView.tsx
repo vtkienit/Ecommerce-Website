@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Helmet } from "react-helmet-async";
 import { Boxes, LoaderCircle, Package, Tags } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
+import AdminFeedbackBanner from "../../../shared/components/AdminFeedbackBanner";
 import useDebouncedValue from "../../../shared/hooks/useDebouncedValue";
 import { getAdminCategories, getAdminProducts } from "../api/catalogAdminApi";
 import type { AdminProduct } from "../model/catalogAdminTypes";
@@ -105,8 +106,8 @@ export default function CatalogAdminView() {
             </TabButton>
           </div>
 
-          {error && <p className="mt-5 rounded-md bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">{error}</p>}
-          {success && <p className="mt-5 rounded-md bg-green-500/10 p-3 text-sm text-green-700 dark:text-green-300">{success}</p>}
+          {error && <AdminFeedbackBanner type="error" message={error} className="mt-5" />}
+          {success && <AdminFeedbackBanner type="success" message={success} className="mt-5" />}
 
           {categoriesLoading || productsLoading ? (
             <div className="flex min-h-80 items-center justify-center gap-2 text-text-secondary">

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { LoaderCircle, PackageOpen, RotateCcw, Search } from "lucide-react";
 import { useLanguage, type TranslationKey } from "../../../app/contexts/LanguageContext";
+import AdminFeedbackBanner from "../../../shared/components/AdminFeedbackBanner";
 import AdminPagination from "../../../shared/components/AdminPagination";
 import useDebouncedValue from "../../../shared/hooks/useDebouncedValue";
 import { getAdminReturnRequests, updateReturnRequestStatus } from "../api/commerceApi";
@@ -140,8 +141,8 @@ export default function ReturnAdminView() {
             </select>
           </div>
 
-          {error && <p className="mt-4 rounded-md bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">{error}</p>}
-          {success && <p className="mt-4 rounded-md bg-green-500/10 p-3 text-sm text-green-700 dark:text-green-300">{success}</p>}
+          {error && <AdminFeedbackBanner type="error" message={error} />}
+          {success && <AdminFeedbackBanner type="success" message={success} />}
 
           {isLoading ? (
             <div className="flex min-h-72 items-center justify-center gap-2 text-text-secondary">
@@ -264,10 +265,10 @@ export default function ReturnAdminView() {
 }
 
 function returnStatusClass(status: ReturnRequestStatus) {
-  if (status === "COMPLETED") return "bg-green-500/10 text-green-700 dark:text-green-300";
-  if (status === "REJECTED") return "bg-red-500/10 text-red-700 dark:text-red-300";
-  if (status === "APPROVED") return "bg-blue-500/10 text-blue-700 dark:text-blue-300";
-  return "bg-amber-500/10 text-amber-700 dark:text-amber-300";
+  if (status === "COMPLETED") return "border border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200";
+  if (status === "REJECTED") return "border border-red-300 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200";
+  if (status === "APPROVED") return "border border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200";
+  return "border border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200";
 }
 
 function paymentLabel(

@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
+import AdminFeedbackBanner from "../../../shared/components/AdminFeedbackBanner";
 import AdminPagination from "../../../shared/components/AdminPagination";
 import useDebouncedValue from "../../../shared/hooks/useDebouncedValue";
 import {
@@ -205,8 +206,8 @@ export default function FlashSaleAdminView() {
             <p className="mt-2 text-sm text-text-secondary">{t("flashSaleManagementDescription")}</p>
           </header>
 
-          {error && <p className="mt-5 rounded-md bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">{error}</p>}
-          {success && <p className="mt-5 rounded-md bg-green-500/10 p-3 text-sm text-green-700 dark:text-green-300">{success}</p>}
+          {error && <AdminFeedbackBanner type="error" message={error} className="mt-5" />}
+          {success && <AdminFeedbackBanner type="success" message={success} className="mt-5" />}
 
           <div className="mt-7 grid items-start gap-7 xl:grid-cols-[minmax(560px,1.05fr)_minmax(480px,0.95fr)] 2xl:grid-cols-[minmax(680px,1.1fr)_minmax(560px,0.9fr)]">
             <form noValidate onSubmit={submit} className="rounded-2xl border border-border bg-bg p-5 shadow-sm sm:p-6 2xl:p-7">

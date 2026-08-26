@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Helmet } from "react-helmet-async";
 import { CalendarClock, LoaderCircle, Pencil, Plus, Save, Search, TicketPercent, Trash2, X } from "lucide-react";
 import { useLanguage } from "../../../app/contexts/LanguageContext";
+import AdminFeedbackBanner from "../../../shared/components/AdminFeedbackBanner";
 import AdminPagination from "../../../shared/components/AdminPagination";
 import useDebouncedValue from "../../../shared/hooks/useDebouncedValue";
 import { createVoucher, deleteVoucher, getVouchers, updateVoucher } from "../api/commerceApi";
@@ -153,8 +154,8 @@ export default function VoucherAdminView() {
             <p className="mt-2 text-sm text-text-secondary">{t("voucherManagementDescription")}</p>
           </header>
 
-          {error && <p className="mt-5 rounded-md bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">{error}</p>}
-          {success && <p className="mt-5 rounded-md bg-green-500/10 p-3 text-sm text-green-700 dark:text-green-300">{success}</p>}
+          {error && <AdminFeedbackBanner type="error" message={error} className="mt-5" />}
+          {success && <AdminFeedbackBanner type="success" message={success} className="mt-5" />}
 
           <div className="mt-7 grid items-start gap-6 xl:grid-cols-[410px_minmax(0,1fr)]">
             <form noValidate onSubmit={submit} className="rounded-xl border border-border bg-bg p-5 shadow-sm xl:sticky xl:top-28">

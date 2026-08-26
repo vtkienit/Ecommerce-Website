@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { LoaderCircle, PackageOpen, Search, Truck, UserRound } from "lucide-react";
 import { useLanguage, type TranslationKey } from "../../../app/contexts/LanguageContext";
+import AdminFeedbackBanner from "../../../shared/components/AdminFeedbackBanner";
 import AdminPagination from "../../../shared/components/AdminPagination";
 import useDebouncedValue from "../../../shared/hooks/useDebouncedValue";
 import { getAdminOrders, updateOrderStatus } from "../api/commerceApi";
@@ -181,8 +182,8 @@ export default function OrderAdminView() {
             </select>
           </div>
 
-          {error && <p className="mt-4 rounded-md bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">{error}</p>}
-          {success && <p className="mt-4 rounded-md bg-green-500/10 p-3 text-sm text-green-700 dark:text-green-300">{success}</p>}
+          {error && <AdminFeedbackBanner type="error" message={error} />}
+          {success && <AdminFeedbackBanner type="success" message={success} />}
 
           {isLoading ? (
             <div className="flex min-h-72 items-center justify-center gap-2 text-text-secondary">
